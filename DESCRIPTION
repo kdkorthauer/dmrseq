@@ -1,0 +1,23 @@
+Package: dmrseq
+Type: Package
+Title: Detection and inference of differentially methylated regions from 
+  Whole Genome Bisulfite Sequencing 
+Version: 0.1.0
+Date: 2017-07-14
+Author: Keegan D. Korthauer
+Maintainer: Keegan D. Korthauer <keegan@jimmy.harvard.edu>
+Description: This package implements an approach for scanning the
+  genome to detect and perform accurate inference on differentially 
+  methylated regions from Whole Genome Bisulfite Sequencing data. 
+  The method is based on comparing detected regions 
+  to a pooled null distribution, that can be implemented even when as 
+  few as two samples per population are available. 
+  Region-level statistics are obtained by fitting a generalized 
+  least squares (GLS) regression model with a nested autoregressive correlated 
+  error structure for the effect of interest on transformed methylation 
+  proportions. 
+License: GPL-2
+Imports: bsseq, GenomicRanges, nlme, annotatr, ggplot2, 
+  doParallel, doRNG, RColorBrewer, Biobase,
+  bumphunter, matrixStats, outliers, reshape2
+RoxygenNote: 6.0.1
