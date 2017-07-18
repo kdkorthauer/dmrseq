@@ -1,3 +1,3 @@
-# dmrseq: an R package to identify and perform inference for differentially methylated regions (DMRs) from bisulfite sequencing data
+# dmrseq: Inference for differentially methylated regions (DMRs) from bisulfite sequencing
 
 *under rapid development* - vignette coming soon!
