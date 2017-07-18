@@ -106,6 +106,13 @@
 #' @import doRNG
 #' 
 #' @export
+#' 
+#' @examples
+#' 
+#' # load example data from bsseq package
+#' #data(BS.chr22, package="bsseq")
+#' 
+#' #regions <- dmrseq(BS.chr22,)
 dmrseq <- function(bs, testCovariate, adjustCovariate=NULL,
                    cutoff = 0.10, minNumRegion=5,
                    smooth = TRUE,

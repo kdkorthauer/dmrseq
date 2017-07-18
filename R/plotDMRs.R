@@ -129,7 +129,7 @@ plotDMRs <- function(BSseq, regions = NULL, extend = 0, main = "",
   # line per sample instead of a uniform-sized verbatim line going through 
   # each observation
   if (verbose) message(paste0("[plotDMRs] plotting ", nrow(regions), 
-                              " DMRs ... "))
+                              " DMRs"))
     if(!is.null(regions)) {
         if(is(regions, "data.frame"))
             gr <- data.frame2GRanges(regions, keepColumns = FALSE)
@@ -149,7 +149,6 @@ plotDMRs <- function(BSseq, regions = NULL, extend = 0, main = "",
         stop("No overlap between BSseq data and regions")
     if(!is.null(main) && length(main) != length(gr))
         main <- rep(main, length = length(gr))
-    cat("done\n")
     
     opar <- par(mar = c(0,4.1,0,0), oma = c(0,0,2.5,1))
     on.exit(par(opar))
@@ -159,18 +158,9 @@ plotDMRs <- function(BSseq, regions = NULL, extend = 0, main = "",
    	}
     for(ii in seq(along = gr)) {
         if(verbose & ii%%100==0){
-          cat(sprintf("[plotDMRs]   plotting region %d (out of %d)\n",
+          cat(sprintf("..... Plotting region %d (out of %d)\n",
                       ii, nrow(regions)))
         } 
-        if(!is.null(qval)){
-        	qval <- round(qval[ii], 4) 
-        }else{
-        	qval <- NULL
-        }
-        
-        if(!is.null(stat)){
-        	stat <- round(stat[ii], 3)
-        }
 
         .plotSingleDMR(BSseq = BSseq, region = regions[ii,], 
                       extend = extend[ii], main = main[ii], 

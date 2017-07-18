@@ -10,6 +10,8 @@
 #' a character vector of available genome names to choose from (see 
 #' \code{annotatr} documentation for more details).
 #' 
+#' @importFrom annotatr build_annotations 
+#' 
 #' @export
 getAnnot <- function(genomeName){
   if (is.null(genomeName)){

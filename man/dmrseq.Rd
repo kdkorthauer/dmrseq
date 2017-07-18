@@ -103,4 +103,11 @@ Performs a three-step approach that (1) detects candidate regions,
 statistic, and (3) evaluates statistical significance using a 
 permuation test on the pooled null distribution of scores.
 }
+\examples{
+
+# load example data from bsseq package
+#data(BS.chr22, package="bsseq")
+
+#regions <- dmrseq(BS.chr22,)
+}
 \keyword{inference}

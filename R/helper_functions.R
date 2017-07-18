@@ -330,7 +330,8 @@ meanDiff <- function(bs, dmrs, testCovariate, adjustCovariate){
       return(mean(rowMeans(prop.mat[(dmrs$indexStart[x]:dmrs$indexEnd[x]), 
                                     which(design[,coeff]==levs[2])]) - 
                     rowMeans(prop.mat[(dmrs$indexStart[x]:dmrs$indexEnd[x]), 
-                                      which(design[,coeff]==levs[1])]), na.rm=TRUE))
+                                      which(design[,coeff]==levs[1])]), 
+                                      na.rm=TRUE))
     })
     return(meanDiff)
   }
@@ -506,11 +507,16 @@ regionScanner <- function(x, y=x, chr, pos,
   t1 <- proc.time()
   for(i in 1:2){
     res[[i]]<-
-      data.frame(chr=sapply(Indexes[[i]], function(Index) chr[ind[Index[1]]]),
-                 start=sapply(Indexes[[i]], function(Index) min(pos[ind[Index]])),
-                 end=sapply(Indexes[[i]], function(Index) max(pos[ind[Index]])),
-                 indexStart=sapply(Indexes[[i]], function(Index) min(ind[Index])),
-                 indexEnd = sapply(Indexes[[i]], function(Index) max(ind[Index])),
+      data.frame(chr=sapply(Indexes[[i]], 
+                            function(Index) chr[ind[Index[1]]]),
+                 start=sapply(Indexes[[i]], 
+                              function(Index) min(pos[ind[Index]])),
+                 end=sapply(Indexes[[i]], 
+                            function(Index) max(pos[ind[Index]])),
+                 indexStart=sapply(Indexes[[i]], 
+                                   function(Index) min(ind[Index])),
+                 indexEnd = sapply(Indexes[[i]], 
+                                   function(Index) max(ind[Index])),
                  L = sapply(Indexes[[i]], length), stringsAsFactors=FALSE)               
     
     if (length(Indexes[[i]]) > 1){
