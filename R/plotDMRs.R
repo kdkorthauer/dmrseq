@@ -172,7 +172,7 @@ plotDMRs <- function(BSseq, regions = NULL, extend = 0, main = "",
         	stat <- round(stat[ii], 3)
         }
 
-        plotSingleDMR(BSseq = BSseq, region = regions[ii,], 
+        .plotSingleDMR(BSseq = BSseq, region = regions[ii,], 
                       extend = extend[ii], main = main[ii], 
                       col = col, lty = lty, lwd = lwd, label=label,
                       addRegions = addRegions, regionCol = regionCol, 

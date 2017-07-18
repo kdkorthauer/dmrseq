@@ -1,7 +1,7 @@
 Package: dmrseq
 Type: Package
-Title: Detection and inference of differentially methylated regions from 
-  Whole Genome Bisulfite Sequencing 
+Title: Detection and inference of differentially methylated regions 
+  from Whole Genome Bisulfite Sequencing 
 Version: 0.1.0
 Date: 2017-07-14
 Author: Keegan D. Korthauer
@@ -13,11 +13,11 @@ Description: This package implements an approach for scanning the
   to a pooled null distribution, that can be implemented even when as 
   few as two samples per population are available. 
   Region-level statistics are obtained by fitting a generalized 
-  least squares (GLS) regression model with a nested autoregressive correlated 
-  error structure for the effect of interest on transformed methylation 
-  proportions. 
+  least squares (GLS) regression model with a nested autoregressive  
+  correlated error structure for the effect of interest on transformed  
+  methylation proportions. 
 License: GPL-2
-Imports: bsseq, GenomicRanges, nlme, annotatr, ggplot2, 
-  doParallel, doRNG, RColorBrewer, Biobase,
-  bumphunter, matrixStats, outliers, reshape2, methods
+Imports: bsseq, GenomicRanges, nlme, annotatr, ggplot2, doParallel, 
+  doRNG, foreach, RColorBrewer, Biobase, bumphunter, matrixStats, 
+  outliers, reshape2, methods, locfit, IRanges, iterators, parallel
 RoxygenNote: 6.0.1

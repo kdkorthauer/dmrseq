@@ -7,7 +7,7 @@
 dmrseq(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
   minNumRegion = 5, smooth = TRUE, bpSpan = 1000, minInSpan = 30,
   maxGapSmooth = 2500, maxGap = 1000, verbose = TRUE, workers = NULL,
-  sampleIndex = seq(1, nrow(phenoData(bs))), maxPerms = 20,
+  sampleIndex = seq(1, nrow(pData(bs))), maxPerms = 20,
   matchCovariate = NULL)
 }
 \arguments{
@@ -15,19 +15,19 @@ dmrseq(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
 phenotype matrix that contains sample level covariates}
 
 \item{testCovariate}{integer value or vector indicating which of columns of
-\code{phenoData(bs)} contains the covariate of interest that will be tested 
+\code{pData(bs)} contains the covariate of interest that will be tested 
 for association of methylation levels. This is used to construct the 
 design matrix for the test statistic calculation.}
 
 \item{adjustCovariate}{an (optional) integer value or vector indicating
-which of the columns of \code{phenoData(bs)} will be adjusted for when 
+which of the columns of \code{pData(bs)} will be adjusted for when 
 testing for the association of methylation value with the 
 \code{testCovariate}. If not NULL (default), then this is also used to 
 construct the design matrix for the test statistic calculation.}
 
 \item{cutoff}{scalar value that represents the absolute value (or a vector 
 of two numbers representing a lower and upper bound) for the cutoff of 
-the single CpG coeffficient that is used to discover 
+the single CpG coefficient that is used to discover 
 candidate regions. Default value is 0.10.}
 
 \item{minNumRegion}{positive integer that represents the minimum number of
@@ -69,7 +69,7 @@ of permutations that will be used to generate the global null
 distribution of test statistics.  Default value is 20.}
 
 \item{matchCovariate}{an (optional) integer value or vector indicating
-which of the columns of \code{phenoData(bs)} will be blocked for when 
+which of the columns of \code{pData(bs)} will be blocked for when 
 constructing the permutations in order to
 test for the association of methylation value with the 
 \code{testCovariate}. Blocking means that only permutations with balanced
@@ -91,7 +91,7 @@ a data.frame that contains the results of the inference. The
    4. indexStart = the index of the region's first CpG, 
    5. indexEnd = the index of the region's last CpG,
    6. L = the number of CpGs contained in the region,
-   7. beta = the coeffficient value for the condition difference,
+   7. beta = the coefficient value for the condition difference,
    8. stat = the test statistic for the condition difference,
    9. pval = the permutation p-value for the significance of the test
    statistic, and 10. qval = the q-value for the test statistic (adjustment

@@ -9,6 +9,8 @@
 #' under study. Use the function \code{annotatr:::builtin_genomes()} to see
 #' a character vector of available genome names to choose from (see 
 #' \code{annotatr} documentation for more details).
+#' 
+#' @export
 getAnnot <- function(genomeName){
   if (is.null(genomeName)){
     return(NULL)

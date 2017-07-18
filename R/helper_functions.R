@@ -28,7 +28,7 @@ getEstimatePooled = function(meth.mat, unmeth.mat, design, coeff){
   }
 }
 
-bumphunt = function (bs, design,
+bumphunt = function (bs, design, sampleSize,
                      coeff = 2, minInSpan=30, minNumRegion=5,
                      cutoff = NULL, maxGap = 1000, 
                      maxGapSmooth=2500,
@@ -85,7 +85,7 @@ bumphunt = function (bs, design,
     chr <- as.character(chr)
   
   if (verbose) 
-    message(".....Computing coeffficients.")
+    message(".....Computing coefficients.")
   
   cov.means = rowMeans(meth.mat + unmeth.mat)
   cov.meds = colMedians(meth.mat + unmeth.mat)
@@ -120,7 +120,7 @@ bumphunt = function (bs, design,
   
   if (smooth) {
     if (verbose) 
-      message(".....Smoothing coeffficients.")
+      message(".....Smoothing coefficients.")
     
     beta <- vector("list", 3)
     beta[[1]] <- beta[[2]] <- rep(NA, length(pos))
@@ -161,7 +161,7 @@ bumphunt = function (bs, design,
                        cutoff = cutoff, minNumRegion = minNumRegion,
                        meth.mat = meth.mat, unmeth.mat = unmeth.mat, 
                        design = design, coeff = coeff, workers=workers,
-                       verbose=verbose)
+                       verbose=verbose, sampleSize=sampleSize)
   rm(beta);
   rm(rawBeta);
   rm(chr);
@@ -177,7 +177,7 @@ bumphunt = function (bs, design,
 
 
 refineEdges <- function(y, candidates = NULL, cutoff=qt(0.975,2*sampleSize-2), 
-                        verbose=FALSE, minNumRegion){
+                        verbose=FALSE, minNumRegion, sampleSize){
   stopifnot(length(cutoff) <= 2)
   stopifnot(is.list(candidates) & length(candidates)==2)
   
@@ -288,13 +288,13 @@ trimEdges <- function(x, candidates = NULL,
 
 # function to compute raw mean methylation differences
 meanDiff <- function(bs, dmrs, testCovariate, adjustCovariate){
-  if (ncol(Biobase::pData(bs)) < max(testCovariate, adjustCovariate)){
+  if (ncol(pData(bs)) < max(testCovariate, adjustCovariate)){
     stop(paste0("Error: pData(bs) has too few columns.  Please specify valid ",
                 "covariates to use in the analysis"))
   }
   
   coeff <- 2:(2+length(testCovariate)-1)
-  testCov <- Biobase::pData(bs)[,testCovariate]
+  testCov <- pData(bs)[,testCovariate]
   if (length(unique(testCov))==1){
     message(paste0("Warning: only one unique value of the specified ",
                    "covariate of interest.  Assuming null comparison and ",
@@ -303,14 +303,14 @@ meanDiff <- function(bs, dmrs, testCovariate, adjustCovariate){
     testCov[1:round(length(testCov)/2)] <- 0
   }
   if (!is.null(adjustCovariate)){
-    adjustCov <- Biobase::pData(bs)[,adjustCovariate]
+    adjustCov <- pData(bs)[,adjustCovariate]
     design <- model.matrix( ~ testCov + adjustCov)
-    colnames(design)[coeff] <- colnames(Biobase::pData(bs))[testCovariate]
+    colnames(design)[coeff] <- colnames(pData(bs))[testCovariate]
     colnames(design)[,(max(coeff)+1):ncol(design)] <- 
-      colnames(Biobase::pData(bs))[adjustCovariate]
+      colnames(pData(bs))[adjustCovariate]
   }else{
     design <- model.matrix( ~ testCov)
-    colnames(design)[coeff] <- colnames(Biobase::pData(bs))[testCovariate]
+    colnames(design)[coeff] <- colnames(pData(bs))[testCovariate]
   }
   
   if (length(unique(design[,coeff]))!=2){
@@ -368,12 +368,15 @@ meanDiff <- function(bs, dmrs, testCovariate, adjustCovariate){
 #' \code{plotFile}
 #' 
 #' @importFrom reshape2 melt
+#' @importFrom locfit locfit lp
 #' 
 plotEmpiricalDistribution <- function(bs, plotFile, 
                                       tiss1, tiss2, 
                                       time=NULL, time2=NULL,
                                       matchCovariate=NULL,
                                       genomeName=NULL){
+  value=NULL # satisfy R cmd check
+  variable=NULL # satisfy R cmd check
   
   if (!is.null(genomeName)){								
     # annotate BS with island/shore/etc
@@ -411,16 +414,16 @@ plotEmpiricalDistribution <- function(bs, plotFile,
   cov.matm <- data.frame((meth.mat + unmeth.mat)[rows.plot,])
   
   if(!is.null(matchCovariate)){
-    if(sum(grepl(matchCovariate, colnames(Biobase::pData(bs))))==0){
+    if(sum(grepl(matchCovariate, colnames(pData(bs))))==0){
       stop("Error: no column in pData() found that matches the matchCovariate")
-    }else if(length(grep(matchCovariate, colnames(Biobase::pData(bs)))) > 1){
+    }else if(length(grep(matchCovariate, colnames(pData(bs)))) > 1){
       stop("Error: matchCovariate matches more than one column in pData()")
     }
-    mC <- grep(matchCovariate, colnames(Biobase::pData(bs)))
+    mC <- grep(matchCovariate, colnames(pData(bs)))
     
-    if (length(grep(Biobase::pData(bs)[1,mC], colnames(meth.mat)))==0){
+    if (length(grep(pData(bs)[1,mC], colnames(meth.mat)))==0){
       colnames(meth.levelsm) <- colnames(cov.matm) <- 
-        paste0(colnames(meth.levelsm), "_", Biobase::pData(bs)[,mC])
+        paste0(colnames(meth.levelsm), "_", pData(bs)[,mC])
     }
   }
   
@@ -526,7 +529,7 @@ regionScanner <- function(x, y=x, chr, pos,
                           assumeSorted = FALSE, meth.mat=meth.mat,
                           unmeth.mat = unmeth.mat, verbose = verbose,
                           design=design, coeff=coeff, workers=workers,
-                          trim=FALSE){
+                          sampleSize=sampleSize){
   if(any(is.na(x[ind]))){
     warning("NAs found and removed. ind changed.")
     ind <- intersect(which(!is.na(x)),ind)
@@ -545,7 +548,8 @@ regionScanner <- function(x, y=x, chr, pos,
   # refine edges -> start = first (stop = last) position with a raw difference
   # that meets the threshold - biggest impact on small regions
   Indexes <- refineEdges(y=y[ind], candidates=Indexes, cutoff=cutoff,
-                         verbose=FALSE, minNumRegion=minNumRegion)
+                         verbose=FALSE, minNumRegion=minNumRegion,
+                         sampleSize=sampleSize)
   
   # refine edges II -> for larger regions, when effect size changes over the 
   # region, remove portions at the beginning and end where effect size is 
@@ -565,11 +569,12 @@ regionScanner <- function(x, y=x, chr, pos,
     Indexes[[i]] <- Indexes[[i]][lns >= minNumRegion]
   }
   
-  asin.gls.cov <- function(ix, design, coeff, 
+  asin.gls.cov <- function(ix, design, coeff,
                            correlation=corAR1(form = ~ 1 | sample),
                            correlationSmall=corCAR1(form = ~ L | sample),
                            weights=varPower(form=~1/MedCov, fixed=0.5),
                            weightsSmall=weights){
+    sampleSize <- nrow(design)
     dat <- data.frame(
       g.fac=factor(as.vector(sapply(design[,coeff], 
                                     function(x) 
@@ -725,7 +730,7 @@ regionScanner <- function(x, y=x, chr, pos,
   }
 
 smoother <- function(y, x=NULL, weights=NULL, chr=chr, 
-                     maxGapSmooth=maxGapSmooth,
+                     maxGapSmooth=maxGapSmooth, minNumRegion=5,
                      verbose=TRUE, workers=1, minInSpan = minInSpan, 
                      bpSpan = bpSpan, bpSpan2=bpSpan2){
   
@@ -862,7 +867,7 @@ smoother <- function(y, x=NULL, weights=NULL, chr=chr,
 
 
 
-## Function to compute the coeffficient estimates for regression
+## Function to compute the coefficient estimates for regression
 # of the methylation levels on the group
 # indicator variable, at each CpG site
 # *Experimental* - only used if not a standard two-group comparison

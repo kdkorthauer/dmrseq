@@ -8,16 +8,16 @@
 #' @param bs bsseq object containing the methylation values as well as the
 #' 	phenotype matrix that contains sample level covariates
 #' @param testCovariate integer value or vector indicating which of columns of
-#'  \code{phenoData(bs)} contains the covariate of interest that will be tested 
+#'  \code{pData(bs)} contains the covariate of interest that will be tested 
 #'  for association of methylation levels. This is used to construct the 
 #'  design matrix for the test statistic calculation.
 #' @param adjustCovariate an (optional) integer value or vector indicating
-#'  which of the columns of \code{phenoData(bs)} will be adjusted for when 
+#'  which of the columns of \code{pData(bs)} will be adjusted for when 
 #'  testing for the association of methylation value with the 
 #'  \code{testCovariate}. If not NULL (default), then this is also used to 
 #'  construct the design matrix for the test statistic calculation.
 #' @param matchCovariate an (optional) integer value or vector indicating
-#'  which of the columns of \code{phenoData(bs)} will be blocked for when 
+#'  which of the columns of \code{pData(bs)} will be blocked for when 
 #'  constructing the permutations in order to
 #'  test for the association of methylation value with the 
 #'  \code{testCovariate}. Blocking means that only permutations with balanced
@@ -35,7 +35,7 @@
 #'    nucleotides to consider for a candidate region. Default value is 5.
 #' @param cutoff scalar value that represents the absolute value (or a vector 
 #'    of two numbers representing a lower and upper bound) for the cutoff of 
-#'    the single CpG coeffficient that is used to discover 
+#'    the single CpG coefficient that is used to discover 
 #'    candidate regions. Default value is 0.10.
 #' @param smooth logical value that indicates whether or not to smooth the 
 #'    CpG level signal when discovering candidate regions.
@@ -69,7 +69,7 @@
 #'    4. indexStart = the index of the region's first CpG, 
 #'    5. indexEnd = the index of the region's last CpG,
 #'    6. L = the number of CpGs contained in the region,
-#'    7. beta = the coeffficient value for the condition difference,
+#'    7. beta = the coefficient value for the condition difference,
 #'    8. stat = the test statistic for the condition difference,
 #'    9. pval = the permutation p-value for the significance of the test
 #'    statistic, and 10. qval = the q-value for the test statistic (adjustment
@@ -77,8 +77,7 @@
 #' @keywords inference
 #' @importFrom outliers grubbs.test
 #' @importFrom reshape2 melt
-#' @importFrom bumphunter clusterMaker
-#' @importFrom bumphunter getSegments
+#' @importFrom bumphunter clusterMaker getSegments
 #' @importFrom matrixStats colMedians
 #' @importFrom matrixStats rowMads
 #' 
@@ -90,9 +89,21 @@
 #' @importFrom graphics axis layout legend lines mtext par 
 #' plot points rect rug text
 #' @importFrom methods is
-#' @importFrom stats approxfun end lm loess median model.matrix p.adjust
+#' @importFrom stats approxfun lm loess median model.matrix p.adjust
 #' predict preplot qt quantile rbeta rbinom runif
 #' @importFrom utils combn
+#' @importFrom foreach getDoParWorkers getDoParRegistered getDoParName 
+#' getDoParVersion registerDoSEQ foreach %dopar%
+#' @importFrom iterators iter
+#' @importFrom parallel mclapply
+#' 
+#' @import bsseq 
+#' @import GenomicRanges
+#' @import nlme
+#' @import annotatr
+#' @import ggplot2
+#' @import doParallel
+#' @import doRNG
 #' 
 #' @export
 dmrseq <- function(bs, testCovariate, adjustCovariate=NULL,
@@ -102,7 +113,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate=NULL,
                    maxGapSmooth=2500, maxGap = 1000,   
                    verbose = TRUE,
                    workers = NULL, 
-                   sampleIndex=seq(1,nrow(phenoData(bs))),
+                   sampleIndex=seq(1,nrow(pData(bs))),
                    maxPerms=20, 
                    matchCovariate=NULL){
   
@@ -118,7 +129,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate=NULL,
   # subset bs
   bs <- bs[,sampleIndex]
   
-  # construct the design matrix using the phenoData of bs
+  # construct the design matrix using the pData of bs
   if (ncol(pData(bs)) < max(testCovariate, adjustCovariate)){
     stop(paste0("Error: pData(bs) has too few columns.  Please specify valid ",
                 "covariates to use in the analysis"))
@@ -169,9 +180,10 @@ dmrseq <- function(bs, testCovariate, adjustCovariate=NULL,
   }
   
   
-  message(paste0("Detecting candidate regions with coeffficient larger than ",
+  message(paste0("Detecting candidate regions with coefficient larger than ",
                  unique(abs(cutoff)), " in magnitude."))
   OBS = bumphunt(bs, minInSpan=minInSpan, bpSpan=bpSpan,
+                        sampleSize=sampleSize,
                         design = design, coeff = coeff, 
                         maxGapSmooth=maxGapSmooth, minNumRegion=minNumRegion,
                         cutoff = cutoff, maxGap = maxGap, 
@@ -280,7 +292,8 @@ dmrseq <- function(bs, testCovariate, adjustCovariate=NULL,
       }
       
       res.flip.p = bumphunt(bs=bs, minInSpan=minInSpan, bpSpan=bpSpan,
-                                   design = designr, coeff = coeff, 
+                                   design = designr, coeff = coeff,
+                                   sampleSize=sampleSize,
                                    maxGapSmooth=maxGapSmooth, 
                                    minNumRegion=minNumRegion,
                                    cutoff = cutoff, maxGap = maxGap, 
@@ -330,7 +343,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate=NULL,
     OBS$pval <- pval$x
     OBS$qval <- pval$y
     
-    return(list(OBS))
+    return(OBS)
   }else{
     message("No candidate regions pass the cutoff of ", unique(abs(cutoff)))
   } 

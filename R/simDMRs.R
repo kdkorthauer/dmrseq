@@ -33,7 +33,14 @@
 #' simulated DMRs. (5) \code{deltas} is a numeric vector that contains the 
 #' effect size used for each DMR. 
 #' 
-simDMRs <- function(simFile=NULL, bs, num.dmrs=3000, delta.max0=0.3){
+#' @importFrom IRanges IRanges
+#' 
+#' @export
+#' 
+simDMRs <- function(simFile=NULL, bs, num.dmrs=3000, 
+                    delta.max0=0.3){
+  sampleSize <- nrow(pData(bs))/2
+  
   # code to simulate DMRs if some number of simulated dmrs was specified
   message("Simulating DMRs.")				  
   triwt <- function(x, amp=1, base=0, width=1, center=0, deg=3, dir=1) {
