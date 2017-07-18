@@ -49,7 +49,7 @@
 #'    use if parallelization is desired of the smoothing step. 
 #' @param sampleIndex vector of positive integers that represents the 
 #'   index of samples to use in the analysis (corresponds to sample ordering
-#'   in \code{bs} (e.g. the order of the rows in \code{Biobase::pData(bs)}. 
+#'   in \code{bs} (e.g. the order of the rows in \code{pData(bs)}. 
 #'   Default is to use all samples in the object.
 #' @param maxPerms a positive integer that represents the maximum number 
 #'    of permutations that will be used to generate the global null 
@@ -82,6 +82,18 @@
 #' @importFrom matrixStats colMedians
 #' @importFrom matrixStats rowMads
 #' 
+#' @importClassesFrom bsseq BSseq 
+#' @importMethodsFrom bsseq pData seqnames sampleNames start width 
+#' @importMethodsFrom bsseq subsetByOverlaps
+#' 
+#' @importFrom grDevices col2rgb colorRampPalette dev.off pdf rgb
+#' @importFrom graphics axis layout legend lines mtext par 
+#' plot points rect rug text
+#' @importFrom methods is
+#' @importFrom stats approxfun end lm loess median model.matrix p.adjust
+#' predict preplot qt quantile rbeta rbinom runif
+#' @importFrom utils combn
+#' 
 #' @export
 dmrseq <- function(bs, testCovariate, adjustCovariate=NULL,
                    cutoff = 0.10, minNumRegion=5,
@@ -96,7 +108,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate=NULL,
   
   # check sampleIndex input
   if(!(class(sampleIndex)=="integer") | min(sampleIndex) < 1 | 
-     max(sampleIndex) > nrow(Biobase::pData(bs)) | 
+     max(sampleIndex) > nrow(pData(bs)) | 
      !(length(sampleIndex)==length(unique(sampleIndex)))){
     stop(paste0("Error: Invalid sampleIndex specified. Must be an integer",
                 "vector with unique indices between 1 and the number of",
@@ -107,13 +119,13 @@ dmrseq <- function(bs, testCovariate, adjustCovariate=NULL,
   bs <- bs[,sampleIndex]
   
   # construct the design matrix using the phenoData of bs
-  if (ncol(Biobase::pData(bs)) < max(testCovariate, adjustCovariate)){
-    stop(paste0("Error: Biobase::pData(bs) has too few columns.  Please specify valid ",
+  if (ncol(pData(bs)) < max(testCovariate, adjustCovariate)){
+    stop(paste0("Error: pData(bs) has too few columns.  Please specify valid ",
                 "covariates to use in the analysis"))
   }
   
   coeff <- 2:(2+length(testCovariate)-1)
-  testCov <- Biobase::pData(bs)[,testCovariate]
+  testCov <- pData(bs)[,testCovariate]
   if (length(unique(testCov))==1){
     message(paste0("Warning: only one unique value of the specified ",
                    "covariate of interest.  Assuming null comparison and ",
@@ -137,23 +149,23 @@ dmrseq <- function(bs, testCovariate, adjustCovariate=NULL,
   }
   
   if (!is.null(adjustCovariate)){
-    adjustCov <- Biobase::pData(bs)[,adjustCovariate]
+    adjustCov <- pData(bs)[,adjustCovariate]
     design <- model.matrix( ~ testCov + adjustCov)
-    colnames(design)[coeff] <- colnames(Biobase::pData(bs))[testCovariate]
+    colnames(design)[coeff] <- colnames(pData(bs))[testCovariate]
     colnames(design)[,(max(coeff)+1):ncol(design)] <- 
-      colnames(Biobase::pData(bs))[adjustCovariate]
+      colnames(pData(bs))[adjustCovariate]
   }else{
     design <- model.matrix( ~ testCov)
-    colnames(design)[coeff] <- colnames(Biobase::pData(bs))[testCovariate]
+    colnames(design)[coeff] <- colnames(pData(bs))[testCovariate]
   }
   
   if(!is.null(matchCovariate)){
-    if(sum(grepl(matchCovariate, colnames(Biobase::pData(bs))))==0){
-      stop("Error: no column in Biobase::pData() found that matches the matchCovariate")
-    }else if(length(grep(matchCovariate, colnames(Biobase::pData(bs)))) > 1){
-      stop("Error: matchCovariate matches more than one column in Biobase::pData()")
+    if(sum(grepl(matchCovariate, colnames(pData(bs))))==0){
+      stop("Error: no column in pData() found that matches the matchCovariate")
+    }else if(length(grep(matchCovariate, colnames(pData(bs)))) > 1){
+      stop("Error: matchCovariate matches more than one column in pData()")
     }
-    mC <- grep(matchCovariate, colnames(Biobase::pData(bs)))
+    mC <- grep(matchCovariate, colnames(pData(bs)))
   }
   
   
@@ -238,15 +250,15 @@ dmrseq <- function(bs, testCovariate, adjustCovariate=NULL,
       
       # if matchCovariate is not null, restrict permutations such 
       # that null comparisons are balanced for the values of 
-      # Biobase::pData$matchCovariate
+      # pData$matchCovariate
       # this avoids comparison of, say two different individuals in the null, 
       # that the comparison of interest is tissue type. Not matching would mean
       # the null is really not null
       if(!is.null(matchCovariate)){
-        permLabel <- paste0(paste0(Biobase::pData(bs)[designr[,coeff]==1,mC], 
+        permLabel <- paste0(paste0(pData(bs)[designr[,coeff]==1,mC], 
                                    collapse="_"),
                             "vs", 
-                            paste0(Biobase::pData(bs)[(1-designr[,coeff])==1,mC],
+                            paste0(pData(bs)[(1-designr[,coeff])==1,mC],
                                    collapse="_"))
         
         c1 <- unlist(strsplit(permLabel, "vs"))[1]

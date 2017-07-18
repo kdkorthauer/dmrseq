@@ -182,7 +182,7 @@ refineEdges <- function(y, candidates = NULL, cutoff=qt(0.975,2*sampleSize-2),
   stopifnot(is.list(candidates) & length(candidates)==2)
   
   if(verbose) message("refineEdges: refining")
-  direction <- as.integer(bumphunter::greaterOrEqual(y, cutoff))
+  direction <- as.integer(bumphunter:::greaterOrEqual(y, cutoff))
   direction[y <= -cutoff] <- -1L
   
   trimmed <- candidates

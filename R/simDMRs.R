@@ -49,7 +49,7 @@ simDMRs <- function(simFile=NULL, bs, num.dmrs=3000, delta.max0=0.3){
   chr = as.character(seqnames(bs))
   pos = start(bs)
   
-  cluster <- bumphunter:::clusterMaker(chr, pos, maxGap = 500)
+  cluster <- bumphunter::clusterMaker(chr, pos, maxGap = 500)
   Indexes <- split(seq(along=cluster), cluster)
   lns <- sapply(Indexes, length)
   Indexes <- Indexes[lns >= 5 & lns <= 500]

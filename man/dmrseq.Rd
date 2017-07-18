@@ -61,7 +61,7 @@ use if parallelization is desired of the smoothing step.}
 
 \item{sampleIndex}{vector of positive integers that represents the 
 index of samples to use in the analysis (corresponds to sample ordering
-in \code{bs} (e.g. the order of the rows in \code{Biobase::pData(bs)}. 
+in \code{bs} (e.g. the order of the rows in \code{pData(bs)}. 
 Default is to use all samples in the object.}
 
 \item{maxPerms}{a positive integer that represents the maximum number 
