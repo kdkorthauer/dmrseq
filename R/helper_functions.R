@@ -182,7 +182,7 @@ refineEdges <- function(y, candidates = NULL, cutoff=qt(0.975,2*sampleSize-2),
   stopifnot(is.list(candidates) & length(candidates)==2)
   
   if(verbose) message("refineEdges: refining")
-  direction <- as.integer(bumphunter:::greaterOrEqual(y, cutoff))
+  direction <- as.integer(bumphunter.greaterOrEqual(y, cutoff))
   direction[y <= -cutoff] <- -1L
   
   trimmed <- candidates
@@ -772,5 +772,11 @@ bumphunter.reduceIt <- function (x, elem, bind = rbind)
   })
   names(ret) <- elem
   ret
+}
+
+# pasting bumphunter's greaterOrEqual function since not exported
+bumphunter.greaterOrEqual <- function (x, y){
+  precision <- sqrt(.Machine$double.eps)
+  (x >= y) | (abs(x - y) <= precision)
 }
 

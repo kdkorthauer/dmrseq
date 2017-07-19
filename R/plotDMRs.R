@@ -128,7 +128,7 @@ plotDMRs <- function(BSseq, regions = NULL, extend = 0, main = "",
   # and one smooth (loess)
   # line per sample instead of a uniform-sized verbatim line going through 
   # each observation
-  if (verbose) message(paste0("[plotDMRs] plotting ", nrow(regions), 
+  if (verbose) message(paste0("[plotDMRs] Plotting ", nrow(regions), 
                               " DMRs"))
     if(!is.null(regions)) {
         if(is(regions, "data.frame"))

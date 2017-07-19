@@ -8,13 +8,30 @@ getAnnot(genomeName)
 }
 \arguments{
 \item{genomeName}{a character object that indicates which organism is 
-under study. Use the function \code{annotatr:::builtin_genomes()} to see
+under study. Use the function \code{builtin_genomes()} from the annotatr
+package to see
 a character vector of available genome names to choose from (see 
 \code{annotatr} documentation for more details).}
+}
+\value{
+a \code{GRangesList} object with two elements returned
+by \code{\link{getAnnot}}. The first
+contains CpG category information in the first element (optional)
+coding gene sequence information in the second element (optional).
+At least one of these elements needs to be non-null in order for 
+any annotation to be plotted, but it is not necessary to contain
+both.
 }
 \description{
 Uses the \code{annotatr} package to retrieve annotation information (
 CpG category and gene coding sequences) for the \code{annoTrack} argument
 of \code{\link{plotDMRs}}. Allows for 5 
 re-tries if download fails (to allow for a spotty internet connection).
+}
+\details{
+Note that this package needs to attach the \code{annotatr} package, 
+and will
+return NULL if this cannot be done. You can still use the 
+\code{\link{plotDMRs}} function without this optional annotation step, 
+just by leaving the \code{annoTrack} argument as NULL.
 }

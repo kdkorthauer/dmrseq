@@ -379,9 +379,9 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
                             pointsMinCov, highlightMain) {
   # modified from .plotSmoothData in bsseq to allow non-smoothed regions
   
-  gr <- bsseq:::.bsGetGr(BSseq, region, extend)
+  gr <- bsseq.bsGetGr(BSseq, region, extend)
   BSseq <- subsetByOverlaps(BSseq, gr)
-  BSseq2 <- subsetByOverlaps(BSseq, bsseq:::.bsGetGr(BSseq, region, extend=0))
+  BSseq2 <- subsetByOverlaps(BSseq, bsseq.bsGetGr(BSseq, region, extend=0))
   ## Extract basic information
   sampleNames <- sampleNames(BSseq)
   names(sampleNames) <- sampleNames
@@ -414,15 +414,15 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
     if(length(regionCol)==1){
       regionCol <- c(regionCol, .alpha("blue", 0.2))
     }
-    bsseq:::.bsHighlightRegions(regions = addRegions[[1]], gr = gr, 
+    bsseq.bsHighlightRegions(regions = addRegions[[1]], gr = gr, 
                                 ylim = c(0,1), regionCol = regionCol[1], 
                                 highlightMain = highlightMain)
-    bsseq:::.bsHighlightRegions(regions = addRegions[[2]], gr = gr, 
+    bsseq.bsHighlightRegions(regions = addRegions[[2]], gr = gr, 
                                 ylim = c(0,1), regionCol = regionCol[2], 
                                 highlightMain = highlightMain)
     
   }else{
-    bsseq:::.bsHighlightRegions(regions = addRegions, gr = gr, ylim = c(0,1),
+    bsseq.bsHighlightRegions(regions = addRegions, gr = gr, ylim = c(0,1),
                                 regionCol = regionCol, 
                                 highlightMain = highlightMain)		
   }
@@ -479,7 +479,7 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
                      addTicks = addTicks, addPoints = addPoints,
                      pointsMinCov = pointsMinCov, 
                      highlightMain = highlightMain)
-  gr <- bsseq:::.bsGetGr(BSseq, region, extend)
+  gr <- bsseq.bsGetGr(BSseq, region, extend)
   
   if(!is.null(main)) {
     if (qval & stat){
@@ -504,4 +504,40 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
   
   if(!is.null(annoTrack))
     dmrPlotAnnotations(gr, annoTrack)
+}
+
+# pasting bsseq's .bsGetGr function since not exported
+bsseq.bsGetGr <- function (object, region, extend){
+  if (is.null(region)) {
+    gr <- GRanges(seqnames = seqnames(object)[1], 
+                  ranges = IRanges(start = min(start(object)), 
+                                   end = max(start(object))))
+  }
+  else {
+    if (is(region, "data.frame")) 
+      gr <- data.frame2GRanges(region, keepColumns = FALSE)
+    else gr <- region
+    if (!is(gr, "GRanges") || length(gr) != 1) 
+      stop(paste0("'region' needs to be either a 'data.frame' ", 
+                  "(with a single row) or a 'GRanges' (with a single element)"))
+    gr <- resize(gr, width = 2 * extend + width(gr), fix = "center")
+  }
+  gr
+}
+
+# pasting bsseq's .bsHighlightRegions function since not exported
+bsseq.bsHighlightRegions <- function (regions, gr, ylim, 
+                                      regionCol, highlightMain){
+  if (is.data.frame(regions)) 
+    regions <- data.frame2GRanges(regions)
+  if (highlightMain) 
+    regions <- c(regions, gr)
+  if (is.null(regions)) 
+    return(NULL)
+  regions <- subsetByOverlaps(regions, gr)
+  regions <- pintersect(regions, rep(gr, length(regions)))
+  if (length(regions) == 0) 
+    return(NULL)
+  rect(xleft = start(regions), xright = end(regions), ybottom = ylim[1], 
+       ytop = ylim[2], col = regionCol, border = NA)
 }
