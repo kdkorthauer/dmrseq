@@ -1,3 +1,90 @@
+#' BS.chr21: Whole-genome bisulfite sequencing for chromosome 21 
+#' from Lister et al.
+#'
+#' @description This dataset represents chromosome 21 
+#' from the IMR90 and H1 cell lines sequenced in Lister et al.  
+#' Only CpG methylation are included. The two samples from 
+#' each cell line are two different extractions (ie. technical replicates), 
+#' and are pooled in the analysis in the original paper.
+#' @usage data(BS.chr21)
+#' @format An object of class \code{BSseq}.
+#' 
+#' @details All coordinates are in hg18.
+#' @source Obtained from 
+#' \url{http://neomorph.salk.edu/human_methylome/data.html} specifically,
+#'  the files \url{mc_h1_r1.tar.gz}, \url{mc_h1_r2.tar.gz}, 
+#'  \url{mc_imr90_r1.tar.gz}, \url{mc_imr90_r2.tar.gz}
+#'  A script which downloads these files and constructs the \code{BS.chr21} 
+#'  object may be found in \file{inst/scripts/get_BS.chr21.R} - this was 
+#'  based off of and modified from the get_BS.chr22.R script in the 
+#'  \code{bsseq} package. The object constructed here contains a 
+#'  different chromosome (22 instead of 21), and two additional samples
+#'  (h1 and imr90 instead of just imr90) to enable identification of
+#'  cell type-DMRs for examples.
+#' @references R Lister et al. \emph{Human DNA methylomes at base 
+#'  resolution show widespread epigenomic differences}. Nature (2009) 462,
+#'   315-322.
+#' @examples
+#'   data(BS.chr21)
+#'   BS.chr21
+"BS.chr21"
+
+#' annot.chr21: Annotation information for chromosome 21, hg38 genome
+#'
+#' @description This is the annotation information returned from 
+#' \code{\link{getAnnot}}, subsetted for chromosome 21 for convenience
+#' in running the examples. The annotation is obtained using the 
+#' \code{annotatr} package.
+#' 
+#' @usage data(annot.chr21)
+#' 
+#' @format a \code{GRangesList} object with two elements returned
+#' by \code{\link{getAnnot}}. The first
+#' contains CpG category information in the first element (optional)
+#' coding gene sequence information in the second element (optional).
+#' At least one of these elements needs to be non-null in order for 
+#' any annotation to be plotted, but it is not necessary to contain
+#' both.
+#' 
+#' @source Obtained from running
+#' \code{annoTrack <- getAnnot("hg38")} and then subsetting the results to 
+#' only include chromosome 21 with 
+#' \code{annoTrack <- lapply(annoTrack, function(x){ x[seqnames(x)=="chr21",]})}
+#'  
+#' @examples
+#' data(annot.chr21)
+"annot.chr21"
+
+#' dmrs.ex: Example results of DMRs 
+#'
+#'@description Example output from \code{dmrseq} function run on the 
+#' example dataset \code{BS.chr21}.
+#' @usage data(dmrs.ex)
+#' @format a data.frame that contains the results of the inference. The
+#'    data.frame contains one row for each candidate region, and 
+#'    10 columns, in the following order: 1. chr = 
+#'    chromosome, 2. start = 
+#'    start basepair position of the region, 3. end = end basepair position
+#'    of the region,
+#'    4. indexStart = the index of the region's first CpG, 
+#'    5. indexEnd = the index of the region's last CpG,
+#'    6. L = the number of CpGs contained in the region,
+#'    7. beta = the coefficient value for the condition difference,
+#'    8. stat = the test statistic for the condition difference,
+#'    9. pval = the permutation p-value for the significance of the test
+#'    statistic, and 10. qval = the q-value for the test statistic (adjustment
+#'    for multiple comparisons to control false discovery rate).
+#' @source Obtained from running the examples in \code{\link{dmrseq}}
+#' \code{dmrs.ex <- dmrseq(bs=BS.chr21[1:10000,],
+#'                   cutoff=0.05,
+#'                   testCovariate=testCovariate,
+#'                   workers=1,
+#'                   maxGapSmooth=500,
+#'                   maxGap=250)}
+#' @examples
+#' data(dmrs.ex)
+"dmrs.ex"
+
 getEstimatePooled = function(meth.mat, unmeth.mat, design, coeff){
   # check whether the covariate of interest is a two group comparison
   # if not (covariate is a multi-level factor or a continuous variable)
@@ -114,8 +201,6 @@ bumphunt = function (bs, design, sampleSize,
   rm(tmp)
   rm(sd.adj)
   rm(cov.means)
-  rm(meth.mat);
-  rm(unmeth.mat);
   gc();
   
   if (smooth) {
@@ -149,8 +234,6 @@ bumphunt = function (bs, design, sampleSize,
   
   rawBeta <- rawBeta  / (sd.raw * sqrt(2/sampleSize))
   rm(sd.raw); gc()
-  meth.mat = getCoverage(bs, type = "M")
-  unmeth.mat = getCoverage(bs, type = "Cov") - meth.mat
   
   betaSmooth <- rawBeta
   betaSmooth[Index] <- beta[Index]
@@ -164,6 +247,8 @@ bumphunt = function (bs, design, sampleSize,
                        verbose=verbose, sampleSize=sampleSize)
   rm(beta);
   rm(rawBeta);
+  rm(meth.mat);
+  rm(unmeth.mat);
   rm(chr);
   rm(pos);
   gc()
@@ -466,8 +551,10 @@ regionScanner <- function(x, y=x, chr, pos,
         # check for presence of 1-2 coverage outliers that could end up driving
         # the difference between the groups
         if (length(unique(dat$MedCov[1:length(ix)])) > 1 & length(ix) <= 10 ){
-          grubbs.one <- grubbs.test(dat$MedCov[1:length(ix)])$p.value
-          grubbs.two <- grubbs.test(dat$MedCov[1:length(ix)], type=20)$p.value
+          grubbs.one <- suppressWarnings(
+              grubbs.test(dat$MedCov[1:length(ix)])$p.value)
+          grubbs.two <- suppressWarnings(
+              grubbs.test(dat$MedCov[1:length(ix)], type=20)$p.value)
         }else{
           grubbs.one <- grubbs.two <- 1
         }
@@ -537,8 +624,7 @@ regionScanner <- function(x, y=x, chr, pos,
   t2 <- proc.time()
   if (verbose){ 
     message(paste0(".....Took ", round((t2-t1)[3]/60, 2), 
-                   " min to score candidate regions.
-                   "))
+                   " min to score candidate regions."))
   }
   
   names(res) <- c("up","dn")

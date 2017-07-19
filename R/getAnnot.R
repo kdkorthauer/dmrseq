@@ -26,6 +26,17 @@
 #' both.
 #' 
 #' @export
+#' 
+#' @examples
+#' 
+#' # get annotation information for hg38
+#' annoTrack <- getAnnot("hg38")
+#' 
+#' # only keep this information for chromosome 21 (for example dataset)
+#' annoTrack <- lapply(annoTrack, function(x){
+#'     x[seqnames(x)=="chr21",]
+#'  })
+#' 
 getAnnot <- function(genomeName){
   if (!requireNamespace("annotatr", quietly = TRUE)) {
     message(paste0("annotatr could not be loaded. Please make sure it is ",

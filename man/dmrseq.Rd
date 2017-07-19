@@ -7,7 +7,7 @@
 dmrseq(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
   minNumRegion = 5, smooth = TRUE, bpSpan = 1000, minInSpan = 30,
   maxGapSmooth = 2500, maxGap = 1000, verbose = TRUE, workers = NULL,
-  sampleIndex = seq(1, nrow(pData(bs))), maxPerms = 20,
+  sampleIndex = seq(1, nrow(pData(bs))), maxPerms = 10,
   matchCovariate = NULL)
 }
 \arguments{
@@ -105,9 +105,19 @@ permuation test on the pooled null distribution of scores.
 }
 \examples{
 
-# load example data from bsseq package
-#data(BS.chr22, package="bsseq")
+# load example data 
+data(BS.chr21)
 
-#regions <- dmrseq(BS.chr22,)
+# the covariate of interest is the "CellType" column of pData(BS.chr21)
+testCovariate <- which(colnames(pData(BS.chr21)) == "CellType")
+
+# run dmrseq on a subset of the chromosome (first 10K CpGs)
+regions <- dmrseq(bs=BS.chr21[1:10000,],
+                  cutoff=0.05,
+                  testCovariate=testCovariate,
+                  workers=1,
+                  maxGapSmooth=500,
+                  maxGap=250)
+
 }
 \keyword{inference}

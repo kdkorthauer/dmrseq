@@ -36,7 +36,7 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
   secondvector <- (1:length(legtext))-1
   textwidths <- xcoords/secondvector # this works for all but the first element
   textwidths[1] <- start(gr) + 0.69*w 
-  legend(start(gr) + 0.69*w, 1.9, bty = "n", xpd=TRUE, cex=0.9,
+  legend(start(gr) + 0.05*w, 1.9, bty = "n", xpd=TRUE, cex=0.9,
          legend = legtext,
          fill = c("forestgreen", "goldenrod2", "dodgerblue", "blue3"),
          border = c("forestgreen", "goldenrod2", "dodgerblue", "blue3"),
@@ -262,7 +262,7 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
   }
   w <- plotRange[2]-plotRange[1]
   
-  legend(plotRange[1] - 0.03*w, 0.20, bg = "white",
+  legend(plotRange[1] - 0.03*w, 0.2, bg = "white",
          legend = label, cex=0.9,
          pch = c(20,20),
          col = col)
@@ -396,6 +396,7 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
   # colEtc is a list object that contains col, lty, lwd and label
   # which are used as plotting parameters
   # label is a condition label to use for adding a legend with condition names
+  
   colEtc <- .dmrGetMeta(object = BSseq, col = col, 
                         lty = lty, lwd = lwd, label=label)
   
@@ -540,4 +541,9 @@ bsseq.bsHighlightRegions <- function (regions, gr, ylim,
     return(NULL)
   rect(xleft = start(regions), xright = end(regions), ybottom = ylim[1], 
        ytop = ylim[2], col = regionCol, border = NA)
+}
+
+gg_color_hue <- function(n) {
+  hues = seq(15, 375, length = n + 1)
+  hcl(h = hues, l = 65, c = 100)[1:n]
 }

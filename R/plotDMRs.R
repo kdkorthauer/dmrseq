@@ -31,8 +31,12 @@
 #' any annotation to be plotted, but it is not necessary to contain
 #' both.
 #' 
-#' @param col The color of the methylation estimates. It is recommended to
-#' pass this information through the \code{pData} slot of the
+#' @param col The color of the methylation estimates. It is recommended to 
+#' leave this value as default (NULL), and specify a value of 
+#' \code{testCovariate} to indicate which column of \code{pData(bs)}
+#' to use as a factor for coloring the points and lines of the plot.
+#' Alternatively, you can specify particular colors by 
+#' passing this information through the \code{pData} slot of the
 #' object \code{BSseq} (a \code{data.frame} that houses metadata). To do 
 #' so, place the color value for each sample in a column titled \code{col}, 
 #' and leave this argument as its default value of NULL. Alternatively,
@@ -63,9 +67,13 @@
 #' 
 #' @param label The condition/population labels for the plot legend. These
 #' should have a 1 to 1 correspondence with \code{col} (i.e. all samples of
-#' one color should correspond to the same condition/population label).
-#' It is recommended to
-#' pass this information through the \code{pData} slot of the
+#' one color should correspond to the same condition/population label). It
+#' is recommended to leave this value as default (NULL), and s
+#' It is recommended to specify a value of 
+#' \code{testCovariate} to indicate which column of \code{pData(bs)}
+#' to use as the condition labels. Alternatively, you can pass in 
+#' arbitrary labels by 
+#' adding this information through the \code{pData} slot of the
 #' object \code{BSseq} (a \code{data.frame} that houses metadata). To do 
 #' so, place the labels for each sample in a column titled \code{label}, 
 #' and leave this argument as its default value of NULL. Alternatively,
@@ -110,8 +118,26 @@
 #' 
 #' @importFrom RColorBrewer brewer.pal
 #' 
-plotDMRs <- function(BSseq, regions = NULL, extend = 0, main = "", 
-                            addRegions = NULL, annoTrack = NULL, 
+#' @examples
+#' 
+#' # load the example data
+#' data(BS.chr21)
+#' 
+#' # load example results (computed with dmrseq function)
+#' data(dmrs.ex)
+#' 
+#' # get annotation information (using getAnnot function)
+#' # here we'll load the example annotation from chr21
+#' data(annot.chr21)
+#' 
+#' # plot the first DMR
+#' plotDMRs(BS.chr21, regions=dmrs.ex[1,], testCovariate=1,
+#'    annoTrack=annot.chr21)
+#' 
+plotDMRs <- function(BSseq, regions = NULL, testCovariate=NULL,
+                            extend = (regions$end-regions$start+1)/2, 
+                            main = "", 
+                            addRegions = regions, annoTrack = NULL, 
                             col = NULL, lty = NULL, lwd = NULL, label=NULL,
                             mainWithWidth = TRUE, 
                             regionCol = .alpha("#C77CFF", 0.2), 
@@ -156,6 +182,27 @@ plotDMRs <- function(BSseq, regions = NULL, extend = 0, main = "",
    	if (length(extend)==1){
    		extend <- rep(extend, length(gr))
    	}
+    
+    if(!is.null(testCovariate)){
+      coeff <- 2:(2+length(testCovariate)-1)
+      design <- model.matrix( ~ pData(BSseq)[,testCovariate])
+
+      if(is.null(col)){
+        cov.unique <- unique(design[,coeff])
+        colors <- gg_color_hue(length(cov.unique))
+        if (length(cov.unique) == 2){
+          colors <- c("mediumblue", "deeppink1")
+        }
+        colors <- cbind(cov.unique, colors[rank(as.numeric(cov.unique))])
+        z <- colors[,2][match(design[,coeff], colors[,1])]
+        pData(BSseq)$col <- as.character(z)
+      }
+      
+      if(is.null(label)){
+        pData(BSseq)$label <- paste0(pData(BSseq)[,testCovariate])
+      }
+    }
+    
     for(ii in seq(along = gr)) {
         if(verbose & ii%%100==0){
           cat(sprintf("..... Plotting region %d (out of %d)\n",

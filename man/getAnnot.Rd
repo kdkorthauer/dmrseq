@@ -35,3 +35,14 @@ return NULL if this cannot be done. You can still use the
 \code{\link{plotDMRs}} function without this optional annotation step, 
 just by leaving the \code{annoTrack} argument as NULL.
 }
+\examples{
+
+# get annotation information for hg38
+annoTrack <- getAnnot("hg38")
+
+# only keep this information for chromosome 21 (for example dataset)
+annoTrack <- lapply(annoTrack, function(x){
+    x[seqnames(x)=="chr21",]
+ })
+
+}

@@ -4,8 +4,9 @@
 \alias{plotDMRs}
 \title{Plot Differentially Methylated Regions}
 \usage{
-plotDMRs(BSseq, regions = NULL, extend = 0, main = "",
-  addRegions = NULL, annoTrack = NULL, col = NULL, lty = NULL,
+plotDMRs(BSseq, regions = NULL, testCovariate = NULL,
+  extend = (regions$end - regions$start + 1)/2, main = "",
+  addRegions = regions, annoTrack = NULL, col = NULL, lty = NULL,
   lwd = NULL, label = NULL, mainWithWidth = TRUE,
   regionCol = .alpha("#C77CFF", 0.2), addTicks = TRUE, addPoints = TRUE,
   pointsMinCov = 1, highlightMain = FALSE, qval = TRUE, stat = TRUE,
@@ -35,8 +36,12 @@ At least one of these elements needs to be non-null in order for
 any annotation to be plotted, but it is not necessary to contain
 both.}
 
-\item{col}{The color of the methylation estimates. It is recommended to
-pass this information through the \code{pData} slot of the
+\item{col}{The color of the methylation estimates. It is recommended to 
+leave this value as default (NULL), and specify a value of 
+\code{testCovariate} to indicate which column of \code{pData(bs)}
+to use as a factor for coloring the points and lines of the plot.
+Alternatively, you can specify particular colors by 
+passing this information through the \code{pData} slot of the
 object \code{BSseq} (a \code{data.frame} that houses metadata). To do 
 so, place the color value for each sample in a column titled \code{col}, 
 and leave this argument as its default value of NULL. Alternatively,
@@ -67,9 +72,13 @@ are in the BSseq object. If NULL and no \code{lwd} column is found in
 
 \item{label}{The condition/population labels for the plot legend. These
 should have a 1 to 1 correspondence with \code{col} (i.e. all samples of
-one color should correspond to the same condition/population label).
-It is recommended to
-pass this information through the \code{pData} slot of the
+one color should correspond to the same condition/population label). It
+is recommended to leave this value as default (NULL), and s
+It is recommended to specify a value of 
+\code{testCovariate} to indicate which column of \code{pData(bs)}
+to use as the condition labels. Alternatively, you can pass in 
+arbitrary labels by 
+adding this information through the \code{pData} slot of the
 object \code{BSseq} (a \code{data.frame} that houses metadata). To do 
 so, place the labels for each sample in a column titled \code{label}, 
 and leave this argument as its default value of NULL. Alternatively,
@@ -120,4 +129,21 @@ points with size proportional to coverage, along with a smoothed line
 for each sample. Elements will be colored by biological condition 
 (\code{label}). Also has functionality to add annotations below the main
 plot (CpG category, genes) if \code{annoTrack} is specified.
+}
+\examples{
+
+# load the example data
+data(BS.chr21)
+
+# load example results (computed with dmrseq function)
+data(dmrs.ex)
+
+# get annotation information (using getAnnot function)
+# here we'll load the example annotation from chr21
+data(annot.chr21)
+
+# plot the first DMR
+plotDMRs(BS.chr21, regions=dmrs.ex[1,], testCovariate=1,
+   annoTrack=annot.chr21)
+
 }

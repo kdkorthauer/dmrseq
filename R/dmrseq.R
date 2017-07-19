@@ -109,10 +109,20 @@
 #' 
 #' @examples
 #' 
-#' # load example data from bsseq package
-#' #data(BS.chr22, package="bsseq")
+#' # load example data 
+#' data(BS.chr21)
 #' 
-#' #regions <- dmrseq(BS.chr22,)
+#' # the covariate of interest is the "CellType" column of pData(BS.chr21)
+#' testCovariate <- which(colnames(pData(BS.chr21)) == "CellType")
+#' 
+#' # run dmrseq on a subset of the chromosome (first 10K CpGs)
+#' regions <- dmrseq(bs=BS.chr21[1:10000,],
+#'                   cutoff=0.05,
+#'                   testCovariate=testCovariate,
+#'                   workers=1,
+#'                   maxGapSmooth=500,
+#'                   maxGap=250)
+#' 
 dmrseq <- function(bs, testCovariate, adjustCovariate=NULL,
                    cutoff = 0.10, minNumRegion=5,
                    smooth = TRUE,
@@ -121,7 +131,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate=NULL,
                    verbose = TRUE,
                    workers = NULL, 
                    sampleIndex=seq(1,nrow(pData(bs))),
-                   maxPerms=20, 
+                   maxPerms=10, 
                    matchCovariate=NULL){
   
   # check sampleIndex input
@@ -189,15 +199,14 @@ dmrseq <- function(bs, testCovariate, adjustCovariate=NULL,
   
   message(paste0("Detecting candidate regions with coefficient larger than ",
                  unique(abs(cutoff)), " in magnitude."))
-  OBS = bumphunt(bs, minInSpan=minInSpan, bpSpan=bpSpan,
-                        sampleSize=sampleSize,
-                        design = design, coeff = coeff, 
-                        maxGapSmooth=maxGapSmooth, minNumRegion=minNumRegion,
-                        cutoff = cutoff, maxGap = maxGap, 
-                        smooth = smooth,  
-                        verbose = verbose,
-                        workers = workers) 
-  
+  OBS = bumphunt(bs=bs, design = design, sampleSize=sampleSize,
+                 coeff = coeff, minInSpan=minInSpan, minNumRegion=minNumRegion,
+                 cutoff = cutoff, maxGap = maxGap, 
+                 maxGapSmooth=maxGapSmooth,
+                 smooth = smooth,
+                 bpSpan=bpSpan,
+                 verbose = verbose,
+                 workers = workers) 
   # check that at least one candidate region was found; if there were none there
   # is no need to go on to compute permutation tests...
   
@@ -207,7 +216,8 @@ dmrseq <- function(bs, testCovariate, adjustCovariate=NULL,
     # first consider balanced, two group comparisons
     if (nrow(design)%%2==0 & length(unique(design[,coeff]))==2){
       if(verbose){
-        message("Performing balanced permutations of condition across samples")
+        message("
+Performing balanced permutations of condition across samples")
       }
       perms <- combn(seq(1, nrow(design)), sampleSize)
       perms <- perms[, 2:(ncol(perms)/2)]
@@ -298,15 +308,15 @@ dmrseq <- function(bs, testCovariate, adjustCovariate=NULL,
         permLabel <- j
       }
       
-      res.flip.p = bumphunt(bs=bs, minInSpan=minInSpan, bpSpan=bpSpan,
-                                   design = designr, coeff = coeff,
-                                   sampleSize=sampleSize,
-                                   maxGapSmooth=maxGapSmooth, 
-                                   minNumRegion=minNumRegion,
-                                   cutoff = cutoff, maxGap = maxGap, 
-                                   smooth = smooth,  
-                                   verbose = verbose,
-                                   workers = workers)
+      res.flip.p = bumphunt(bs=bs, design = designr, sampleSize=sampleSize,
+                                    coeff = coeff, minInSpan=minInSpan, 
+                                    minNumRegion=minNumRegion,
+                                    cutoff = cutoff, maxGap = maxGap, 
+                                    maxGapSmooth=maxGapSmooth,
+                                    smooth = smooth,
+                                    bpSpan=bpSpan,
+                                    verbose = verbose,
+                                    workers = workers) 
       
       
       res.flip.p$permNum <- permLabel
@@ -315,7 +325,8 @@ dmrseq <- function(bs, testCovariate, adjustCovariate=NULL,
       FLIP <- rbind(FLIP, res.flip.p)
       if(verbose){
         message(paste0("* ", j, " out of ", ncol(perms),
-                     " permutations completed"))
+                     " permutations completed
+                     "))
       }
     }	
     rm(res.flip.p)
