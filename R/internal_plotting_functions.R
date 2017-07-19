@@ -262,8 +262,8 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
   }
   w <- plotRange[2]-plotRange[1]
   
-  legend(plotRange[1] - 0.03*w, 0.2, bg = "white",
-         legend = label, cex=0.9,
+  legend(plotRange[1] - 0.03*w, 0.23, bg = "white",
+         legend = label, cex=0.75,
          pch = c(20,20),
          col = col)
   
