@@ -78,7 +78,6 @@
 #' \code{dmrs.ex <- dmrseq(bs=BS.chr21[1:10000,],
 #'                   cutoff=0.05,
 #'                   testCovariate=testCovariate,
-#'                   workers=1,
 #'                   maxGapSmooth=500,
 #'                   maxGap=250)}
 #' @examples
@@ -120,7 +119,7 @@ bumphunt = function (bs, design, sampleSize,
                      cutoff = NULL, maxGap = 1000, 
                      maxGapSmooth=2500,
                      smooth = FALSE, bpSpan=1000,  
-                     verbose = TRUE, workers=NULL, ...) 
+                     verbose = TRUE, ...) 
 {
   # extract relevant bsseq objects and remove the bsseq object itself
   meth.mat = getCoverage(bs, type = "M")
@@ -149,23 +148,8 @@ bumphunt = function (bs, design, sampleSize,
     cutoff <- sort(cutoff)
   if (is.null(cutoff) | abs(cutoff) > 1 | abs(cutoff)==0) 
     stop("Must specify a value for cutoff between 0 and 1")
-  if (!getDoParRegistered()) 
-    registerDoSEQ()
-  registerDoParallel()    
-  if (is.null(workers)) { workers <- 1 }
-  backend <- getDoParName()
-  version <- getDoParVersion()
   subverbose <- max(as.integer(verbose) - 1L, 0)
-  if (verbose) {
-    if (workers == 1) {
-      mes <- ".....Using a single core (backend: %s, version: %s)."
-      message(sprintf(mes, backend, version))
-    }else {
-      mes <- paste0(".....Parallelizing using %s workers/cores ",
-                    "(backend: %s, version: %s).")
-      message(sprintf(mes, workers, backend, version))
-    }
-  }
+  
   if (is.null(chr)) 
     chr <- rep("Unspecified", length(pos))
   if (is.factor(chr)) 
@@ -183,7 +167,7 @@ bumphunt = function (bs, design, sampleSize,
     sd.raw <- tmp$sd
   }else{
     tmp = estim(meth.mat = meth.mat, unmeth.mat = unmeth.mat, design = design, 
-                coeff = coeff, workers = workers)
+                coeff = coeff)
     rawBeta <- tmp$meth.diff
     sd.raw = tmp$sd.meth.diff
   }
@@ -212,9 +196,11 @@ bumphunt = function (bs, design, sampleSize,
     for (chromosome in unique(chr)){
       beta.tmp <- smoother(y = rawBeta[chr==chromosome], 
                            x = pos[chr==chromosome], 
-                           workers=workers, chr=chr[chr==chromosome],
-                           maxGapSmooth=maxGapSmooth, weights[chr==chromosome],
-                           minNumRegion = minNumRegion, minInSpan = minInSpan, 
+                           chr=chr[chr==chromosome],
+                           maxGapSmooth=maxGapSmooth, 
+                           weights = weights[chr==chromosome],
+                           minNumRegion = minNumRegion, 
+                           minInSpan = minInSpan, 
                            bpSpan = bpSpan, bpSpan2=bpSpan2,
                            verbose = verbose)
       beta[[1]][chr==chromosome] <- beta.tmp[[1]]
@@ -243,7 +229,7 @@ bumphunt = function (bs, design, sampleSize,
   tab <- regionScanner(x = beta, y=rawBeta, chr = chr, pos = pos, maxGap=maxGap,
                        cutoff = cutoff, minNumRegion = minNumRegion,
                        meth.mat = meth.mat, unmeth.mat = unmeth.mat, 
-                       design = design, coeff = coeff, workers=workers,
+                       design = design, coeff = coeff,
                        verbose=verbose, sampleSize=sampleSize)
   rm(beta);
   rm(rawBeta);
@@ -427,7 +413,7 @@ regionScanner <- function(x, y=x, chr, pos,
                           maxGap=300, cutoff=quantile(abs(x), 0.99),
                           assumeSorted = FALSE, meth.mat=meth.mat,
                           unmeth.mat = unmeth.mat, verbose = verbose,
-                          design=design, coeff=coeff, workers=workers,
+                          design=design, coeff=coeff,
                           sampleSize=sampleSize){
   if(any(is.na(x[ind]))){
     warning("NAs found and removed. ind changed.")
@@ -607,9 +593,8 @@ regionScanner <- function(x, y=x, chr, pos,
                  L = sapply(Indexes[[i]], length), stringsAsFactors=FALSE)               
     
     if (length(Indexes[[i]]) > 1){
-      ret <- t(matrix(unlist(mclapply(Indexes[[i]], function(Index)
-        asin.gls.cov(ix=ind[Index],design=design,coeff=coeff),
-        mc.cores=workers)), nrow=2)) 
+      ret <- t(matrix(unlist(bplapply(Indexes[[i]], function(Index)
+        asin.gls.cov(ix=ind[Index],design=design,coeff=coeff))), nrow=2)) 
       res[[i]]$beta <- ret[,1]
       res[[i]]$stat <- ret[,2]      
     }else if(length(Indexes[[i]]) > 0){
@@ -636,7 +621,7 @@ regionScanner <- function(x, y=x, chr, pos,
 
 smoother <- function(y, x=NULL, weights=NULL, chr=chr, 
                      maxGapSmooth=maxGapSmooth, minNumRegion=5,
-                     verbose=TRUE, workers=1, minInSpan = minInSpan, 
+                     verbose=TRUE, minInSpan = minInSpan, 
                      bpSpan = bpSpan, bpSpan2=bpSpan2){
   
   locfitByCluster2 <- function(ix) {
@@ -695,76 +680,38 @@ smoother <- function(y, x=NULL, weights=NULL, chr=chr,
     y <- matrix(y, ncol=1) ##need to change this to be more robust
   if(!is.null(weights) && is.null(dim(weights)))
     weights <- matrix(weights, ncol=1)
-  if (!getDoParRegistered())
-    registerDoSEQ()
   
   ret.all <- NULL
-  cores <- workers
-  # loop through each chromosome to mitigate memory spikes
-  for (chromosome in unique(chr)){
-    t1 <- proc.time()
-    clusterC <- bumphunter::clusterMaker(chr[chr==chromosome], 
-                                          x[chr==chromosome], 
-                                          maxGap = maxGapSmooth)
+  
+  t1 <- proc.time()
+  clusterC <- bumphunter::clusterMaker(chr, x, 
+                                      maxGap = maxGapSmooth)
     
-    Indexes <- split(seq(along=clusterC), clusterC)
-    IndexesChunks <- vector("list", length = cores)
-    baseSize <- length(Indexes) %/% cores
-    remain <- length(Indexes) %% cores
-    done <- 0L
-    for(ii in 1:cores) {
-      if(remain > 0) {
-        IndexesChunks[[ii]] <- done + 1:(baseSize + 1)
-        remain <- remain - 1L
-        done <- done + baseSize + 1L
-      } else {
-        IndexesChunks[[ii]] <- done + 1:baseSize
-        done <- done + baseSize
-      }
-    }
+  Indexes <- split(seq(along=clusterC), clusterC)
     
-    IndexesChunks <- lapply(IndexesChunks, function(idxes) {
-      do.call(c, unname(Indexes[idxes]))
-    })
-    
-    idx <- NULL ## for R CMD check
-    ret <- foreach(idx = iter(IndexesChunks)) %dorng% 
-    {
-      sm <- locfitByCluster2(idx)
-      c(sm, list(idx = seq(1, length(chr))[chr==chromosome][idx]))
-    }
-    
-    attributes(ret)[["rng"]] <- NULL
-    ## Paste together results from different workers
-    ret <- bumphunter.reduceIt(ret)
-    
-    if(is.null(ret.all)){
-      ret.all <- ret
-    }else{
-      ret.all$smoother <- c(ret.all$smoother, ret$smoother)
-      ret.all$fitted <- rbind(ret.all$fitted, ret$fitted)
-      ret.all$smoothed <- c(ret.all$smoothed, ret$smoothed)
-      ret.all$idx <- c(ret.all$idx, ret$idx)
-    }
-    rm(ret)
-    if (verbose){ 
-      t2 <- proc.time()
-      message(paste0("..........Done Smoothing Chromosome ", 
-                     chromosome, ". Took ", 
-                     round((t2-t1)[3]/60, 2), " minutes"))
-    }
+  idx <- NULL ## for R CMD check
+  ret <- bplapply(Indexes, function(idx){
+    sm <- locfitByCluster2(idx)
+    return(sm)
+  })
+  
+  # smash together output
+  ret.all <- vector("list", length(ret[[1]]))
+  for (j in 1:length(ret[[1]])){
+    ret.all[[j]] <- unlist(sapply(ret, function(x){
+      x[[j]]
+    }))
+  }
+  names(ret.all) <- names(ret[[1]])
+  
+  if (verbose){ 
+    t2 <- proc.time()
+    message(paste0("..........Done Smoothing Chromosome ", 
+                   chr[1], ". Took ", 
+                   round((t2-t1)[3]/60, 2), " minutes"))
   }
   
-  ## Now fixing order issue
-  revOrder <- ret.all$idx
-  names(revOrder) <- seq_along(ret.all$idx)
-  revOrder <- sort(revOrder)
-  revOrder <- as.integer(names(revOrder))
-  
   ret.all$smoother <- ret.all$smoother[1]
-  ret.all$fitted <- ret.all$fitted[revOrder,,drop=FALSE]
-  ret.all$smoothed <- ret.all$smoothed[revOrder]
-  ret.all$idx <- NULL
   
   return(ret.all)  
 }
@@ -817,12 +764,8 @@ getEstimate = function (mat, design, coeff)
 }
 
 # *Experimental* - only used if not a standard two-group comparison
-estim = function (meth.mat, unmeth.mat, design, coeff, workers=NULL) 
+estim = function (meth.mat, unmeth.mat, design, coeff) 
 {
-  registerDoParallel()    
-  if (is.null(workers)) { workers <- 1 }
-  backend <- getDoParName()
-  version <- getDoParVersion()
   
   ## For a linear regression of logit(meth.level) on the biological 
   # group indicator variable at each CpG site

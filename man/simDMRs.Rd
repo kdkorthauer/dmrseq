@@ -52,4 +52,13 @@ data(BS.chr21)
 
 BS.chr21.sim <- simDMRs(bs=BS.chr21, num.dmrs=300)
 
+# show the simulated DMRs GRanges object
+show(BS.chr21.sim$gr.dmrs)
+
+# show the updated BSseq object that includes the simulated DMRs
+show(BS.chr21.sim$bs)
+
+#' # examine effect sizes of the DMRs
+head(BS.chr21.sim$delta)
+
 }

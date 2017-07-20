@@ -18,10 +18,13 @@ Description: This package implements an approach for scanning the
   methylation proportions. 
 License: GPL-2
 Depends: R (>= 3.4.0), bsseq, annotatr
-Imports: GenomicRanges, nlme, ggplot2, doParallel, 
-  doRNG, foreach, RColorBrewer, bumphunter, matrixStats, 
-  outliers, reshape2, methods, locfit, IRanges, iterators, 
-  parallel, grDevices, graphics, stats, utils
+Imports: GenomicRanges, nlme, ggplot2, 
+  RColorBrewer, bumphunter, matrixStats, BiocParallel,
+  outliers, reshape2, methods, locfit, IRanges, 
+  grDevices, graphics, stats, utils
+Suggests: knitr, rmarkdown, BiocStyle
 biocViews: DNAMethylation, Epigenetics, MultipleComparison, Software,
-  Sequencing, DifferentialMethylation
+  Sequencing, DifferentialMethylation, WholeGenome, Regression, 
+  FunctionalGenomics
+VignetteBuilder: knitr
 RoxygenNote: 6.0.1

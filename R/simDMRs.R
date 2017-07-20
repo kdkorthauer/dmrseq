@@ -48,6 +48,15 @@
 #' 
 #' BS.chr21.sim <- simDMRs(bs=BS.chr21, num.dmrs=300)
 #' 
+#' # show the simulated DMRs GRanges object
+#' show(BS.chr21.sim$gr.dmrs)
+#' 
+#' # show the updated BSseq object that includes the simulated DMRs
+#' show(BS.chr21.sim$bs)
+#' 
+#' #' # examine effect sizes of the DMRs
+#' head(BS.chr21.sim$delta)
+#' 
 simDMRs <- function(simFile=NULL, bs, num.dmrs=3000, 
                     delta.max0=0.3){
   sampleSize <- nrow(pData(bs))/2
@@ -109,7 +118,6 @@ simDMRs <- function(simFile=NULL, bs, num.dmrs=3000,
     deltas[u] <- delta.max
     
     # grab loci in the dmr
-    # gr.hit <- bs[dmrs.ind[[u]]]
     dmr.L[u] <- length(dmrs.ind[[u]])
     prop.mat <- meth.mat[dmrs.ind[[u]],]/ 
       ( meth.mat[dmrs.ind[[u]],] + unmeth.mat[dmrs.ind[[u]],] )
@@ -212,7 +220,7 @@ simDMRs <- function(simFile=NULL, bs, num.dmrs=3000,
   sim.dat.red = list(gr.dmrs = gr.dmrs, 
                      dmr.mncov= dmr.mncov,
                      dmr.L = dmr.L,
-                     bs=bs,
+                     bs=bsNew,
                      delta=deltas)
   if (is.null(simFile)){
     return(sim.dat.red)

@@ -45,8 +45,18 @@
 #'    1000.
 #' @param verbose logical value that indicates whether progress messages
 #'    should be printed to stdout. Defaults value is TRUE.
-#' @param workers positive integer that represents the number of cores to 
-#'    use if parallelization is desired of the smoothing step. 
+#' @param BPPARAM a \code{MulticoreParam} or \code{SnowParam} object of 
+#' the \code{BiocParallel}
+#' package that defines a parallel backend.  The default option is 
+#' \code{BiocParallel::bpparam()} which will automatically creates a cluster 
+#' appropriate for 
+#' the operating system.  Alternatively, the user can specify the number
+#' of cores they wish to use by first creating the corresponding 
+#' \code{MulticoreParam} (for Linux-like OS) or \code{SnowParam} (for Windows)
+#' object, and then passing it into the \code{dmrseq}
+#' function. This could be done to specify a parallel backend on a Linux-like
+#' OS with, say 4 
+#' cores by setting \code{BPPARAM=BiocParallel::MulticoreParam(workers=4)}
 #' @param sampleIndex vector of positive integers that represents the 
 #'   index of samples to use in the analysis (corresponds to sample ordering
 #'   in \code{bs} (e.g. the order of the rows in \code{pData(bs)}. 
@@ -92,18 +102,14 @@
 #' @importFrom stats approxfun lm loess median model.matrix p.adjust
 #' predict preplot qt quantile rbeta rbinom runif
 #' @importFrom utils combn
-#' @importFrom foreach getDoParWorkers getDoParRegistered getDoParName 
-#' getDoParVersion registerDoSEQ foreach %dopar%
-#' @importFrom iterators iter
-#' @importFrom parallel mclapply
-#' 
+#' @importFrom BiocParallel bplapply register MulticoreParam bpparam
+#'
 #' @import bsseq 
 #' @import GenomicRanges
 #' @import nlme
 #' @import annotatr
 #' @import ggplot2
-#' @import doParallel
-#' @import doRNG
+
 #' 
 #' @export
 #' 
@@ -119,9 +125,9 @@
 #' regions <- dmrseq(bs=BS.chr21[1:10000,],
 #'                   cutoff=0.05,
 #'                   testCovariate=testCovariate,
-#'                   workers=1,
 #'                   maxGapSmooth=500,
-#'                   maxGap=250)
+#'                   maxGap=250,
+#'                   BPPARAM=BiocParallel::MulticoreParam(workers=1))
 #' 
 dmrseq <- function(bs, testCovariate, adjustCovariate=NULL,
                    cutoff = 0.10, minNumRegion=5,
@@ -129,10 +135,10 @@ dmrseq <- function(bs, testCovariate, adjustCovariate=NULL,
                    bpSpan=1000, minInSpan=30, 
                    maxGapSmooth=2500, maxGap = 1000,   
                    verbose = TRUE,
-                   workers = NULL, 
                    sampleIndex=seq(1,nrow(pData(bs))),
                    maxPerms=10, 
-                   matchCovariate=NULL){
+                   matchCovariate=NULL,
+                   BPPARAM=bpparam()){
   
   # check sampleIndex input
   if(!(class(sampleIndex)=="integer") | min(sampleIndex) < 1 | 
@@ -196,6 +202,22 @@ dmrseq <- function(bs, testCovariate, adjustCovariate=NULL,
     mC <- grep(matchCovariate, colnames(pData(bs)))
   }
   
+  # register the parallel backend
+  BiocParallel::register(BPPARAM)
+  backend <- "BiocParallel"
+  
+  if (verbose) {
+    if (bpparam()$workers == 1) {
+      mes <- "Using a single core (backend: %s).
+              "
+      message(sprintf(mes, backend))
+    }else {
+      mes <- paste0("Parallelizing using %s workers/cores ",
+                    "(backend: %s).
+                    ")
+      message(sprintf(mes, bpparam()$workers, backend))
+    }
+  }
   
   message(paste0("Detecting candidate regions with coefficient larger than ",
                  unique(abs(cutoff)), " in magnitude."))
@@ -205,8 +227,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate=NULL,
                  maxGapSmooth=maxGapSmooth,
                  smooth = smooth,
                  bpSpan=bpSpan,
-                 verbose = verbose,
-                 workers = workers) 
+                 verbose = verbose) 
   # check that at least one candidate region was found; if there were none there
   # is no need to go on to compute permutation tests...
   
@@ -216,8 +237,9 @@ dmrseq <- function(bs, testCovariate, adjustCovariate=NULL,
     # first consider balanced, two group comparisons
     if (nrow(design)%%2==0 & length(unique(design[,coeff]))==2){
       if(verbose){
-        message("
-Performing balanced permutations of condition across samples")
+        message(paste0("
+Performing balanced permutations of condition across samples ",
+"to generate a null distribution of region test statistics"))
       }
       perms <- combn(seq(1, nrow(design)), sampleSize)
       perms <- perms[, 2:(ncol(perms)/2)]
@@ -241,7 +263,8 @@ Performing balanced permutations of condition across samples")
       # be permuted in an unrestricted manner
       if(verbose){
         message(paste0("Performing unrestricted permutation of", 
-                " covariate of interest across samples")) 
+                " covariate of interest across samples ",
+                "to generate a null distribution of region test statistics")) 
       }
       perms <- as.matrix(sample(seq(1:nrow(design)), nrow(design)))
       
@@ -262,11 +285,11 @@ Performing balanced permutations of condition across samples")
            "supported for 2-group comparisons"))
     }
     
-    if(verbose){
-      message(".....Generating null distribution of region test statistics")
-    }
     # Now rerun on flipped designs and concatenate results
     for (j in 1:ncol(perms)){
+      if (verbose){
+        message(paste0("Beginning permutation ", j))
+      }
       reorder <- perms[,j]
       designr <- design
       
@@ -315,8 +338,7 @@ Performing balanced permutations of condition across samples")
                                     maxGapSmooth=maxGapSmooth,
                                     smooth = smooth,
                                     bpSpan=bpSpan,
-                                    verbose = verbose,
-                                    workers = workers) 
+                                    verbose = verbose) 
       
       
       res.flip.p$permNum <- permLabel

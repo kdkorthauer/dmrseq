@@ -23,7 +23,6 @@ Obtained from running the examples in \code{\link{dmrseq}}
 \code{dmrs.ex <- dmrseq(bs=BS.chr21[1:10000,],
                   cutoff=0.05,
                   testCovariate=testCovariate,
-                  workers=1,
                   maxGapSmooth=500,
                   maxGap=250)}
 }

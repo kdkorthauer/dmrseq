@@ -18,6 +18,11 @@ plotDMRs(BSseq, regions = NULL, testCovariate = NULL,
 \item{regions}{A data.frame containing the DMRs (output from the main
 \code{dmrseq}) function.}
 
+\item{testCovariate}{integer value or vector indicating which of columns of
+\code{pData(bs)} contains the covariate of interest that will be tested 
+for association of methylation levels. This is used to construct the 
+design matrix for the test statistic calculation.}
+
 \item{extend}{Describes how much the plotting region should be extended in
 either direction. The total width of the plot is equal to the width of the 
 region plus twice extend.}

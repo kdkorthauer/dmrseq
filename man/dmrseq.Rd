@@ -6,9 +6,9 @@
 \usage{
 dmrseq(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
   minNumRegion = 5, smooth = TRUE, bpSpan = 1000, minInSpan = 30,
-  maxGapSmooth = 2500, maxGap = 1000, verbose = TRUE, workers = NULL,
+  maxGapSmooth = 2500, maxGap = 1000, verbose = TRUE,
   sampleIndex = seq(1, nrow(pData(bs))), maxPerms = 10,
-  matchCovariate = NULL)
+  matchCovariate = NULL, BPPARAM = bpparam())
 }
 \arguments{
 \item{bs}{bsseq object containing the methylation values as well as the
@@ -56,9 +56,6 @@ between neighboring CpGs to be included in the same DMR.}
 \item{verbose}{logical value that indicates whether progress messages
 should be printed to stdout. Defaults value is TRUE.}
 
-\item{workers}{positive integer that represents the number of cores to 
-use if parallelization is desired of the smoothing step.}
-
 \item{sampleIndex}{vector of positive integers that represents the 
 index of samples to use in the analysis (corresponds to sample ordering
 in \code{bs} (e.g. the order of the rows in \code{pData(bs)}. 
@@ -80,6 +77,19 @@ it is recommended to use gender as a matching covariate to avoid one
 of the permutations testing entirely males versus females; this violates
 the null hypothesis and will decrease power).
 If not NULL (default), then no blocking is performed.}
+
+\item{BPPARAM}{a \code{MulticoreParam} or \code{SnowParam} object of 
+the \code{BiocParallel}
+package that defines a parallel backend.  The default option is 
+\code{BiocParallel::bpparam()} which will automatically creates a cluster 
+appropriate for 
+the operating system.  Alternatively, the user can specify the number
+of cores they wish to use by first creating the corresponding 
+\code{MulticoreParam} (for Linux-like OS) or \code{SnowParam} (for Windows)
+object, and then passing it into the \code{dmrseq}
+function. This could be done to specify a parallel backend on a Linux-like
+OS with, say 4 
+cores by setting \code{BPPARAM=BiocParallel::MulticoreParam(workers=4)}}
 }
 \value{
 a data.frame that contains the results of the inference. The
@@ -115,9 +125,9 @@ testCovariate <- which(colnames(pData(BS.chr21)) == "CellType")
 regions <- dmrseq(bs=BS.chr21[1:10000,],
                   cutoff=0.05,
                   testCovariate=testCovariate,
-                  workers=1,
                   maxGapSmooth=500,
-                  maxGap=250)
+                  maxGap=250,
+                  BPPARAM=BiocParallel::MulticoreParam(workers=1))
 
 }
 \keyword{inference}

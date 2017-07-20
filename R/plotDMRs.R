@@ -112,11 +112,17 @@
 #' @param verbose logical value indicating whether progress messages 
 #' should be printed to the screen.
 #' 
+#' @param testCovariate integer value or vector indicating which of columns of
+#'  \code{pData(bs)} contains the covariate of interest that will be tested 
+#'  for association of methylation levels. This is used to construct the 
+#'  design matrix for the test statistic calculation.
+#' 
 #' @export
 #' 
 #' @return None (generates a plot)
 #' 
 #' @importFrom RColorBrewer brewer.pal
+#' @importFrom grDevices hcl
 #' 
 #' @examples
 #' 
