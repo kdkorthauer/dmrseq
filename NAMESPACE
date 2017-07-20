@@ -3,7 +3,6 @@
 export(dmrseq)
 export(getAnnot)
 export(plotDMRs)
-export(plotEmpiricalDistribution)
 export(simDMRs)
 import(GenomicRanges)
 import(annotatr)

@@ -37,6 +37,17 @@
 #' 
 #' @export
 #' 
+#' @examples 
+#' 
+#' # Add simulated DMRs to a BSseq dataset
+#' # This is just for illustrative purposes - ideally you would
+#' # add DMRs to a set of samples from the same condition (in our
+#' # example data, we have data from two different cell types)
+#' 
+#' data(BS.chr21)
+#' 
+#' BS.chr21.sim <- simDMRs(bs=BS.chr21, num.dmrs=300)
+#' 
 simDMRs <- function(simFile=NULL, bs, num.dmrs=3000, 
                     delta.max0=0.3){
   sampleSize <- nrow(pData(bs))/2
@@ -191,7 +202,7 @@ simDMRs <- function(simFile=NULL, bs, num.dmrs=3000,
   gc()
   
   # get everything in order to run bumphunter functions
-  bs <- BSseq(pos = pos, chr = chr, M = meth.mat,
+  bsNew <- BSseq(pos = pos, chr = chr, M = meth.mat,
               Cov = (meth.mat + unmeth.mat), 
               sampleNames = paste0("Condition", 
                                    c(rep(1, sampleSize), rep(2, sampleSize)),

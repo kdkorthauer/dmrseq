@@ -41,3 +41,15 @@ effect size used for each DMR.
 Add simulated DMRs to observed control data. Control data will be split
 into two (artificial) populations.
 }
+\examples{
+
+# Add simulated DMRs to a BSseq dataset
+# This is just for illustrative purposes - ideally you would
+# add DMRs to a set of samples from the same condition (in our
+# example data, we have data from two different cell types)
+
+data(BS.chr21)
+
+BS.chr21.sim <- simDMRs(bs=BS.chr21, num.dmrs=300)
+
+}

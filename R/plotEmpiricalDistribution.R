@@ -32,7 +32,6 @@
 #' @importFrom reshape2 melt
 #' @importFrom locfit locfit lp
 #' 
-#' @export
 plotEmpiricalDistribution <- function(bs, plotFile, 
                                       tiss1, tiss2, 
                                       time=NULL, time2=NULL,
