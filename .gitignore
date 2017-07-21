@@ -4,4 +4,3 @@
 .Ruserdata
 *.Rproj
 *.Rbuildignore
-dmrseq_cache/*
