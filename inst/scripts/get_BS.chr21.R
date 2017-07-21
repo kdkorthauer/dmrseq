@@ -41,7 +41,7 @@ read.lister <- function(file) {
   ## We join these
   tmp <- dat[dat$strand == "+",]
   BS.forward <- BSseq(pos = tmp$pos, chr = tmp$chr, 
-  					  M = as.matrix(tmp$M, ncol = 1),
+                      M = as.matrix(tmp$M, ncol = 1),
                       Cov = as.matrix(tmp$Cov, ncol = 1), 
                       sampleNames = "forward")
   tmp <- dat[dat$strand == "-",]
@@ -75,9 +75,8 @@ meth.levels.raw = getMeth(BS.chr21, type = "raw")
 no.hits = which(is.na(rowMeans(meth.levels.raw)) == TRUE)
 BS.chr21 = BS.chr21[-no.hits]
 
-save(BS.chr21, file = "BS.chr21.rda")
+save(BS.chr21, file = "./data/BS.chr21.rda")
 library(tools)
-resaveRdaFiles("BS.chr21.rda")
-
+resaveRdaFiles("./data/BS.chr21.rda")
 
 
