@@ -161,6 +161,19 @@ dmrseq <- function(bs, testCovariate, adjustCovariate=NULL,
   # subset bs
   bs <- bs[,sampleIndex]
   
+  # check for loci with missing data
+  Cov = as.matrix(getCoverage(bs, type = "Cov"))
+  which.zero = which(rowSums(Cov==0) > 0)
+  rm(Cov)
+  
+  if (length(which.zero) > 0){
+    stop(paste0(which.zero, " loci have zero coverage in one or more ",
+                "samples. Please remove these with the filterLoci ",
+                "function before running dmrseq"))
+  }else{
+    rm(which.zero)
+  }
+  
   # convert covariates to column numbers if characters
   if (is.character(testCovariate)){
     tc <- testCovariate

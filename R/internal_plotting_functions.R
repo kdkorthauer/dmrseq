@@ -32,7 +32,7 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
   #add legend
   w <- end(gr) - start(gr)
   legtext <- c("Island", "Shore", "Shelf", "Open Sea")
-  xcoords <- c(0, 0.04*w , 0.08*w,0.115*w)
+  xcoords <- c(0, 0.08*w , 0.16*w, 0.225*w)
   secondvector <- (1:length(legtext))-1
   textwidths <- xcoords/secondvector # this works for all but the first element
   textwidths[1] <- start(gr) + 0.69*w 
@@ -195,10 +195,8 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
                          format(plotRange[2], big.mark = ",", 
                                 scientific = FALSE))
   if(mainWithWidth) {
-    regionWidth <- sprintf("width = %s, extended = %s", 
+    regionWidth <- sprintf("width = %s", 
                            format(width(gr), big.mark = ",", 
-                                  scientific = FALSE),
-                           format(extend, big.mark = ",", 
                                   scientific = FALSE))
     # add optional labels to plot titles
     if(!is.null(qval) & !is.null(stat)){
@@ -262,10 +260,12 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
   }
   w <- plotRange[2]-plotRange[1]
   
-  legend(plotRange[1] - 0.03*w, 0.23, bg = "white",
+  legend(plotRange[1] - 0.03*w, 0.9, bg = .alpha("white", 0.3),
          legend = label, cex=0.75,
          pch = c(20,20),
-         col = col)
+         col = col,
+         y.intersp = 0.8,
+         bty="n")
   
 }
 
@@ -500,7 +500,7 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
       main <- .dmrPlotTitle(gr = region, extend = extend, main = main,
                             mainWithWidth = mainWithWidth)
     }
-    mtext(side = 3, text = main, outer = FALSE, cex = 1, line=0 )
+    mtext(side = 3, text = main, outer = FALSE, cex = 0.8, line=0 )
   }
   
   if(!is.null(annoTrack))

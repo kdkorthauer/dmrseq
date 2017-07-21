@@ -3,6 +3,7 @@ title: "Analyzing Bisulfite-seq data with dmrseq"
 author: "Keegan D. Korthauer"
 date: "`r BiocStyle::doc_date()`"
 package: "`r BiocStyle::pkg_ver('dmrseq')`"
+bibliography: dmrseqBib.bib
 abstract: >
   A basic task in the analysis of count data from Whole Genome Bisulfite
   Sequencing is the detection of differentially methylated regions. 
@@ -15,7 +16,7 @@ abstract: >
   in terms of of biological function. Although several methods exist
   to quantify and perform statistical inference on changes at the individual
   CpG level, detection of DMRs is still limited to aggregating signifiant 
-  CpGs without proper inference at the region level. The package dmrseq 
+  CpGs without proper inference at the region level. The package **dmrseq**
   addresses this gap by providing a rigorous permutation-based approach to
   detect and perform inference for differential methylation by use of 
   generalized least squares models that account for inter-individual and 
@@ -56,16 +57,17 @@ methylated regions from Whole Genome Bisulfite Sequencing
 > [doi](placelinkhere)
 
 This package builds upon the 
-[bsseq](http://bioconductor.org/packages/bsseq) package, which provides
-efficient storage and manipulation of bisulfite sequencing data and 
-inference for differentially methylated CpGs. The main goal of dmrseq
+[bsseq](http://bioconductor.org/packages/bsseq) package [@Hansen2012], 
+which provides efficient storage and manipulation of bisulfite 
+sequencing data and inference for differentially methylated CpGs. 
+The main goal of **dmrseq**
 is to provide inference for differentially methylated *regions*, or 
 groups of CpGs.
 
 ## Quick start
 
 Here we show the most basic steps for a differential methylation 
-analysis. There are a variety of steps upstream of dmrseq that result
+analysis. There are a variety of steps upstream of **dmrseq** that result
 in the generation of counts of methylated reads and total reads covering each
 CpG for each sample, including mapping of sequencing reads to a reference
 genome with and without bisulfite conversion. You can use the software
@@ -75,7 +77,7 @@ long as you are able to obtain counts of methylation and coverage (as
 opposed to solely methylation proportions, as discussed below).
 
 This package uses a specific data structure to store and manipulate 
-bisulfite sequencing data introduced by the bsseq package. This data 
+bisulfite sequencing data introduced by the **bsseq** package. This data 
 structure is a *class* called `BSseq`. Objects of the class `BSseq` contain
 all pertinent information for a bisulfite sequencing experiment, including 
 the number of reads corresponding to methylation, and the total number 
@@ -132,7 +134,7 @@ see the [bsseq](http://bioconductor.org/packages/bsseq) vignettes.
 
 ## How to get help for dmrseq
 
-Please post dmrseq questions to the 
+Please post **dmrseq** questions to the 
 **Bioconductor support site**, which serves as a searchable knowledge
 base of questions and answers:
 
@@ -147,7 +149,7 @@ the first question in the list of [Frequently Asked Questions](#FAQ)
 
 ### Why counts instead of methylation proportions?
 
-As input, the dmrseq package expects count data as obtained, e.g.,
+As input, the **dmrseq** package expects count data as obtained, e.g.,
 from Bisulfite-sequencing. The value in the *i*-th row and the *j*-th column of
 the M matrix tells how many methylated reads can be assigned to CpG *i* 
 in sample *j*. Likewise, the value in the *i*-th row and the *j*-th column of
@@ -160,9 +162,9 @@ and naturally, we have more confidence in those with many reads mapping to them.
 If we only kept the proportions, a CpG with 2 out of 2 reads methylated would
 be treated the same as a CpG with 30 out of 30 reads methylated.
 
-### How many samples?
+### How many samples do I need?
 
-To use dmrseq, you need to have at least 2 samples in each condition. 
+To use **dmrseq**, you need to have at least 2 samples in each condition. 
 Without this replicates, it is impossible to distinguish between biological
 variability due to condition/covariate of interest, and inter-individual 
 variability within condition.
@@ -170,7 +172,8 @@ variability within condition.
 ### Bismark input
 
 If you used Bismark for mapping and methylation level extraction, you can 
-use the `read.bismark` function from bsseq to read the data directly into 
+use the `read.bismark` function from the **bsseq** package to read the 
+data directly into 
 a `BSeq` object. 
 
 The following example is from the help page of the function. After running
@@ -239,6 +242,18 @@ bs <- BSseq(chr = chr, pos = pos,
 show(bs)
 ```
 
+The example data contains CpGs from chromosome 21 for  four samples 
+from @Lister2009. Two of the samples are replicates of the cell type 'imr90' 
+and the other two are replicates of the cell type 'h1'. Now that we have the
+data loaded into a `BSseq` object, we can use **dmrseq**
+to find regions of the genome where these two cell types have significantly
+different methylation levels. But first, we need to add the sample metadata
+that indicates which samples are from which cell type (the `celltype` 
+varialbe above). This information, which we call 'metadata', 
+will be used by the `dmrseq` function to decide
+which samples to compare to one another. The next section shows how to add
+this information to the `BSseq` object.
+
 ### Sample metadata
 
 To add sample metadata, including the covariate of interest, you can add it 
@@ -255,29 +270,31 @@ pData(bs)$Replicate <- substr(sampleNames,
 pData(bs)
 ```
 
+We will then tell the `dmrseq` function which metadata variable to use
+for testing for methylation differences by setting the `testCovariate` 
+parameter equal to its column name. 
+
 ### Smoothing
 
-Note that unlike in bsseq, you do not need to carry out the smoothing step
+Note that unlike in **bsseq**, you do not need to carry out the smoothing step
 with a separate function. In addition, you should not use bbseq's bsmooth
-function to smooth the methylation levels, since dmrseq smooths in a very 
-different way. Briefly, dmrseq smooths methylation *differences*, so it 
+function to smooth the methylation levels, since **dmrseq** smooths in a very 
+different way. Briefly, **dmrseq** smooths methylation *differences*, so it 
 carries out the smoothing step once. This is automatically done with the main
-`dmrseq` function. bsseq on the other hand, smooths each sample independently,
+`dmrseq` function. **bsseq** on the other hand, smooths each sample independently,
 so smoothing needs to be carried out once per sample.
 
 ### Removing CpGs with no coverage
 
-dmrseq analyzes all CpGs that have at least one read in all samples in the
+**dmrseq** analyzes all CpGs that have at least one read in all samples in the
 dataset. Thus, if your dataset contains CpGs with zero reads in some samples,
-you should filter them out. This can be done as follows (note that the zero
+you should filter them out. This can be done with the helper function 
+`filter` loci which will remove the loci with no reads in a sample by default.
+The function is used as follows (note that the zero
 sites have already been filtered out on this example dataset):
 
-```{r filter}
-Cov = getCoverage(bs, type = "Cov")
-which.zero = which(rowSums(Cov==0) > 0)
-if(length(which.zero)>0){
-  bs = bs[-which.zero]
-}
+```{r filter, message=TRUE}
+bs <- filterLoci(bs)
 ```
 
 ## Differentially Methylated Regions
@@ -285,10 +302,10 @@ if(length(which.zero)>0){
 The standard differential expression analysis steps are wrapped
 into a single function, `dmrseq`. The estimation steps performed
 by this function are described briefly below, as well as in 
-more detail in the dmrseq paper. Here we run the results for a subset
+more detail in the **dmrseq** paper. Here we run the results for a subset
 of 20,000 CpGs in the interest of computation time.
 
-```{r mainfunction}
+```{r mainfunction, message=TRUE, warning=TRUE}
 testCovariate <- "CellType"
 regions <- dmrseq(bs=bs[240001:260000,],
                   cutoff = 0.05,
@@ -297,7 +314,7 @@ regions <- dmrseq(bs=bs[240001:260000,],
 
 Progress messages are printed to the console if `verbose` is TRUE.
 The text, `condition h1 vs imr90`, tells you that positive methylation 
-differences mean h1 has higer methylation than imr90 (see below for
+differences mean h1 has higher methylation than imr90 (see below for
 more details).
 
 The above steps are carried out on a very small subset of data (20,000 CpGs).
@@ -321,14 +338,14 @@ register(MulticoreParam(4))
 ```
 ### Steps of the dmrseq method
 
-dmrseq is a two-stage approach that first detects candidate regions and then
+**dmrseq** is a two-stage approach that first detects candidate regions and then
 explicitly evaluates statistical significance at the region level while 
 accounting for known sources of variability. 
 Candidate DMRs are defined by segmenting the genome into groups of CpGs 
 that show consistent evidence of differential methylation. 
 Because the methylation levels of neighboring CpGs are highly correlated, 
 we first smooth the signal to combat loss of power due to low coverage as done
-in bsseq. 
+in **bsseq**. 
 
 In the second stage, we compute a statistic for each candidate 
 DMR that takes into account variability between biological replicates 
@@ -337,6 +354,8 @@ region is assessed via a permutation procedure which uses a pooled null
 distribution that can be generated from as few as two biological replicates,
 and false discovery rate is controlled using the Benjamini-Hochberg 
 procedure.
+
+For more details, refer to the **dmrseq** paper.
 
 ## Exploring and exporting results
 
@@ -364,7 +383,7 @@ sum(sigRegions$stat > 0) / nrow(sigRegions)
 ```
 
 To interpret the direction of effect, note that for a two-group comparison 
-dmrseq uses alphabetical order of the covariate of interest. For example, if 
+**dmrseq** uses alphabetical order of the covariate of interest. For example, if 
 the two conditions are "A" and "B", a positive direction of effect means that 
 "A" is hyper-methylated relative to "B". Conversely, a negative direction of 
 effect means that "A" is hypo-methylated relative to "B". 
@@ -372,13 +391,13 @@ effect means that "A" is hypo-methylated relative to "B".
 ### Plot DMRs 
 
 It can be useful to visualize individual DMRs, so we provide a plotting 
-function that is based off of bsseq's plotting functions. There is also
+function that is based off of **bsseq**'s plotting functions. There is also
 functionality to add annotations using the 
 [annotatr](http://bioconductor.org/packages/annotatr) package to 
 see the nearby CpG categories (island, shore, shelf, open sea) and nearby
 coding sequences.
 
-```{r plot}
+```{r plot, out.width='\\textwidth', fig.height = 2.5}
 data(annot.chr21)
 plotDMRs(bs, regions=regions[1,], testCovariate="CellType",
     annoTrack=annot.chr21)
@@ -396,10 +415,10 @@ write.csv(as.data.frame(regions),
           file="h1_imr90_results.csv")
 ```
 
-
 # Session info
 
 ```{r sessionInfo}
 sessionInfo()
 ```
 
+# References
