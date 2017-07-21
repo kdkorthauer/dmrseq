@@ -387,8 +387,8 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
   names(sampleNames) <- sampleNames
   positions <- start(BSseq)
   positions2 <- start(BSseq2)
-  rawPs <- bsseq::getMeth(BSseq, type = "raw")
-  coverage <- bsseq::getCoverage(BSseq)
+  rawPs <- as.matrix(bsseq::getMeth(BSseq, type = "raw"))
+  coverage <- as.matrix(bsseq::getCoverage(BSseq))
   
   ## get col, lwd, lty 
   # these are extracted from the pData data.frame that is part of the 
@@ -431,8 +431,8 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
   # add points first to avoid lines getting hidden by plotting many cpg points
   if(addPoints) {    	
     ix <- region$indexStart:region$indexEnd
-    meth <- bsseq::getCoverage(BSseq2, type = "M")
-    unmeth <- bsseq::getCoverage(BSseq2, type = "Cov") - meth
+    meth <- as.matrix(bsseq::getCoverage(BSseq2, type = "M"))
+    unmeth <- as.matrix(bsseq::getCoverage(BSseq2, type = "Cov")) - meth
     
     sapply(1:ncol(BSseq), function(sampIdx) {
       .dmrPlotPoints(positions, rawPs[, sampIdx], coverage[, sampIdx],

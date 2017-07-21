@@ -1,0 +1,402 @@
+---
+title: "Analyzing Bisulfite-seq data with dmrseq"
+author: "Keegan D. Korthauer"
+date: "`r BiocStyle::doc_date()`"
+package: "`r BiocStyle::pkg_ver('dmrseq')`"
+abstract: >
+  A basic task in the analysis of count data from Whole Genome Bisulfite
+  Sequencing is the detection of differentially methylated regions. 
+  The count data consist of, for each sample, the number of methylated 
+  reads and the total number of reads covering CpG. 
+  An important analysis question is to detect regions (collections of 
+  neighboring CpGs) with systematic differences between conditions, 
+  as compared to within-condition variability. These so-called Differentially
+  Methylated Regions (DMRs) are thought to be more informative than single CpGs 
+  in terms of of biological function. Although several methods exist
+  to quantify and perform statistical inference on changes at the individual
+  CpG level, detection of DMRs is still limited to aggregating signifiant 
+  CpGs without proper inference at the region level. The package dmrseq 
+  addresses this gap by providing a rigorous permutation-based approach to
+  detect and perform inference for differential methylation by use of 
+  generalized least squares models that account for inter-individual and 
+  inter-CpG variability to generate region-level statistics that can be
+  comparable across the genome. This allows the framework to perform well even
+  on samples as small as two per group. This vignette explains the
+  use of the package and demonstrates typical workflows.
+  dmrseq package version: `r packageVersion("dmrseq")`
+output:
+  rmarkdown::html_document:
+    highlight: pygments
+    toc: true
+    fig_width: 5
+vignette: >
+  %\VignetteIndexEntry{Analyzing Bisulfite-seq data with dmrseq}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding[utf8]{inputenc}
+---
+
+
+<!-- This is the source document -->
+
+
+```{r setup, echo=FALSE, results="hide"}
+knitr::opts_chunk$set(tidy=FALSE, cache=TRUE,
+                      dev="png",
+                      message=FALSE, error=FALSE, warning=TRUE)
+```	
+
+# Standard workflow
+
+**If you use dmrseq in published research, please cite:**
+
+> Korthauer, K., Chakraborty, S., Benjamini, Y., and Irizarry, R.A.
+> Detection and accurate False Discovery Rate control of differentially 
+methylated regions from Whole Genome Bisulfite Sequencing
+> *BioRxiv* 2017.
+> [doi](placelinkhere)
+
+This package builds upon the 
+[bsseq](http://bioconductor.org/packages/bsseq) package, which provides
+efficient storage and manipulation of bisulfite sequencing data and 
+inference for differentially methylated CpGs. The main goal of dmrseq
+is to provide inference for differentially methylated *regions*, or 
+groups of CpGs.
+
+## Quick start
+
+Here we show the most basic steps for a differential methylation 
+analysis. There are a variety of steps upstream of dmrseq that result
+in the generation of counts of methylated reads and total reads covering each
+CpG for each sample, including mapping of sequencing reads to a reference
+genome with and without bisulfite conversion. You can use the software
+of your preference for this step (one option is 
+[Bismark](https://www.bioinformatics.babraham.ac.uk/projects/bismark/)), as
+long as you are able to obtain counts of methylation and coverage (as 
+opposed to solely methylation proportions, as discussed below).
+
+This package uses a specific data structure to store and manipulate 
+bisulfite sequencing data introduced by the bsseq package. This data 
+structure is a *class* called `BSseq`. Objects of the class `BSseq` contain
+all pertinent information for a bisulfite sequencing experiment, including 
+the number of reads corresponding to methylation, and the total number 
+of reads at each
+CpG site, the location of each CpG site, and experimental metadata on the
+samples. Note that here we focus on CpG methylation, since this is the 
+most common form of methylation in humans and many other organisms; take
+care when applying this method to other types of methylation and make sure 
+that it will
+be able to scale to the number of methylation sites, and that similar 
+assumptions can be made regarding spatial correlation. Also note that 
+the default settings for smoothing parameters and spacing/gap parameters
+are set to values that we found useful, but may need to be altered for 
+datasets for other organisms.
+
+To store your data in a `BSseq` object, make sure you have the following
+neccessary components:
+1. genomic positions, including chromosome and location, for methylation loci.
+2. a (matrix) of M (Methylation) values, describing the number of read 
+supporting methylation covering a single loci. 
+Each row in this matrix is a methylation loci and each column is a sample.
+3. a (matrix) of Cov (Coverage) values, 
+describing the total number of reads covering a single loci.
+Each row in this matrix is a methylation loci and each column is a sample.
+
+The following code chunk asumes that `chr` and `pos` are vectors of 
+chromosome names and positions, respectively, for each CpG in the dataset. It 
+also assumes that the matrices of methylation and coverage values (described
+above) are named `M` and `Cov`, respectively. `sampleNames` and `trt` are 
+vectors with sample labels and condition labels for each sample. A condition
+label could be something like treatment or control, or a tissue type, etc. 
+This is the covariate for which you wish to test for differences in 
+methylation. Once the `BSseq` object is constructed and the sample covariate
+information is added, DMRs are obtained by running the `dmrseq` function.
+
+```{r quickStart, eval=FALSE}
+bs <- BSseq(chr = chr, pos = pos,
+            M = M, Cov = Cov, 
+            sampleNames = sampleNames)
+pData(bs)$Condition <- trt
+
+regions <- dmrseq(bs=bs, testCovariate="Condition")
+```
+
+For more information on constructing and manipulating `BSseq` objects, 
+see the [bsseq](http://bioconductor.org/packages/bsseq) vignettes. 
+
+* If you used *Bismark* to align your bisulfite sequencing data,
+  you can use the `read.bismark` function to read bismark files
+  into `BSseq` objects. See below for more details.
+
+## How to get help for dmrseq
+
+Please post dmrseq questions to the 
+**Bioconductor support site**, which serves as a searchable knowledge
+base of questions and answers:
+
+<https://support.bioconductor.org>
+
+Posting a question and tagging with "dmrseq" will automatically send
+an alert to the package authors to respond on the support site.  See
+the first question in the list of [Frequently Asked Questions](#FAQ)
+(FAQ) for information about how to construct an informative post. 
+
+## Input data
+
+### Why counts instead of methylation proportions?
+
+As input, the dmrseq package expects count data as obtained, e.g.,
+from Bisulfite-sequencing. The value in the *i*-th row and the *j*-th column of
+the M matrix tells how many methylated reads can be assigned to CpG *i* 
+in sample *j*. Likewise, the value in the *i*-th row and the *j*-th column of
+the Cov matrix tells how many total reads can be assigned to CpG *i* 
+in sample *j*. Although we might be tempted to combine these matrices into
+one matrix that contains the methylation *proportion* (M/Cov) at each CpG
+site, it is critical to notice that this would be throwing away a lot of
+information. For example, some sites have much higher coverage than others,
+and naturally, we have more confidence in those with many reads mapping to them.
+If we only kept the proportions, a CpG with 2 out of 2 reads methylated would
+be treated the same as a CpG with 30 out of 30 reads methylated.
+
+### How many samples?
+
+To use dmrseq, you need to have at least 2 samples in each condition. 
+Without this replicates, it is impossible to distinguish between biological
+variability due to condition/covariate of interest, and inter-individual 
+variability within condition.
+
+### Bismark input
+
+If you used Bismark for mapping and methylation level extraction, you can 
+use the `read.bismark` function from bsseq to read the data directly into 
+a `BSeq` object. 
+
+The following example is from the help page of the function. After running
+Bismark's methylation extractor, you should have output files with names 
+that end in `.bismark.cov.gz`. You can specify a vector of file names with
+the `file` argument, and a corresponding vector of `sampleNames`. It is 
+recommended that you set `rmZeroCov` to TRUE in order to remove CpGs with 
+no coverage in any of the samples, and set `strandCollapse` to TRUE in order
+to combine CpGs on opposite strands into one observation (since CpG methylation)
+is symmetric.
+
+```{r bismarkinput}
+library(dmrseq)
+infile <- system.file("extdata/test_data.fastq_bismark.bismark.cov.gz",
+                        package = 'bsseq')
+bismarkBSseq <- read.bismark(files = infile,
+                               sampleNames = "test_data",
+                               rmZeroCov = TRUE,
+                               strandCollapse = FALSE,
+                               fileType = "cov",
+                               verbose = TRUE)
+bismarkBSseq
+```
+
+See the [bsseq](http://bioconductor.org/packages/bsseq) help pages for 
+more information on using this function.
+
+### Count matrix input
+
+If you haven't used Bismark but you have count data for number of methylated
+reads and total coverage for each CpG, along with their corresponding chromosome
+and position information, you can construct a `BSseq` object from scratch, 
+like below. Notice that the `M` and `Cov` matrices have the same dimension, and
+`chr` and `pos` have the same number of elements as rows in the count matrices
+(which corresponds to the number of CpGs). Also note that the number of columns
+in the count matrices matches the number of elements in `sampleNames` and the
+condition variable 'celltype`.
+
+```{r dissect, results="hide", echo=FALSE}
+data("BS.chr21")
+M <- getCoverage(BS.chr21, type="M")
+Cov <- getCoverage(BS.chr21, type="Cov")
+chr <- as.character(seqnames(BS.chr21))
+pos <- start(BS.chr21)
+celltype <- pData(BS.chr21)$CellType
+sampleNames <- sampleNames(BS.chr21)
+```
+
+```{r fromScratch}
+head(M)
+head(Cov)
+head(chr)
+head(pos)
+
+dim(M)
+dim(Cov)
+length(chr)
+length(pos)
+
+print(sampleNames)
+print(celltype)
+
+bs <- BSseq(chr = chr, pos = pos,
+            M = M, Cov = Cov, 
+            sampleNames = sampleNames)
+show(bs)
+```
+
+### Sample metadata
+
+To add sample metadata, including the covariate of interest, you can add it 
+to the 
+`BSseq` object by adding columns to the `pData` slot. You must have at least
+one column of `pData`, which contains the covariate of interest. Additional 
+columns are optional.
+
+```{r meta}
+pData(bs)$CellType <- celltype
+pData(bs)$Replicate <- substr(sampleNames, 
+                              nchar(sampleNames), nchar(sampleNames))
+
+pData(bs)
+```
+
+### Smoothing
+
+Note that unlike in bsseq, you do not need to carry out the smoothing step
+with a separate function. In addition, you should not use bbseq's bsmooth
+function to smooth the methylation levels, since dmrseq smooths in a very 
+different way. Briefly, dmrseq smooths methylation *differences*, so it 
+carries out the smoothing step once. This is automatically done with the main
+`dmrseq` function. bsseq on the other hand, smooths each sample independently,
+so smoothing needs to be carried out once per sample.
+
+### Removing CpGs with no coverage
+
+dmrseq analyzes all CpGs that have at least one read in all samples in the
+dataset. Thus, if your dataset contains CpGs with zero reads in some samples,
+you should filter them out. This can be done as follows (note that the zero
+sites have already been filtered out on this example dataset):
+
+```{r filter}
+Cov = getCoverage(bs, type = "Cov")
+which.zero = which(rowSums(Cov==0) > 0)
+if(length(which.zero)>0){
+  bs = bs[-which.zero]
+}
+```
+
+## Differentially Methylated Regions
+
+The standard differential expression analysis steps are wrapped
+into a single function, `dmrseq`. The estimation steps performed
+by this function are described briefly below, as well as in 
+more detail in the dmrseq paper. Here we run the results for a subset
+of 20,000 CpGs in the interest of computation time.
+
+```{r mainfunction}
+testCovariate <- "CellType"
+regions <- dmrseq(bs=bs[240001:260000,],
+                  cutoff = 0.05,
+                  testCovariate=testCovariate)
+```
+
+Progress messages are printed to the console if `verbose` is TRUE.
+The text, `condition h1 vs imr90`, tells you that positive methylation 
+differences mean h1 has higer methylation than imr90 (see below for
+more details).
+
+The above steps are carried out on a very small subset of data (20,000 CpGs).
+This package currently requires that all the data is loaded into system memory. 
+For on human data, this means objects with a maximum of 28.2 million entries, 
+per sample (since there are roughly 28.2 millions CpGs in the human genome). 
+This means that whole-genome `BSseq` objects for several samples can use up
+several GB of RAM. In order to improve speed, the package allows for easy
+parallel processing of chromosomes, but be aware that using more cores will
+also require the use of more RAM.
+
+To use more cores, use the `register` function of 
+[BiocParallel](http://bioconductor.org/packages/BiocParallel). For example,
+the following chunk (not evaluated here), would register 4 cores, and
+then the functions above would
+split computation over these cores. 
+
+```{r parallel, eval=FALSE}
+library("BiocParallel")
+register(MulticoreParam(4))
+```
+### Steps of the dmrseq method
+
+dmrseq is a two-stage approach that first detects candidate regions and then
+explicitly evaluates statistical significance at the region level while 
+accounting for known sources of variability. 
+Candidate DMRs are defined by segmenting the genome into groups of CpGs 
+that show consistent evidence of differential methylation. 
+Because the methylation levels of neighboring CpGs are highly correlated, 
+we first smooth the signal to combat loss of power due to low coverage as done
+in bsseq. 
+
+In the second stage, we compute a statistic for each candidate 
+DMR that takes into account variability between biological replicates 
+and spatial correlation among neighboring loci. Significance of each 
+region is assessed via a permutation procedure which uses a pooled null 
+distribution that can be generated from as few as two biological replicates,
+and false discovery rate is controlled using the Benjamini-Hochberg 
+procedure.
+
+## Exploring and exporting results
+
+### Explore how many regions were signifiant
+
+How many regions were significant at the FDR (q-value) cutoff of 0.05? We
+can find this by counting how many values in the `qval` column of the results
+data.frame were less than 0.05. 
+You can also subset the regions by an FDR cutoff.
+
+```{r}
+sum(regions$qval < 0.05)
+
+# select just the regions below FDR 0.05 and place in a new data.frame
+sigRegions <- regions[regions$qval < 0.05,]
+```
+
+### Hypo- or Hyper- methylation?
+
+You can determine the proportion of regions with hyper-methylation by counting
+how many had a positive direction of effect (positive statistic).
+
+```{r hyper}
+sum(sigRegions$stat > 0) / nrow(sigRegions)
+```
+
+To interpret the direction of effect, note that for a two-group comparison 
+dmrseq uses alphabetical order of the covariate of interest. For example, if 
+the two conditions are "A" and "B", a positive direction of effect means that 
+"A" is hyper-methylated relative to "B". Conversely, a negative direction of 
+effect means that "A" is hypo-methylated relative to "B". 
+
+### Plot DMRs 
+
+It can be useful to visualize individual DMRs, so we provide a plotting 
+function that is based off of bsseq's plotting functions. There is also
+functionality to add annotations using the 
+[annotatr](http://bioconductor.org/packages/annotatr) package to 
+see the nearby CpG categories (island, shore, shelf, open sea) and nearby
+coding sequences.
+
+```{r plot}
+data(annot.chr21)
+plotDMRs(bs, regions=regions[1,], testCovariate="CellType",
+    annoTrack=annot.chr21)
+```
+
+### Exporting results to CSV files
+
+A plain-text file of the results can be exported using the 
+base R functions *write.csv* or *write.delim*. 
+We suggest using a descriptive file name indicating the variable
+and levels which were tested.
+
+```{r export, eval=FALSE}
+write.csv(as.data.frame(regions), 
+          file="h1_imr90_results.csv")
+```
+
+
+# Session info
+
+```{r sessionInfo}
+sessionInfo()
+```
+
