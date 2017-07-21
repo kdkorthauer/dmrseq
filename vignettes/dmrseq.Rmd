@@ -93,10 +93,13 @@ datasets for other organisms.
 
 To store your data in a `BSseq` object, make sure you have the following
 neccessary components:
+
 1. genomic positions, including chromosome and location, for methylation loci.
+
 2. a (matrix) of M (Methylation) values, describing the number of read 
 supporting methylation covering a single loci. 
 Each row in this matrix is a methylation loci and each column is a sample.
+
 3. a (matrix) of Cov (Coverage) values, 
 describing the total number of reads covering a single loci.
 Each row in this matrix is a methylation loci and each column is a sample.
