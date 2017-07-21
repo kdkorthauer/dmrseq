@@ -147,7 +147,7 @@ data(dmrs.ex)
 # here we'll load the example annotation from chr21
 data(annot.chr21)
 
-# plot the first DMR
+# plot the 1st DMR
 plotDMRs(BS.chr21, regions=dmrs.ex[1,], testCovariate=1,
    annoTrack=annot.chr21)
 

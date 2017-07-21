@@ -7,20 +7,32 @@
 #' 
 #' @param bs bsseq object containing the methylation values as well as the
 #' 	phenotype matrix that contains sample level covariates
-#' @param testCovariate integer value or vector indicating which of columns of
-#'  \code{pData(bs)} contains the covariate of interest that will be tested 
-#'  for association of methylation levels. This is used to construct the 
+#' @param testCovariate Character value or vector indicating which variables
+#' (column names) in \code{pData(bs)} to test
+#'  for association of methylation levels. 
+#'  Can alternatively specify an integer value or vector indicating
+#'  which of columns of
+#'  \code{pData(bs)} to use. This is used to construct the 
 #'  design matrix for the test statistic calculation.
-#' @param adjustCovariate an (optional) integer value or vector indicating
-#'  which of the columns of \code{pData(bs)} will be adjusted for when 
+#' @param adjustCovariate an (optional) character value or vector 
+#' indicating which variables (column names) in \code{pData(bs)} 
+#' will be adjusted for when 
 #'  testing for the association of methylation value with the 
-#'  \code{testCovariate}. If not NULL (default), then this is also used to 
+#'  \code{testCovariate}. 
+#' Can alternatively specify an
+#' integer value or vector indicating
+#'  which of the columns of \code{pData(bs)} to adjust for.
+#'  If not NULL (default), then this is also used to 
 #'  construct the design matrix for the test statistic calculation.
-#' @param matchCovariate an (optional) integer value or vector indicating
-#'  which of the columns of \code{pData(bs)} will be blocked for when 
+#' @param matchCovariate an (optional) character value or vector 
+#' indicating which variables (column names) of \code{pData(bs)} 
+#' will be blocked for when 
 #'  constructing the permutations in order to
 #'  test for the association of methylation value with the 
-#'  \code{testCovariate}. Blocking means that only permutations with balanced
+#'  \code{testCovariate}. 
+#'  Alternatively, you can specify an integer value or vector indicating
+#'  which columns of \code{pData(bs)} to block for.
+#'  Blocking means that only permutations with balanced
 #'  composition of \code{testCovariate} values will be used (for example if
 #'  you have samples from different gender and this is not your covariate of
 #'  interest, 
@@ -119,15 +131,12 @@
 #' data(BS.chr21)
 #' 
 #' # the covariate of interest is the "CellType" column of pData(BS.chr21)
-#' testCovariate <- which(colnames(pData(BS.chr21)) == "CellType")
+#' testCovariate <- "CellType"
 #' 
-#' # run dmrseq on a subset of the chromosome (first 10K CpGs)
-#' regions <- dmrseq(bs=BS.chr21[1:10000,],
-#'                   cutoff=0.05,
-#'                   testCovariate=testCovariate,
-#'                   maxGapSmooth=500,
-#'                   maxGap=250,
-#'                   BPPARAM=BiocParallel::MulticoreParam(workers=1))
+#' # run dmrseq on a subset of the chromosome (20K CpGs)
+#' regions <- dmrseq(bs=BS.chr21[240001:260000,],
+#'                  cutoff = 0.05,
+#'                  testCovariate=testCovariate)
 #' 
 dmrseq <- function(bs, testCovariate, adjustCovariate=NULL,
                    cutoff = 0.10, minNumRegion=5,
@@ -151,6 +160,40 @@ dmrseq <- function(bs, testCovariate, adjustCovariate=NULL,
   
   # subset bs
   bs <- bs[,sampleIndex]
+  
+  # convert covariates to column numbers if characters
+  if (is.character(testCovariate)){
+    tc <- testCovariate
+    testCovariate <- which(colnames(pData(bs)) == testCovariate)
+    if (length(testCovariate)==0){
+      stop(paste0("testCovariate named ", tc, 
+                  " not found in pData(). ", 
+                  "Please specify a valid testCovariate"))
+    }
+    rm(tc)
+  }
+  
+  if (is.character(adjustCovariate)){
+    tc <- adjustCovariate
+    adjustCovariate <- which(colnames(pData(bs)) == adjustCovariate)
+    if (length(adjustCovariate)==0){
+      stop(paste0("adjustCovariate named ", tc, 
+                  " not found in pData(). ", 
+                  "Please specify a valid adjustCovariate"))
+    }
+    rm(tc)
+  }
+  
+  if (is.character(matchCovariate)){
+    tc <- matchCovariate
+    matchCovariate <- which(colnames(pData(bs)) == matchCovariate)
+    if (length(matchCovariate)==0){
+      stop(paste0("matchCovariate named ", tc, 
+                  " not found in pData(). ", 
+                  "Please specify a valid matchCovariate"))
+    }
+    rm(tc)
+  }
   
   # construct the design matrix using the pData of bs
   if (ncol(pData(bs)) < max(testCovariate, adjustCovariate)){
@@ -193,6 +236,13 @@ dmrseq <- function(bs, testCovariate, adjustCovariate=NULL,
     colnames(design)[coeff] <- colnames(pData(bs))[testCovariate]
   }
   
+  if (length(unique(testCov))==2 & (is.character(pData(bs)[,testCovariate]) | 
+                                    is.factor(pData(bs)[,testCovariate]))){
+    message(paste0("Condition ", 
+                   unique(pData(bs)[,testCovariate][which(design[,coeff]==1)]), 
+                   " vs ", 
+                   unique(pData(bs)[,testCovariate][which(design[,coeff]==0)])))
+  }
   if(!is.null(matchCovariate)){
     if(sum(grepl(matchCovariate, colnames(pData(bs))))==0){
       stop("Error: no column in pData() found that matches the matchCovariate")

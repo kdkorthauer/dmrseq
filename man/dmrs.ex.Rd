@@ -19,12 +19,10 @@
    statistic, and 10. qval = the q-value for the test statistic (adjustment
    for multiple comparisons to control false discovery rate).}
 \source{
-Obtained from running the examples in \code{\link{dmrseq}}
-\code{dmrs.ex <- dmrseq(bs=BS.chr21[1:10000,],
-                  cutoff=0.05,
-                  testCovariate=testCovariate,
-                  maxGapSmooth=500,
-                  maxGap=250)}
+Obtained from running the examples in \code{\link{dmrseq}}. 
+A script which executes these steps 
+and constructs the \code{dmrs.ex} 
+ object may be found in \file{inst/scripts/get_dmrs.ex.R}
 }
 \usage{
 data(dmrs.ex)

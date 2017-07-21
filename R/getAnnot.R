@@ -29,8 +29,8 @@
 #' 
 #' @examples
 #' 
-#' # get annotation information for hg38
-#' annoTrack <- getAnnot("hg38")
+#' # get annotation information for hg19
+#' annoTrack <- getAnnot("hg19")
 #' 
 #' # only keep this information for chromosome 21 (for example dataset)
 #' annoTrack <- lapply(annoTrack, function(x){

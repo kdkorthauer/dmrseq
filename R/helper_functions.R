@@ -47,9 +47,10 @@
 #' both.
 #' 
 #' @source Obtained from running
-#' \code{annoTrack <- getAnnot("hg38")} and then subsetting the results to 
-#' only include chromosome 21 with 
-#' \code{annoTrack <- lapply(annoTrack, function(x){ x[seqnames(x)=="chr21",]})}
+#' \code{annoTrack} function and then subsetting the results to 
+#' only include chromosome 21. A script which executes these steps 
+#' and constructs the \code{annot.chr21} 
+#'  object may be found in \file{inst/scripts/get_annot.chr21.R}
 #'  
 #' @examples
 #' data(annot.chr21)
@@ -74,12 +75,10 @@
 #'    9. pval = the permutation p-value for the significance of the test
 #'    statistic, and 10. qval = the q-value for the test statistic (adjustment
 #'    for multiple comparisons to control false discovery rate).
-#' @source Obtained from running the examples in \code{\link{dmrseq}}
-#' \code{dmrs.ex <- dmrseq(bs=BS.chr21[1:10000,],
-#'                   cutoff=0.05,
-#'                   testCovariate=testCovariate,
-#'                   maxGapSmooth=500,
-#'                   maxGap=250)}
+#' @source Obtained from running the examples in \code{\link{dmrseq}}. 
+#' A script which executes these steps 
+#' and constructs the \code{dmrs.ex} 
+#'  object may be found in \file{inst/scripts/get_dmrs.ex.R}
 #' @examples
 #' data(dmrs.ex)
 "dmrs.ex"
@@ -122,8 +121,8 @@ bumphunt = function (bs, design, sampleSize,
                      verbose = TRUE, ...) 
 {
   # extract relevant bsseq objects and remove the bsseq object itself
-  meth.mat = getCoverage(bs, type = "M")
-  unmeth.mat = getCoverage(bs, type = "Cov") - meth.mat
+  meth.mat = as.matrix(getCoverage(bs, type = "M"))
+  unmeth.mat = as.matrix(getCoverage(bs, type = "Cov")) - meth.mat
   chr = as.character(seqnames(bs))
   pos = start(bs)
   
@@ -390,8 +389,8 @@ meanDiff <- function(bs, dmrs, testCovariate, adjustCovariate){
                    "Returning beta estimates instead"))
     return(dmrs$beta)
   }else{
-    meth.mat = bsseq::getCoverage(bs, type = "M")
-    unmeth.mat = bsseq::getCoverage(bs, type = "Cov") - meth.mat
+    meth.mat = as.matrix(bsseq::getCoverage(bs, type = "M"))
+    unmeth.mat = as.matrix(bsseq::getCoverage(bs, type = "Cov") - meth.mat)
     prop.mat = meth.mat / (meth.mat + unmeth.mat)
     rm(meth.mat)
     rm(unmeth.mat)
@@ -554,6 +553,20 @@ regionScanner <- function(x, y=x, chr, pos,
                                      data=dat,
                                      correlation=correlationSmall))},
                         error=function(e) { return(NA)})
+        
+        # error handling in case of false convergence (don't
+        # include first variance weighting, and then corr str)
+        if (sum(is.na(fit)) == length(fit)){
+          fit <- tryCatch({summary(gls(Z ~ g.fac + factor(L),
+                                       data=dat,
+                                       correlation=correlationSmall))},
+                          error=function(e) { return(NA)})
+          if (sum(is.na(fit)) == length(fit)){
+            fit <- tryCatch({summary(gls(Z ~ g.fac + factor(L),
+                                         data=dat))},
+                            error=function(e) { return(NA)})
+          }
+        }
       }
       
       if (!(sum(is.na(fit)) == length(fit))){

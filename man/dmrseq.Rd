@@ -14,16 +14,24 @@ dmrseq(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
 \item{bs}{bsseq object containing the methylation values as well as the
 phenotype matrix that contains sample level covariates}
 
-\item{testCovariate}{integer value or vector indicating which of columns of
-\code{pData(bs)} contains the covariate of interest that will be tested 
-for association of methylation levels. This is used to construct the 
-design matrix for the test statistic calculation.}
+\item{testCovariate}{Character value or vector indicating which variables
+(column names) in \code{pData(bs)} to test
+ for association of methylation levels. 
+ Can alternatively specify an integer value or vector indicating
+ which of columns of
+ \code{pData(bs)} to use. This is used to construct the 
+ design matrix for the test statistic calculation.}
 
-\item{adjustCovariate}{an (optional) integer value or vector indicating
-which of the columns of \code{pData(bs)} will be adjusted for when 
-testing for the association of methylation value with the 
-\code{testCovariate}. If not NULL (default), then this is also used to 
-construct the design matrix for the test statistic calculation.}
+\item{adjustCovariate}{an (optional) character value or vector 
+indicating which variables (column names) in \code{pData(bs)} 
+will be adjusted for when 
+ testing for the association of methylation value with the 
+ \code{testCovariate}. 
+Can alternatively specify an
+integer value or vector indicating
+ which of the columns of \code{pData(bs)} to adjust for.
+ If not NULL (default), then this is also used to 
+ construct the design matrix for the test statistic calculation.}
 
 \item{cutoff}{scalar value that represents the absolute value (or a vector 
 of two numbers representing a lower and upper bound) for the cutoff of 
@@ -65,18 +73,22 @@ Default is to use all samples in the object.}
 of permutations that will be used to generate the global null 
 distribution of test statistics.  Default value is 20.}
 
-\item{matchCovariate}{an (optional) integer value or vector indicating
-which of the columns of \code{pData(bs)} will be blocked for when 
-constructing the permutations in order to
-test for the association of methylation value with the 
-\code{testCovariate}. Blocking means that only permutations with balanced
-composition of \code{testCovariate} values will be used (for example if
-you have samples from different gender and this is not your covariate of
-interest, 
-it is recommended to use gender as a matching covariate to avoid one 
-of the permutations testing entirely males versus females; this violates
-the null hypothesis and will decrease power).
-If not NULL (default), then no blocking is performed.}
+\item{matchCovariate}{an (optional) character value or vector 
+indicating which variables (column names) of \code{pData(bs)} 
+will be blocked for when 
+ constructing the permutations in order to
+ test for the association of methylation value with the 
+ \code{testCovariate}. 
+ Alternatively, you can specify an integer value or vector indicating
+ which columns of \code{pData(bs)} to block for.
+ Blocking means that only permutations with balanced
+ composition of \code{testCovariate} values will be used (for example if
+ you have samples from different gender and this is not your covariate of
+ interest, 
+ it is recommended to use gender as a matching covariate to avoid one 
+ of the permutations testing entirely males versus females; this violates
+ the null hypothesis and will decrease power).
+ If not NULL (default), then no blocking is performed.}
 
 \item{BPPARAM}{a \code{MulticoreParam} or \code{SnowParam} object of 
 the \code{BiocParallel}
@@ -119,15 +131,12 @@ permuation test on the pooled null distribution of scores.
 data(BS.chr21)
 
 # the covariate of interest is the "CellType" column of pData(BS.chr21)
-testCovariate <- which(colnames(pData(BS.chr21)) == "CellType")
+testCovariate <- "CellType"
 
-# run dmrseq on a subset of the chromosome (first 10K CpGs)
-regions <- dmrseq(bs=BS.chr21[1:10000,],
-                  cutoff=0.05,
-                  testCovariate=testCovariate,
-                  maxGapSmooth=500,
-                  maxGap=250,
-                  BPPARAM=BiocParallel::MulticoreParam(workers=1))
+# run dmrseq on a subset of the chromosome (20K CpGs)
+regions <- dmrseq(bs=BS.chr21[240001:260000,],
+                 cutoff = 0.05,
+                 testCovariate=testCovariate)
 
 }
 \keyword{inference}

@@ -13,9 +13,10 @@ any annotation to be plotted, but it is not necessary to contain
 both.}
 \source{
 Obtained from running
-\code{annoTrack <- getAnnot("hg38")} and then subsetting the results to 
-only include chromosome 21 with 
-\code{annoTrack <- lapply(annoTrack, function(x){ x[seqnames(x)=="chr21",]})}
+\code{annoTrack} function and then subsetting the results to 
+only include chromosome 21. A script which executes these steps 
+and constructs the \code{annot.chr21} 
+ object may be found in \file{inst/scripts/get_annot.chr21.R}
 }
 \usage{
 data(annot.chr21)
