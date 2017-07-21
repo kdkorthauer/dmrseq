@@ -260,12 +260,12 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
   }
   w <- plotRange[2]-plotRange[1]
   
-  legend(plotRange[1] - 0.03*w, 0.9, bg = .alpha("white", 0.3),
+  legend(plotRange[1] - 0.03*w, 0.9, bg = .alpha("antiquewhite", 0.75),
          legend = label, cex=0.75,
          pch = c(20,20),
          col = col,
          y.intersp = 0.8,
-         bty="n")
+         box.lwd=0)
   
 }
 
