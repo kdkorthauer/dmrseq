@@ -118,7 +118,7 @@ bumphunt = function (bs, design, sampleSize,
                      cutoff = NULL, maxGap = 1000, 
                      maxGapSmooth=2500,
                      smooth = FALSE, bpSpan=1000,  
-                     verbose = TRUE, ...) 
+                     verbose = TRUE, parallel=FALSE, ...) 
 {
   # extract relevant bsseq objects and remove the bsseq object itself
   meth.mat = as.matrix(getCoverage(bs, type = "M"))
@@ -201,7 +201,8 @@ bumphunt = function (bs, design, sampleSize,
                            minNumRegion = minNumRegion, 
                            minInSpan = minInSpan, 
                            bpSpan = bpSpan, bpSpan2=bpSpan2,
-                           verbose = verbose)
+                           verbose = verbose,
+                           parallel=parallel)
       beta[[1]][chr==chromosome] <- beta.tmp[[1]]
       beta[[2]][chr==chromosome] <- beta.tmp[[2]]
     }
@@ -229,7 +230,8 @@ bumphunt = function (bs, design, sampleSize,
                        cutoff = cutoff, minNumRegion = minNumRegion,
                        meth.mat = meth.mat, unmeth.mat = unmeth.mat, 
                        design = design, coeff = coeff,
-                       verbose=verbose, sampleSize=sampleSize)
+                       verbose=verbose, sampleSize=sampleSize,
+                       parallel=parallel)
   rm(beta);
   rm(rawBeta);
   rm(meth.mat);
@@ -358,6 +360,18 @@ trimEdges <- function(x, candidates = NULL,
 
 # function to compute raw mean methylation differences
 meanDiff <- function(bs, dmrs, testCovariate, adjustCovariate){
+  # convert covariates to column numbers if characters
+  if (is.character(testCovariate)){
+    tc <- testCovariate
+    testCovariate <- which(colnames(pData(bs)) == testCovariate)
+    if (length(testCovariate)==0){
+      stop(paste0("testCovariate named ", tc, 
+                  " not found in pData(). ", 
+                  "Please specify a valid testCovariate"))
+    }
+    rm(tc)
+  }
+  
   if (ncol(pData(bs)) < max(testCovariate, adjustCovariate)){
     stop(paste0("Error: pData(bs) has too few columns.  Please specify valid ",
                 "covariates to use in the analysis"))
@@ -413,7 +427,8 @@ regionScanner <- function(x, y=x, chr, pos,
                           assumeSorted = FALSE, meth.mat=meth.mat,
                           unmeth.mat = unmeth.mat, verbose = verbose,
                           design=design, coeff=coeff,
-                          sampleSize=sampleSize){
+                          sampleSize=sampleSize,
+                          parallel=parallel){
   if(any(is.na(x[ind]))){
     warning("NAs found and removed. ind changed.")
     ind <- intersect(which(!is.na(x)),ind)
@@ -606,8 +621,13 @@ regionScanner <- function(x, y=x, chr, pos,
                  L = sapply(Indexes[[i]], length), stringsAsFactors=FALSE)               
     
     if (length(Indexes[[i]]) > 1){
-      ret <- t(matrix(unlist(bplapply(Indexes[[i]], function(Index)
-        asin.gls.cov(ix=ind[Index],design=design,coeff=coeff))), nrow=2)) 
+      if (parallel){
+        ret <- t(matrix(unlist(bplapply(Indexes[[i]], function(Index)
+          asin.gls.cov(ix=ind[Index],design=design,coeff=coeff))), nrow=2)) 
+      }else{
+        ret <- t(matrix(unlist(lapply(Indexes[[i]], function(Index)
+          asin.gls.cov(ix=ind[Index],design=design,coeff=coeff))), nrow=2)) 
+      }
       res[[i]]$beta <- ret[,1]
       res[[i]]$stat <- ret[,2]      
     }else if(length(Indexes[[i]]) > 0){
@@ -635,7 +655,8 @@ regionScanner <- function(x, y=x, chr, pos,
 smoother <- function(y, x=NULL, weights=NULL, chr=chr, 
                      maxGapSmooth=maxGapSmooth, minNumRegion=5,
                      verbose=TRUE, minInSpan = minInSpan, 
-                     bpSpan = bpSpan, bpSpan2=bpSpan2){
+                     bpSpan = bpSpan, bpSpan2=bpSpan2,
+                     parallel=parallel){
   
   locfitByCluster2 <- function(ix) {
     
@@ -703,10 +724,17 @@ smoother <- function(y, x=NULL, weights=NULL, chr=chr,
   Indexes <- split(seq(along=clusterC), clusterC)
     
   idx <- NULL ## for R CMD check
-  ret <- bplapply(Indexes, function(idx){
-    sm <- locfitByCluster2(idx)
-    return(sm)
-  })
+  if (parallel){
+    ret <- bplapply(Indexes, function(idx){
+      sm <- locfitByCluster2(idx)
+      return(sm)
+    })
+  }else{
+    ret <- lapply(Indexes, function(idx){
+      sm <- locfitByCluster2(idx)
+      return(sm)
+    }) 
+  }
   
   # smash together output
   ret.all <- vector("list", length(ret[[1]]))
@@ -728,7 +756,6 @@ smoother <- function(y, x=NULL, weights=NULL, chr=chr,
   
   return(ret.all)  
 }
-
 
 
 

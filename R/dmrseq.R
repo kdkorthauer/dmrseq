@@ -62,7 +62,8 @@
 #' package that defines a parallel backend.  The default option is 
 #' \code{BiocParallel::bpparam()} which will automatically creates a cluster 
 #' appropriate for 
-#' the operating system.  Alternatively, the user can specify the number
+#' the operating system (if \code{parallel} is set to TRUE).
+#' Alternatively, the user can specify the number
 #' of cores they wish to use by first creating the corresponding 
 #' \code{MulticoreParam} (for Linux-like OS) or \code{SnowParam} (for Windows)
 #' object, and then passing it into the \code{dmrseq}
@@ -82,6 +83,11 @@
 #' in between neighboring CpGs to be included in the same 
 #' cluster when performing smoothing (should generally be larger than
 #' \code{maxGap})
+#' @param parallel a logical value that indicates whether the computation
+#' should be carried out in parallel using the parallel backend defined 
+#' by the \code{BPPARAM} argument (see the description of that parameter
+#' for details on how to specify the number of cores for your system). 
+#' Parallelization will reduce computation time.
 #' @return a data.frame that contains the results of the inference. The
 #'    data.frame contains one row for each candidate region, and 
 #'    10 columns, in the following order: 1. chr = 
@@ -147,6 +153,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate=NULL,
                    sampleIndex=seq(1,nrow(pData(bs))),
                    maxPerms=10, 
                    matchCovariate=NULL,
+                   parallel=FALSE,
                    BPPARAM=bpparam()){
   
   # check sampleIndex input
@@ -266,20 +273,24 @@ dmrseq <- function(bs, testCovariate, adjustCovariate=NULL,
   }
   
   # register the parallel backend
-  BiocParallel::register(BPPARAM)
-  backend <- "BiocParallel"
+  if (parallel){ 
+    BiocParallel::register(BPPARAM)
+    backend <- "BiocParallel"
   
-  if (verbose) {
-    if (bpparam()$workers == 1) {
-      mes <- "Using a single core (backend: %s).
-              "
-      message(sprintf(mes, backend))
-    }else {
-      mes <- paste0("Parallelizing using %s workers/cores ",
+    if (verbose) {
+      if (bpparam()$workers == 1) {
+        mes <- "Using a single core (backend: %s).
+                "
+        message(sprintf(mes, backend))
+      }else {
+        mes <- paste0("Parallelizing using %s workers/cores ",
                     "(backend: %s).
                     ")
-      message(sprintf(mes, bpparam()$workers, backend))
+        message(sprintf(mes, bpparam()$workers, backend))
+      }
     }
+  }else{
+    message("Using a single core")
   }
   
   message(paste0("Detecting candidate regions with coefficient larger than ",
@@ -290,7 +301,8 @@ dmrseq <- function(bs, testCovariate, adjustCovariate=NULL,
                  maxGapSmooth=maxGapSmooth,
                  smooth = smooth,
                  bpSpan=bpSpan,
-                 verbose = verbose) 
+                 verbose = verbose,
+                 parallel=parallel) 
   # check that at least one candidate region was found; if there were none there
   # is no need to go on to compute permutation tests...
   
@@ -401,7 +413,8 @@ Performing balanced permutations of condition across samples ",
                                     maxGapSmooth=maxGapSmooth,
                                     smooth = smooth,
                                     bpSpan=bpSpan,
-                                    verbose = verbose) 
+                                    verbose = verbose,
+                                    parallel=parallel) 
       
       
       res.flip.p$permNum <- permLabel

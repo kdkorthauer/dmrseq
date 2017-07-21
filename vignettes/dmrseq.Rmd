@@ -23,8 +23,8 @@ abstract: >
   inter-CpG variability to generate region-level statistics that can be
   comparable across the genome. This allows the framework to perform well even
   on samples as small as two per group. This vignette explains the
-  use of the package and demonstrates typical workflows.
-  dmrseq package version: `r packageVersion("dmrseq")`
+  use of the package and demonstrates typical workflows. This vignette was 
+  generated with dmrseq package version `r packageVersion("dmrseq")`
 output:
   rmarkdown::html_document:
     highlight: pygments

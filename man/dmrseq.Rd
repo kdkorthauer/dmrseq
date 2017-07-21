@@ -8,7 +8,7 @@ dmrseq(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
   minNumRegion = 5, smooth = TRUE, bpSpan = 1000, minInSpan = 30,
   maxGapSmooth = 2500, maxGap = 1000, verbose = TRUE,
   sampleIndex = seq(1, nrow(pData(bs))), maxPerms = 10,
-  matchCovariate = NULL, BPPARAM = bpparam())
+  matchCovariate = NULL, parallel = FALSE, BPPARAM = bpparam())
 }
 \arguments{
 \item{bs}{bsseq object containing the methylation values as well as the
@@ -90,12 +90,19 @@ will be blocked for when
  the null hypothesis and will decrease power).
  If not NULL (default), then no blocking is performed.}
 
+\item{parallel}{a logical value that indicates whether the computation
+should be carried out in parallel using the parallel backend defined 
+by the \code{BPPARAM} argument (see the description of that parameter
+for details on how to specify the number of cores for your system). 
+Parallelization will reduce computation time.}
+
 \item{BPPARAM}{a \code{MulticoreParam} or \code{SnowParam} object of 
 the \code{BiocParallel}
 package that defines a parallel backend.  The default option is 
 \code{BiocParallel::bpparam()} which will automatically creates a cluster 
 appropriate for 
-the operating system.  Alternatively, the user can specify the number
+the operating system (if \code{parallel} is set to TRUE).
+Alternatively, the user can specify the number
 of cores they wish to use by first creating the corresponding 
 \code{MulticoreParam} (for Linux-like OS) or \code{SnowParam} (for Windows)
 object, and then passing it into the \code{dmrseq}
