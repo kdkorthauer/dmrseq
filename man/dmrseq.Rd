@@ -127,9 +127,9 @@ a data.frame that contains the results of the inference. The
    for multiple comparisons to control false discovery rate).
 }
 \description{
-Performs a three-step approach that (1) detects candidate regions, 
+Performs a two-step approach that (1) detects candidate regions, and
 (2) scores candidate regions with an exchangeable (across the genome)
-statistic, and (3) evaluates statistical significance using a 
+statistic and evaluates statistical significance using a 
 permuation test on the pooled null distribution of scores.
 }
 \examples{

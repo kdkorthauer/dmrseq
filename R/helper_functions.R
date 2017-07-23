@@ -83,29 +83,27 @@
 #' data(dmrs.ex)
 "dmrs.ex"
 
-getEstimatePooled = function(meth.mat, unmeth.mat, design, coeff){
+getEstimatePooled = function(bs, design, coeff){
   # check whether the covariate of interest is a two group comparison
   # if not (covariate is a multi-level factor or a continuous variable)
   # then use single-loci estimate of methylation
   # effect instead of pooled mean diff
+  
   if (length(unique(design[,coeff]))==2){
     lev1 <- 1
     lev2 <- 0
     
     # pooled
-    est <- rowSums(meth.mat[,design[,coeff]==lev1]) /
-      (rowSums(meth.mat[,design[,coeff]==lev1] + 
-                 unmeth.mat[,design[,coeff]==lev1])) - 
-      rowSums(meth.mat[,design[,coeff]==lev2]) /
-      (rowSums(meth.mat[,design[,coeff]==lev2] + 
-                 unmeth.mat[,design[,coeff]==lev2]))
+    est<-rowSums(as.array(getCoverage(bs, type = "M")[,design[,coeff]==lev1]))/
+      rowSums(as.array(getCoverage(bs, type = "Cov")[,design[,coeff]==lev1])) - 
+      rowSums(as.array(getCoverage(bs, type = "M")[,design[,coeff]==lev2])) /
+      rowSums(as.array(getCoverage(bs, type = "Cov")[,design[,coeff]==lev2]))
     
-    sd <- 1.4826*sqrt(rowSums(cbind(rowMads(meth.mat[,design[,coeff]==lev1] / 
-                                          ((meth.mat[,design[,coeff]==lev1] + 
-                                        unmeth.mat[,design[,coeff]==lev1])))^2, 
-                                    rowMads(meth.mat[,design[,coeff]==lev2] /
-                                            ((meth.mat[,design[,coeff]==lev2] + 
-                                      unmeth.mat[,design[,coeff]==lev2])))^2)))
+    sd <- 1.4826*sqrt(rowSums(cbind(rowMads(
+      as.array(getCoverage(bs, type = "M")[,design[,coeff]==lev1]) / 
+          as.array(getCoverage(bs, type = "Cov")[,design[,coeff]==lev1]))^2, 
+      rowMads(as.array(getCoverage(bs, type = "M")[,design[,coeff]==lev2]) /
+          as.array(getCoverage(bs, type = "Cov")[,design[,coeff]==lev2]))^2)))
     return(list(rawBeta=est, sd=sd))
   }else{
     # continuous or multi-level factor case 
@@ -120,56 +118,33 @@ bumphunt = function (bs, design, sampleSize,
                      smooth = FALSE, bpSpan=1000,  
                      verbose = TRUE, parallel=FALSE, ...) 
 {
-  # extract relevant bsseq objects and remove the bsseq object itself
-  meth.mat = as.matrix(getCoverage(bs, type = "M"))
-  unmeth.mat = as.matrix(getCoverage(bs, type = "Cov")) - meth.mat
-  chr = as.character(seqnames(bs))
-  pos = start(bs)
-  
+
   #calculate smoothing span from minInSpan
   bpSpan2 <- NULL
-  for (ch in unique(chr)){
-    bpSpan2 <- c(bpSpan2, minInSpan*(max(pos[chr==ch]) - 
-                                       min(pos[chr==ch]) + 1) / sum(chr==ch))
+  for (ch in seqlevels(bs)){
+    bpSpan2 <- c(bpSpan2, minInSpan*
+                   (max(start(bs)[as.character(seqnames(bs))==ch]) - 
+                    min(start(bs)[as.character(seqnames(bs))==ch]) + 1) / 
+                   sum(as.character(seqnames(bs))==ch))
   }
   bpSpan2 <- mean(bpSpan2, na.rm = TRUE)
-  
-  rm(bs); gc()
-  
-  if (!is.matrix(meth.mat)) 
-    stop("'meth.mat' and 'unmeth.mat' must be a matrices.")
-  if (ncol(meth.mat) != nrow(design)) 
-    stop(paste0("Total number of columns in 'meth.mat' and 'unmeth.mat' must  ",
-                "match number of rows of 'design'"))
-  if (!(is.null(cutoff) || length(cutoff) %in% 1:2)) 
-    stop("'cutoff' has to be either NULL or a vector of length 1 or 2")
-  if (length(cutoff) == 2) 
-    cutoff <- sort(cutoff)
-  if (is.null(cutoff) | abs(cutoff) > 1 | abs(cutoff)==0) 
-    stop("Must specify a value for cutoff between 0 and 1")
-  subverbose <- max(as.integer(verbose) - 1L, 0)
-  
-  if (is.null(chr)) 
-    chr <- rep("Unspecified", length(pos))
-  if (is.factor(chr)) 
-    chr <- as.character(chr)
   
   if (verbose) 
     message(".....Computing coefficients.")
   
-  cov.means = rowMeans(meth.mat + unmeth.mat)
-  cov.meds = colMedians(meth.mat + unmeth.mat)
+  cov.means = rowMeans(as.array(getCoverage(bs, type = "Cov")))
   
   if (length(unique(design[,coeff])) == 2){
-    tmp <- getEstimatePooled(meth.mat, unmeth.mat, design, coeff)
+    tmp <- getEstimatePooled(bs, design, coeff)
     rawBeta <- tmp$rawBeta
     sd.raw <- tmp$sd
   }else{
-    tmp = estim(meth.mat = meth.mat, unmeth.mat = unmeth.mat, design = design, 
+    tmp = estim(bs, design = design, 
                 coeff = coeff)
     rawBeta <- tmp$meth.diff
     sd.raw = tmp$sd.meth.diff
   }
+  rm(tmp)
   
   sd.raw[sd.raw < 1e-5] <- 1e-5
   
@@ -181,7 +156,6 @@ bumphunt = function (bs, design, sampleSize,
   
   weights = (cov.means)/sd.adj
   
-  rm(tmp)
   rm(sd.adj)
   rm(cov.means)
   gc();
@@ -191,20 +165,21 @@ bumphunt = function (bs, design, sampleSize,
       message(".....Smoothing coefficients.")
     
     beta <- vector("list", 3)
-    beta[[1]] <- beta[[2]] <- rep(NA, length(pos))
-    for (chromosome in unique(chr)){
-      beta.tmp <- smoother(y = rawBeta[chr==chromosome], 
-                           x = pos[chr==chromosome], 
-                           chr=chr[chr==chromosome],
+    beta[[1]] <- beta[[2]] <- rep(NA, length(bs))
+    for (chromosome in seqlevels(bs)){
+      beta.tmp <- smoother(y=rawBeta[as.character(seqnames(bs))==chromosome], 
+                           x=start(bs)[as.character(seqnames(bs))==chromosome], 
+                           chr=chromosome,
                            maxGapSmooth=maxGapSmooth, 
-                           weights = weights[chr==chromosome],
+                           weights = weights[as.character(seqnames(bs))==
+                                               chromosome],
                            minNumRegion = minNumRegion, 
                            minInSpan = minInSpan, 
                            bpSpan = bpSpan, bpSpan2=bpSpan2,
                            verbose = verbose,
                            parallel=parallel)
-      beta[[1]][chr==chromosome] <- beta.tmp[[1]]
-      beta[[2]][chr==chromosome] <- beta.tmp[[2]]
+      beta[[1]][as.character(seqnames(bs))==chromosome] <- beta.tmp[[1]]
+      beta[[2]][as.character(seqnames(bs))==chromosome] <- beta.tmp[[2]]
     }
     
     beta[[3]] <- beta.tmp[[3]]
@@ -226,18 +201,13 @@ bumphunt = function (bs, design, sampleSize,
   beta <- betaSmooth
   rm(betaSmooth)
   
-  tab <- regionScanner(x = beta, y=rawBeta, chr = chr, pos = pos, maxGap=maxGap,
+  tab <- regionScanner(bs, x = beta, y=rawBeta, maxGap=maxGap,
                        cutoff = cutoff, minNumRegion = minNumRegion,
-                       meth.mat = meth.mat, unmeth.mat = unmeth.mat, 
                        design = design, coeff = coeff,
                        verbose=verbose, sampleSize=sampleSize,
                        parallel=parallel)
   rm(beta);
   rm(rawBeta);
-  rm(meth.mat);
-  rm(unmeth.mat);
-  rm(chr);
-  rm(pos);
   gc()
   if (nrow(tab) == 0) {
     if (verbose) 
@@ -403,11 +373,7 @@ meanDiff <- function(bs, dmrs, testCovariate, adjustCovariate){
                    "Returning beta estimates instead"))
     return(dmrs$beta)
   }else{
-    meth.mat = as.matrix(bsseq::getCoverage(bs, type = "M"))
-    unmeth.mat = as.matrix(bsseq::getCoverage(bs, type = "Cov") - meth.mat)
-    prop.mat = meth.mat / (meth.mat + unmeth.mat)
-    rm(meth.mat)
-    rm(unmeth.mat)
+    prop.mat = getCoverage(bs, type = "M") / getCoverage(bs, type = "Cov")
     levs <- unique(design[,coeff])
     
     meanDiff <- sapply(1:nrow(dmrs), function(x) {
@@ -421,11 +387,10 @@ meanDiff <- function(bs, dmrs, testCovariate, adjustCovariate){
   }
 } 
 
-regionScanner <- function(x, y=x, chr, pos,
+regionScanner <- function(bs, x, y=x,
                           ind=seq(along=x),order=TRUE, minNumRegion=5,
                           maxGap=300, cutoff=quantile(abs(x), 0.99),
-                          assumeSorted = FALSE, meth.mat=meth.mat,
-                          unmeth.mat = unmeth.mat, verbose = verbose,
+                          assumeSorted = FALSE, verbose = verbose,
                           design=design, coeff=coeff,
                           sampleSize=sampleSize,
                           parallel=parallel){
@@ -434,8 +399,9 @@ regionScanner <- function(x, y=x, chr, pos,
     ind <- intersect(which(!is.na(x)),ind)
   } 
   
-  cluster <- bumphunter::clusterMaker(chr, pos, maxGap=maxGap, 
-                                       assumeSorted = assumeSorted)
+  cluster <- bumphunter::clusterMaker(as.character(seqnames(bs)), start(bs), 
+                                      maxGap=maxGap, 
+                                      assumeSorted = assumeSorted)
   Indexes <- bumphunter::getSegments(x = x[ind], f = cluster[ind], 
                                       cutoff = cutoff, 
                                       assumeSorted = assumeSorted, 
@@ -455,12 +421,6 @@ regionScanner <- function(x, y=x, chr, pos,
   # less than 75% of the 
   Indexes <- trimEdges(x=x[ind], candidates=Indexes, 
                        verbose=FALSE, minNumRegion=minNumRegion)
-
-  # function to get the base pair length of a cluster with
-  # index ix
-  grabSpan <- function(ix, bp){
-    return(	max(bp[ix]) - min(bp[ix]) + 1 )
-  }
   
   for(i in 1:2){
     # get number of loci in region
@@ -476,20 +436,18 @@ regionScanner <- function(x, y=x, chr, pos,
     sampleSize <- nrow(design)/2
     dat <- data.frame(
       g.fac=factor(as.vector(sapply(design[,coeff], 
-                                    function(x) 
-                                      rep(x,nrow(meth.mat[ix,,drop=FALSE]))))),
+                                    function(x) rep(x,length(ix))))),
       sample=factor(as.vector(sapply(1:(sampleSize*2), 
-                                     function(x) 
-                                       rep(x,nrow(meth.mat[ix,,drop=FALSE]))))),
-      meth=melt(meth.mat[ix,])$value,
-      unmeth=melt(unmeth.mat[ix,])$value,
-      L = as.vector(rep(pos[ix], nrow(design))),
-      lix = length(ix)
+                                     function(x) rep(x,length(ix))))),
+      meth=melt(as.array(getCoverage(bs, type = "M")[ix,]))$value,
+      cov=melt(as.array(getCoverage(bs, type = "Cov")[ix,]))$value,
+      L = as.vector(rep(start(bs)[ix], nrow(design)))
     )
     
     # condition to remove regions with constant methylation / unmeth values
     if ( ! ((length(unique(dat$meth)) == 1 & dat$meth[1] == 0) |
-            (length(unique(dat$unmeth)) == 1 & dat$unmeth[1] == 0)) ){ 
+            (length(unique(dat$cov-dat$meth)) == 1 & 
+             (dat$cov-dat$meth)[1] == 0)) ){ 
       
       dat$pos <- as.numeric(factor(dat$L))   				
       X <- model.matrix( ~ dat$g.fac )
@@ -500,11 +458,9 @@ regionScanner <- function(x, y=x, chr, pos,
                     "model. Drop some terms in formula"))
       
       Y <- as.matrix(dat$meth)
-      dat$N <- dat$meth+dat$unmeth
-      N <- as.matrix(dat$N)
+      N <- as.matrix(dat$cov)
       
-      dat$MedCov <- rep(as.numeric(by(dat$N, dat$pos, median)), sampleSize*2)
-      dat$MedCovS <- rep(as.numeric(by(dat$N, dat$sample, median)), length(ix))
+      dat$MedCov <- rep(as.numeric(by(dat$cov, dat$pos, median)), sampleSize*2)
       
       # tol is the convergence criteria (for difference Between two
       # iterations of the dispersion parameter estimate
@@ -604,40 +560,39 @@ regionScanner <- function(x, y=x, chr, pos,
                    " candidate regions."))
   }        			
   
-  res <- vector("list",2)
+  Indexes <- c(Indexes[[1]], Indexes[[2]])
   t1 <- proc.time()
-  for(i in 1:2){
-    res[[i]]<-
-      data.frame(chr=sapply(Indexes[[i]], 
-                            function(Index) chr[ind[Index[1]]]),
-                 start=sapply(Indexes[[i]], 
-                              function(Index) min(pos[ind[Index]])),
-                 end=sapply(Indexes[[i]], 
-                            function(Index) max(pos[ind[Index]])),
-                 indexStart=sapply(Indexes[[i]], 
+  res <-
+      data.frame(chr=sapply(Indexes, function(Index) 
+                              as.character(seqnames(bs))[ind[Index[1]]]),
+                 start=sapply(Indexes, 
+                              function(Index) min(start(bs)[ind[Index]])),
+                 end=sapply(Indexes, 
+                            function(Index) max(start(bs)[ind[Index]])),
+                 indexStart=sapply(Indexes, 
                                    function(Index) min(ind[Index])),
-                 indexEnd = sapply(Indexes[[i]], 
+                 indexEnd = sapply(Indexes, 
                                    function(Index) max(ind[Index])),
-                 L = sapply(Indexes[[i]], length), stringsAsFactors=FALSE)               
+                 L = sapply(Indexes, length), stringsAsFactors=FALSE)               
     
-    if (length(Indexes[[i]]) > 1){
-      if (parallel){
-        ret <- t(matrix(unlist(bplapply(Indexes[[i]], function(Index)
-          asin.gls.cov(ix=ind[Index],design=design,coeff=coeff))), nrow=2)) 
-      }else{
-        ret <- t(matrix(unlist(lapply(Indexes[[i]], function(Index)
-          asin.gls.cov(ix=ind[Index],design=design,coeff=coeff))), nrow=2)) 
-      }
-      res[[i]]$beta <- ret[,1]
-      res[[i]]$stat <- ret[,2]      
-    }else if(length(Indexes[[i]]) > 0){
-      # avoid error from trying to rearrange a matrix when there is only one 
-      # or zero candidate regions
-      ret <- asin.gls.cov(ix=ind[Indexes[[i]][[1]]], design=design, coeff=coeff)
-      res[[i]]$beta <- ret[1]
-      res[[i]]$stat <- ret[2]
-    }			
-  }
+  if (length(Indexes) > 1){
+    if (parallel){
+      ret <- t(matrix(unlist(bplapply(Indexes, function(Index)
+        asin.gls.cov(ix=ind[Index],design=design,coeff=coeff))), nrow=2)) 
+    }else{
+      ret <- t(matrix(unlist(lapply(Indexes, function(Index)
+        asin.gls.cov(ix=ind[Index],design=design,coeff=coeff))), nrow=2)) 
+    }
+    res$beta <- ret[,1]
+    res$stat <- ret[,2]      
+  }else if(length(Indexes) > 0){
+    # avoid error from trying to rearrange a matrix when there is only one 
+    # or zero candidate regions
+    ret <- asin.gls.cov(ix=ind[Indexes[[1]]], design=design, coeff=coeff)
+    res$beta <- ret[1]
+    res$stat <- ret[2]
+  }			
+
   
   t2 <- proc.time()
   if (verbose){ 
@@ -645,8 +600,6 @@ regionScanner <- function(x, y=x, chr, pos,
                    " min to score candidate regions."))
   }
   
-  names(res) <- c("up","dn")
-  res <- rbind(res$up,res$dn)
   if(order & nrow(res)>0) res <- res[order(-abs(res$stat)),]
   
   return(res)
@@ -718,7 +671,7 @@ smoother <- function(y, x=NULL, weights=NULL, chr=chr,
   ret.all <- NULL
   
   t1 <- proc.time()
-  clusterC <- bumphunter::clusterMaker(chr, x, 
+  clusterC <- bumphunter::clusterMaker(rep(chr, length(x)), x, 
                                       maxGap = maxGapSmooth)
     
   Indexes <- split(seq(along=clusterC), clusterC)
@@ -748,7 +701,7 @@ smoother <- function(y, x=NULL, weights=NULL, chr=chr,
   if (verbose){ 
     t2 <- proc.time()
     message(paste0("..........Done Smoothing Chromosome ", 
-                   chr[1], ". Took ", 
+                   chr, ". Took ", 
                    round((t2-t1)[3]/60, 2), " minutes"))
   }
   
@@ -804,12 +757,12 @@ getEstimate = function (mat, design, coeff)
 }
 
 # *Experimental* - only used if not a standard two-group comparison
-estim = function (meth.mat, unmeth.mat, design, coeff) 
+estim = function (bs, design, coeff) 
 {
   
   ## For a linear regression of logit(meth.level) on the biological 
   # group indicator variable at each CpG site
-  mat = meth.mat/(meth.mat + unmeth.mat)
+  mat = getCoverage(bs, type = "M")/getCoverage(bs, type = "Cov")
   
   eps = min(mat[mat != 0])
   mat[mat == 0] = eps

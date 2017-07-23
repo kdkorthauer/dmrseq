@@ -1,8 +1,8 @@
 #' Main function for detecting and evaluating significance of DMRs.
 #' 
-#' Performs a three-step approach that (1) detects candidate regions, 
+#' Performs a two-step approach that (1) detects candidate regions, and
 #' (2) scores candidate regions with an exchangeable (across the genome)
-#' statistic, and (3) evaluates statistical significance using a 
+#' statistic and evaluates statistical significance using a 
 #' permuation test on the pooled null distribution of scores.
 #' 
 #' @param bs bsseq object containing the methylation values as well as the
@@ -156,6 +156,16 @@ dmrseq <- function(bs, testCovariate, adjustCovariate=NULL,
                    parallel=FALSE,
                    BPPARAM=bpparam()){
   
+  stopifnot(class(bs) == "BSseq")
+  
+  if (!(is.null(cutoff) || length(cutoff) %in% 1:2)) 
+    stop("'cutoff' has to be either NULL or a vector of length 1 or 2")
+  if (length(cutoff) == 2) 
+    cutoff <- sort(cutoff)
+  if (is.null(cutoff) | abs(cutoff) > 1 | abs(cutoff)==0) 
+    stop("Must specify a value for cutoff between 0 and 1")
+  subverbose <- max(as.integer(verbose) - 1L, 0)
+  
   # check sampleIndex input
   if(!(class(sampleIndex)=="integer") | min(sampleIndex) < 1 | 
      max(sampleIndex) > nrow(pData(bs)) | 
@@ -169,9 +179,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate=NULL,
   bs <- bs[,sampleIndex]
   
   # check for loci with missing data
-  Cov = as.matrix(getCoverage(bs, type = "Cov"))
-  which.zero = which(rowSums(Cov==0) > 0)
-  rm(Cov)
+  which.zero = which(rowSums(as.matrix(getCoverage(bs, type = "Cov"))==0) > 0)
   
   if (length(which.zero) > 0){
     stop(paste0(which.zero, " loci have zero coverage in one or more ",
@@ -204,16 +212,6 @@ dmrseq <- function(bs, testCovariate, adjustCovariate=NULL,
     rm(tc)
   }
   
-  if (is.character(matchCovariate)){
-    tc <- matchCovariate
-    matchCovariate <- which(colnames(pData(bs)) == matchCovariate)
-    if (length(matchCovariate)==0){
-      stop(paste0("matchCovariate named ", tc, 
-                  " not found in pData(). ", 
-                  "Please specify a valid matchCovariate"))
-    }
-    rm(tc)
-  }
   
   # construct the design matrix using the pData of bs
   if (ncol(pData(bs)) < max(testCovariate, adjustCovariate)){
@@ -264,12 +262,16 @@ dmrseq <- function(bs, testCovariate, adjustCovariate=NULL,
                    unique(pData(bs)[,testCovariate][which(design[,coeff]==0)])))
   }
   if(!is.null(matchCovariate)){
-    if(sum(grepl(matchCovariate, colnames(pData(bs))))==0){
-      stop("Error: no column in pData() found that matches the matchCovariate")
-    }else if(length(grep(matchCovariate, colnames(pData(bs)))) > 1){
-      stop("Error: matchCovariate matches more than one column in pData()")
+    if (is.character(matchCovariate)){
+      if(sum(grepl(matchCovariate, colnames(pData(bs))))==0){
+        stop("Error: no column in pData() found that matches the matchCovariate")
+      }else if(length(grep(matchCovariate, colnames(pData(bs)))) > 1){
+        stop("Error: matchCovariate matches more than one column in pData()")
+      }
+      mC <- grep(matchCovariate, colnames(pData(bs)))
+    }else{
+      stopifnot(matchCovariate <= ncol(pData(bs)))
     }
-    mC <- grep(matchCovariate, colnames(pData(bs)))
   }
   
   # register the parallel backend
