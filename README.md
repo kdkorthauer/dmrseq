@@ -1,6 +1,8 @@
 # dmrseq: Inference for differentially methylated regions (DMRs) from bisulfite sequencing
 
-<center><img src="/inst/sticker/dmrseq.png" height="300"/></center>
+<p align="center">
+  <img src="/inst/sticker/dmrseq.png" height="300"/>
+</p>
 
 An central question in the analysis of bisulfite sequencing data 
 is to detect regions (collections of 
