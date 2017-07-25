@@ -397,10 +397,17 @@ functionality to add annotations using the
 see the nearby CpG categories (island, shore, shelf, open sea) and nearby
 coding sequences.
 
+To retrieve annotations for genomes supported by **annotatr**, use the 
+helper function `getAnnot`, and pass this annotation object to the `plotDMRs` 
+function as the `annoTrack` parameter.
+
 ```{r plot, out.width='\\textwidth', fig.height = 2.5}
-data(annot.chr21)
+# load the annotatr package & get annotations for hg19
+library(annotatr)
+annoTrack <- getAnnot("hg18")
+
 plotDMRs(bs, regions=regions[1,], testCovariate="CellType",
-    annoTrack=annot.chr21)
+    annoTrack=annoTrack)
 ```
 
 ### Exporting results to CSV files

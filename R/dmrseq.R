@@ -154,7 +154,8 @@ dmrseq <- function(bs, testCovariate, adjustCovariate=NULL,
                    maxPerms=10, 
                    matchCovariate=NULL,
                    parallel=FALSE,
-                   BPPARAM=bpparam()){
+                   BPPARAM=bpparam(),
+                   workers = workers){
   
   stopifnot(class(bs) == "BSseq")
   
@@ -295,16 +296,26 @@ dmrseq <- function(bs, testCovariate, adjustCovariate=NULL,
     message("Using a single core")
   }
   
+  meth.mat <- as.matrix(getCoverage(bs, type="M"))
+  cov.mat <- as.matrix(getCoverage(bs, type="Cov"))
+  pos <- start(bs)
+  chr <- as.character(seqnames(bs))
+  meta <- pData(bs)
+  rm(bs)
+  gc()
+  
   message(paste0("Detecting candidate regions with coefficient larger than ",
                  unique(abs(cutoff)), " in magnitude."))
-  OBS = bumphunt(bs=bs, design = design, sampleSize=sampleSize,
+  OBS = bumphunt(meth.mat=meth.mat, cov.mat=cov.mat, pos=pos, chr=chr, 
+                 design = design, sampleSize=sampleSize,
                  coeff = coeff, minInSpan=minInSpan, minNumRegion=minNumRegion,
                  cutoff = cutoff, maxGap = maxGap, 
                  maxGapSmooth=maxGapSmooth,
                  smooth = smooth,
                  bpSpan=bpSpan,
                  verbose = verbose,
-                 parallel=parallel) 
+                 parallel=parallel,
+                 workers = workers) 
   # check that at least one candidate region was found; if there were none there
   # is no need to go on to compute permutation tests...
   
@@ -384,10 +395,10 @@ Performing balanced permutations of condition across samples ",
       # that the comparison of interest is tissue type. Not matching would mean
       # the null is really not null
       if(!is.null(matchCovariate)){
-        permLabel <- paste0(paste0(pData(bs)[designr[,coeff]==1,mC], 
+        permLabel <- paste0(paste0(meta[designr[,coeff]==1,mC], 
                                    collapse="_"),
                             "vs", 
-                            paste0(pData(bs)[(1-designr[,coeff])==1,mC],
+                            paste0(meta[(1-designr[,coeff])==1,mC],
                                    collapse="_"))
         
         c1 <- unlist(strsplit(permLabel, "vs"))[1]
@@ -408,7 +419,8 @@ Performing balanced permutations of condition across samples ",
         permLabel <- j
       }
       
-      res.flip.p = bumphunt(bs=bs, design = designr, sampleSize=sampleSize,
+      res.flip.p = bumphunt(meth.mat=meth.mat, cov.mat=cov.mat, pos=pos, chr=chr, 
+                            design = designr, sampleSize=sampleSize,
                                     coeff = coeff, minInSpan=minInSpan, 
                                     minNumRegion=minNumRegion,
                                     cutoff = cutoff, maxGap = maxGap, 
@@ -416,7 +428,8 @@ Performing balanced permutations of condition across samples ",
                                     smooth = smooth,
                                     bpSpan=bpSpan,
                                     verbose = verbose,
-                                    parallel=parallel) 
+                                    parallel=parallel,
+                            workers=workers) 
       
       
       res.flip.p$permNum <- permLabel
