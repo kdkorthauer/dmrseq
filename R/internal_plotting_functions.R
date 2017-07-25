@@ -36,7 +36,7 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
   secondvector <- (1:length(legtext))-1
   textwidths <- xcoords/secondvector # this works for all but the first element
   textwidths[1] <- start(gr) + 0.69*w 
-  legend(start(gr) + 0.05*w, 1.9, bty = "n", xpd=TRUE, cex=0.9,
+  legend(start(gr) + 0.05*w, 2, bty = "n", xpd=TRUE, cex=0.9,
          legend = legtext,
          fill = c("forestgreen", "goldenrod2", "dodgerblue", "blue3"),
          border = c("forestgreen", "goldenrod2", "dodgerblue", "blue3"),
@@ -471,8 +471,7 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
                            highlightMain = FALSE, 
                            qval=NULL, stat=NULL) {
 
-  layout(matrix(1:2, ncol = 1), heights = c(2,2,1))
-
+  layout(matrix(1:2, ncol = 1), heights = c(2,1.5))
   .dmrPlotSmoothData(BSseq = BSseq, region = region, extend = extend, 
                      addRegions = addRegions,
                      col = col, lty = lty, lwd = lwd, label=label, 
