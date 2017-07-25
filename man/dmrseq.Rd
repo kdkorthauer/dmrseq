@@ -8,7 +8,8 @@ dmrseq(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
   minNumRegion = 5, smooth = TRUE, bpSpan = 1000, minInSpan = 30,
   maxGapSmooth = 2500, maxGap = 1000, verbose = TRUE,
   sampleIndex = seq(1, nrow(pData(bs))), maxPerms = 10,
-  matchCovariate = NULL, parallel = FALSE, BPPARAM = bpparam())
+  matchCovariate = NULL, parallel = FALSE, BPPARAM = bpparam(),
+  workers = workers)
 }
 \arguments{
 \item{bs}{bsseq object containing the methylation values as well as the

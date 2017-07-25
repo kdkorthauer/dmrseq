@@ -8,8 +8,9 @@ getAnnot(genomeName)
 }
 \arguments{
 \item{genomeName}{a character object that indicates which organism is 
-under study. Use the function \code{builtin_genomes()} from the annotatr
-package to see
+under study. Use the function \code{builtin_genomes2()} (modified from
+the annotatr
+package) to see
 a character vector of available genome names to choose from (see 
 \code{annotatr} documentation for more details).}
 }
@@ -37,12 +38,11 @@ just by leaving the \code{annoTrack} argument as NULL.
 }
 \examples{
 
-# get annotation information for hg19
-annoTrack <- getAnnot("hg19")
+# need to load annotatr package with "library(annotatr)" before 
+# running this command to retrieve annotations
 
-# only keep this information for chromosome 21 (for example dataset)
-annoTrack <- lapply(annoTrack, function(x){
-    x[seqnames(x)=="chr21",]
- })
+# get annotation information for hg18
+annoTrack <- getAnnot("hg18")
+
 
 }
