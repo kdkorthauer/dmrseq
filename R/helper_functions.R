@@ -70,10 +70,12 @@
 #'    4. indexStart = the index of the region's first CpG, 
 #'    5. indexEnd = the index of the region's last CpG,
 #'    6. L = the number of CpGs contained in the region,
-#'    7. beta = the coefficient value for the condition difference,
-#'    8. stat = the test statistic for the condition difference,
-#'    9. pval = the permutation p-value for the significance of the test
-#'    statistic, and 10. qval = the q-value for the test statistic (adjustment
+#'    7. area = the sum of the smoothed beta values
+#'    8. beta = the coefficient value for the condition difference,
+#'    9. stat = the test statistic for the condition difference,
+#'    10. pval = the permutation p-value for the significance of the test
+#'    statistic, and 
+#'    11. qval = the q-value for the test statistic (adjustment
 #'    for multiple comparisons to control false discovery rate).
 #' @source Obtained from running the examples in \code{\link{dmrseq}}. 
 #' A script which executes these steps 
@@ -238,8 +240,10 @@ refineEdges <- function(y, candidates = NULL, cutoff=qt(0.975,2*sampleSize-2),
     }else{
       sig <- -1
     }
+    if(length(candidates[[ii]])>0){
     which.long <- which(sapply(candidates[[ii]],length) > minNumRegion)
-    trimmed[[ii]][which.long] <- sapply(candidates[[ii]][which.long], 
+    if (length(which.long)>0){
+      trimmed[[ii]][which.long] <- sapply(candidates[[ii]][which.long], 
                                         function(x){
                                           idx <- which(direction[x]==sig)
                                           if (length(idx) > 0){
@@ -253,8 +257,9 @@ refineEdges <- function(y, candidates = NULL, cutoff=qt(0.975,2*sampleSize-2),
                                             x
                                           }
                                         })
-    trimmed[[ii]][sapply(trimmed[[ii]], is.null)] <- NULL
-  }
+      trimmed[[ii]][sapply(trimmed[[ii]], is.null)] <- NULL
+    }
+  }}
   
   return(trimmed)
 }
@@ -268,14 +273,16 @@ trimEdges <- function(x, candidates = NULL,
   
   trimmed <- candidates
   for(ii in 1:2){
+    if (length(candidates[[ii]])>0){
     if (ii == 1){
       sig <- 1
     }else{
       sig <- -1
     }
     x <- x*sig
-    which.long <- which(sapply(candidates[[ii]],length) > minNumRegion)
-    trimmed[[ii]][which.long] <- sapply(candidates[[ii]][which.long],  
+    which.long2 <- which(sapply(candidates[[ii]],length) > minNumRegion)
+    if (length(which.long2)>0){
+      trimmed[[ii]][which.long2] <- sapply(candidates[[ii]][which.long2],  
                                         function(w){
                                           mid <- which.max(x[w])
                                           new.start <- 1
@@ -328,7 +335,8 @@ trimEdges <- function(x, candidates = NULL,
                                             return(w)
                                           }
                                         })
-  }
+    }
+  }}
   return(trimmed)  
 }
 
@@ -415,17 +423,29 @@ regionScanner <- function(meth.mat=meth.mat, cov.mat=cov.mat, pos=pos, chr=chr,
   # only keep up and down indices
   Indexes <- Indexes[1:2]
   
+  if (sum(sapply(Indexes, length))==0){
+    return(NULL)
+  }
+  
   # refine edges -> start = first (stop = last) position with a raw difference
   # that meets the threshold - biggest impact on small regions
   Indexes <- refineEdges(y=y[ind], candidates=Indexes, cutoff=cutoff,
                          verbose=FALSE, minNumRegion=minNumRegion,
                          sampleSize=sampleSize)
   
+  if (sum(sapply(Indexes, length))==0){
+    return(NULL)
+  }
+  
   # refine edges II -> for larger regions, when effect size changes over the 
   # region, remove portions at the beginning and end where effect size is 
   # less than 75% of the 
   Indexes <- trimEdges(x=x[ind], candidates=Indexes, 
                        verbose=FALSE, minNumRegion=minNumRegion)
+  
+  if (sum(sapply(Indexes, length))==0){
+    return(NULL)
+  }
   
   for(i in 1:2){
     # get number of loci in region
@@ -551,9 +571,9 @@ regionScanner <- function(meth.mat=meth.mat, cov.mat=cov.mat, pos=pos, chr=chr,
         stat <- beta <- NA
       }
       
-      return(data.frame(beta=beta,stat=stat))
+      return(data.frame(beta=beta,stat=stat,constant=FALSE))
     }else{
-      return(data.frame(beta=NA,stat=NA))
+      return(data.frame(beta=NA,stat=NA,constant=TRUE))
     }
   }
   
@@ -564,7 +584,19 @@ regionScanner <- function(meth.mat=meth.mat, cov.mat=cov.mat, pos=pos, chr=chr,
                    " candidate regions."))
   }        			
   
+  if (numCandidates==0){
+    return(NULL)
+  }
+  
   Indexes <- c(Indexes[[1]], Indexes[[2]])
+  
+  maxLength <- max(sapply(Indexes, length))
+  if (maxLength > 1000){
+    message(paste0("Note: candidate regions with more than 1000 CpGs detected.",
+                   " It is recommended to decrease the value of maxGap to ",
+                   "increase computational efficiency."))
+  }
+  
   t1 <- proc.time()
   res <-
       data.frame(chr=sapply(Indexes, function(Index) 
@@ -577,7 +609,10 @@ regionScanner <- function(meth.mat=meth.mat, cov.mat=cov.mat, pos=pos, chr=chr,
                                    function(Index) min(ind[Index])),
                  indexEnd = sapply(Indexes, 
                                    function(Index) max(ind[Index])),
-                 L = sapply(Indexes, length), stringsAsFactors=FALSE)               
+                 L = sapply(Indexes, length), 
+                 area = sapply(Indexes, function(Index) 
+                            abs(sum(x[ind[Index]]))),
+                 stringsAsFactors=FALSE)               
    
   
   if (parallel){
@@ -588,7 +623,10 @@ regionScanner <- function(meth.mat=meth.mat, cov.mat=cov.mat, pos=pos, chr=chr,
 	  asin.gls.cov(ix=ind[Index],design=design,coeff=coeff)))
   }
   res$beta <- ret$beta
-  res$stat <- ret$stat      
+  res$stat <- ret$stat    
+  
+  # remove regions that had constant meth values
+  res <- res[!ret$constant,]
 
   rm(meth.mat)
   rm(cov.mat)
@@ -678,10 +716,10 @@ smoother <- function(y, x=NULL, weights=NULL, chr=chr,
     
   idx <- NULL ## for R CMD check
   if (parallel){
-    ret <- do.call("rbind", bplapply(Indexes, function(idx){
+    ret <- do.call("rbind", mclapply(Indexes, function(idx){
       sm <- locfitByCluster2(idx)
       return(sm)
-    }))
+    }, mc.cores=bpparam()$workers))
   }else{
     ret <- do.call("rbind", lapply(Indexes, function(idx){
       sm <- locfitByCluster2(idx)
