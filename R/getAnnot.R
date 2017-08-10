@@ -341,7 +341,7 @@ build_cpg_annots2 = function(genome = builtin_genomes2(),
 #' @examples
 #' # Example with hg19 gene promoters
 #' annots = c('hg19_genes_promoters')
-#' annots_gr = build_annotations(genome = 'hg19', annotations = annots)
+#' annots_gr = build_annotations2(genome = 'hg19', annotations = annots)
 #'
 #' # See vignette for an example with custom annotation
 #'

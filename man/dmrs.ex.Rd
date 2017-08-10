@@ -13,10 +13,12 @@
    4. indexStart = the index of the region's first CpG, 
    5. indexEnd = the index of the region's last CpG,
    6. L = the number of CpGs contained in the region,
-   7. beta = the coefficient value for the condition difference,
-   8. stat = the test statistic for the condition difference,
-   9. pval = the permutation p-value for the significance of the test
-   statistic, and 10. qval = the q-value for the test statistic (adjustment
+   7. area = the sum of the smoothed beta values
+   8. beta = the coefficient value for the condition difference,
+   9. stat = the test statistic for the condition difference,
+   10. pval = the permutation p-value for the significance of the test
+   statistic, and 
+   11. qval = the q-value for the test statistic (adjustment
    for multiple comparisons to control false discovery rate).}
 \source{
 Obtained from running the examples in \code{\link{dmrseq}}. 

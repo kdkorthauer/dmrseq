@@ -9,7 +9,7 @@ dmrseq(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
   maxGapSmooth = 2500, maxGap = 1000, verbose = TRUE,
   sampleIndex = seq(1, nrow(pData(bs))), maxPerms = 10,
   matchCovariate = NULL, parallel = FALSE, BPPARAM = bpparam(),
-  workers = workers)
+  workers = workers, stat = "stat")
 }
 \arguments{
 \item{bs}{bsseq object containing the methylation values as well as the
@@ -110,6 +110,16 @@ object, and then passing it into the \code{dmrseq}
 function. This could be done to specify a parallel backend on a Linux-like
 OS with, say 4 
 cores by setting \code{BPPARAM=BiocParallel::MulticoreParam(workers=4)}}
+
+\item{stat}{a character vector indicating the name of the column of the 
+output to use as the region-level test statistic. Default value is "stat"
+which is the region level-statistic designed to be comparable across the
+genome.
+It is not recommended to change this argument, but it can be done for
+experimental purposes. Possible values are: "L" - the number of loci
+in the region, "area" - the sum of the smoothed loci statistics,
+"beta" - the effect size of the region, "stat" - the test statistic for
+the region, or "avg" - the average smoothed loci statistic.}
 }
 \value{
 a data.frame that contains the results of the inference. The
@@ -121,10 +131,12 @@ a data.frame that contains the results of the inference. The
    4. indexStart = the index of the region's first CpG, 
    5. indexEnd = the index of the region's last CpG,
    6. L = the number of CpGs contained in the region,
-   7. beta = the coefficient value for the condition difference,
-   8. stat = the test statistic for the condition difference,
-   9. pval = the permutation p-value for the significance of the test
-   statistic, and 10. qval = the q-value for the test statistic (adjustment
+   7. area = the sum of the smoothed beta values
+   8. beta = the coefficient value for the condition difference,
+   9. stat = the test statistic for the condition difference,
+   10. pval = the permutation p-value for the significance of the test
+   statistic, and 
+   11. qval = the q-value for the test statistic (adjustment
    for multiple comparisons to control false discovery rate).
 }
 \description{
