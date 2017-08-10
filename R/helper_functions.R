@@ -242,7 +242,7 @@ refineEdges <- function(y, candidates = NULL, cutoff=qt(0.975,2*sampleSize-2),
     }
     if(length(candidates[[ii]])>0){
     which.long <- which(sapply(candidates[[ii]],length) > minNumRegion)
-    if (length(which.long)>0){
+    if (length(which.long)>1){
       trimmed[[ii]][which.long] <- sapply(candidates[[ii]][which.long], 
                                         function(x){
                                           idx <- which(direction[x]==sig)
@@ -258,6 +258,21 @@ refineEdges <- function(y, candidates = NULL, cutoff=qt(0.975,2*sampleSize-2),
                                           }
                                         })
       trimmed[[ii]][sapply(trimmed[[ii]], is.null)] <- NULL
+    }else if (length(which.long)==1){
+      trimmed[[ii]][[which.long]] <- sapply(candidates[[ii]][which.long], 
+                                          function(x){
+                                            idx <- which(direction[x]==sig)
+                                            if (length(idx) > 0){
+                                              if( length(min(idx):max(idx)) >= 
+                                                  minNumRegion ){
+                                                x[min(idx):max(idx)]
+                                              }else{
+                                                x
+                                              }
+                                            }else{
+                                              x
+                                            }
+                                          })
     }
   }}
   
@@ -282,7 +297,7 @@ trimEdges <- function(x, candidates = NULL,
     x <- x*sig
     which.long2 <- which(sapply(candidates[[ii]],length) > minNumRegion)
     if (length(which.long2)>0){
-      trimmed[[ii]][which.long2] <- sapply(candidates[[ii]][which.long2],  
+      repl <- sapply(candidates[[ii]][which.long2],  
                                         function(w){
                                           mid <- which.max(x[w])
                                           new.start <- 1
@@ -335,6 +350,11 @@ trimEdges <- function(x, candidates = NULL,
                                             return(w)
                                           }
                                         })
+      if (length(which.long2)>1){
+        trimmed[[ii]][which.long2] <- repl
+      }else{
+        trimmed[[ii]][[which.long2]] <- repl
+      }
     }
   }}
   return(trimmed)  
