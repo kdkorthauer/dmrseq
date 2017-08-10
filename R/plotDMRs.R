@@ -116,6 +116,10 @@
 #'  \code{pData(bs)} contains the covariate of interest that will be tested 
 #'  for association of methylation levels. This is used to construct the 
 #'  design matrix for the test statistic calculation.
+#'  
+#' @param includeYlab a logical indicating whether to include the Y axis
+#'  label "Methylation" (useful to turn off if combining multiple region
+#'  figures and you do not want to include redundant y axis label information)
 #' 
 #' @export
 #' 
@@ -151,7 +155,7 @@ plotDMRs <- function(BSseq, regions = NULL, testCovariate=NULL,
                             pointsMinCov = 1, 
                             highlightMain = FALSE, 
                             qval=TRUE, stat=TRUE,
-                            verbose = TRUE) {
+                            verbose = TRUE, includeYlab=TRUE) {
   # adapted from plotManyRegions from bsseq plot to 
   # take in a vector of qval values 
   # (1 per region in regions 
@@ -224,7 +228,7 @@ plotDMRs <- function(BSseq, regions = NULL, testCovariate=NULL,
                       addPoints = addPoints,
                       pointsMinCov = pointsMinCov, 
                       highlightMain = highlightMain,
-                      qval=qval, stat=stat)
+                      qval=qval, stat=stat, includeYlab=includeYlab)
     }
 }
 
