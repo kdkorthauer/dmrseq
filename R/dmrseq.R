@@ -88,6 +88,15 @@
 #' by the \code{BPPARAM} argument (see the description of that parameter
 #' for details on how to specify the number of cores for your system). 
 #' Parallelization will reduce computation time.
+#' @param stat a character vector indicating the name of the column of the 
+#'   output to use as the region-level test statistic. Default value is "stat"
+#'   which is the region level-statistic designed to be comparable across the
+#'   genome.
+#'   It is not recommended to change this argument, but it can be done for
+#'   experimental purposes. Possible values are: "L" - the number of loci
+#'   in the region, "area" - the sum of the smoothed loci statistics,
+#'   "beta" - the effect size of the region, "stat" - the test statistic for
+#'   the region, or "avg" - the average smoothed loci statistic.
 #' @return a data.frame that contains the results of the inference. The
 #'    data.frame contains one row for each candidate region, and 
 #'    10 columns, in the following order: 1. chr = 
@@ -97,10 +106,12 @@
 #'    4. indexStart = the index of the region's first CpG, 
 #'    5. indexEnd = the index of the region's last CpG,
 #'    6. L = the number of CpGs contained in the region,
-#'    7. beta = the coefficient value for the condition difference,
-#'    8. stat = the test statistic for the condition difference,
-#'    9. pval = the permutation p-value for the significance of the test
-#'    statistic, and 10. qval = the q-value for the test statistic (adjustment
+#'    7. area = the sum of the smoothed beta values
+#'    8. beta = the coefficient value for the condition difference,
+#'    9. stat = the test statistic for the condition difference,
+#'    10. pval = the permutation p-value for the significance of the test
+#'    statistic, and 
+#'    11. qval = the q-value for the test statistic (adjustment
 #'    for multiple comparisons to control false discovery rate).
 #' @keywords inference
 #' @importFrom outliers grubbs.test
@@ -121,13 +132,13 @@
 #' predict preplot qt quantile rbeta rbinom runif
 #' @importFrom utils combn
 #' @importFrom BiocParallel bplapply register MulticoreParam bpparam
+#' @importFrom parallel mclapply
 #'
 #' @import bsseq 
 #' @import GenomicRanges
 #' @import nlme
 #' @import annotatr
 #' @import ggplot2
-
 #' 
 #' @export
 #' 
@@ -155,7 +166,8 @@ dmrseq <- function(bs, testCovariate, adjustCovariate=NULL,
                    matchCovariate=NULL,
                    parallel=FALSE,
                    BPPARAM=bpparam(),
-                   workers = workers){
+                   workers = workers, 
+                   stat="stat"){
   
   stopifnot(class(bs) == "BSseq")
   
@@ -174,6 +186,13 @@ dmrseq <- function(bs, testCovariate, adjustCovariate=NULL,
     stop(paste0("Error: Invalid sampleIndex specified. Must be an integer",
                 "vector with unique indices between 1 and the number of",
                 "samples contained in bs"))
+  }
+  
+  # check statistic name
+  if (!(stat %in% c("L", "area", "beta", "stat", "avg"))){
+    stop(paste0("Specified '", stat, "' as the test statistic which is not ",
+                "in the results. Please specify a valid name from one of ",
+                "L, area, beta, stat, or avg"))
   }
   
   # subset bs
@@ -429,13 +448,13 @@ Performing balanced permutations of condition across samples ",
                                     bpSpan=bpSpan,
                                     verbose = verbose,
                                     parallel=parallel,
-                            workers=workers) 
+                                    workers=workers) 
       
+      if (!is.null(res.flip.p)){
+        res.flip.p$permNum <- permLabel
+        FLIP <- rbind(FLIP, res.flip.p)
+      }
       
-      res.flip.p$permNum <- permLabel
-      
-      
-      FLIP <- rbind(FLIP, res.flip.p)
       if(verbose){
         message(paste0("* ", j, " out of ", ncol(perms),
                      " permutations completed
@@ -452,18 +471,34 @@ Performing balanced permutations of condition across samples ",
       FLIP <- FLIP[rs,]
     }
     
+    # which column of results to use as test statistic ?
+    # check statistic name
+    if (!(stat %in% c(colnames(OBS), "avg"))){
+                  stop(paste0("Specified '", stat, "' as the test statistic which is not ",
+                  "in the results. Please specify a valid name from one of ",
+                  "L, area, beta, or stat"))
+    }else if (stat=="avg"){
+      OBS$avg <- OBS$area/OBS$L
+      FLIP$avg <- FLIP$area/FLIP$L
+    }      
+    
+    whichStatO <- which(colnames(OBS)==stat)
+    whichStatF <- which(colnames(FLIP)==stat)
+    
     # Faster way to compute the p-values that doesn't use multiple cores 
     # Step 1: sort the permuted statistics vector
-    perm.ordered <- c(sort(abs(FLIP$stat), method="quick"), Inf)
+    perm.ordered <- c(sort(abs(FLIP[,whichStatF]), method="quick"), Inf)
     
     # Step 2: find the first instance in the sorted vector where the permuted 
     #   value is greater than the observed and use this to determine the number
     #   of permuted values that are greater than or equal to the observed
     pval <- rep(NA, nrow(OBS))
-    pval[!is.na(OBS$stat)] <- (1 + sapply(abs(OBS$stat[!is.na(OBS$stat)]), 
+    pval[!is.na(OBS[,whichStatO])] <- (1 + 
+                                sapply(abs(OBS[!is.na(OBS[,whichStatO]),
+                                               whichStatO]), 
                                           function(x) length(perm.ordered) - 
                                             min(which(x <= perm.ordered)))) /
-      (1 + sum(!is.na(FLIP$stat)))							
+      (1 + sum(!is.na(FLIP[,whichStatF])))							
     
     # missing test statistics cause Inf for the p-value calculation 
     # instead, propagate the missing values

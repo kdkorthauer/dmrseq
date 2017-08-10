@@ -21,7 +21,7 @@ Depends: R (>= 3.3.0), bsseq
 Imports: GenomicRanges, nlme, ggplot2, 
   RColorBrewer, bumphunter, matrixStats, BiocParallel,
   outliers, reshape2, methods, locfit, IRanges, 
-  grDevices, graphics, stats, utils,
+  grDevices, graphics, stats, utils, parallel,
   annotatr, TxDb.Hsapiens.UCSC.hg18.knownGene
 Suggests: knitr, rmarkdown, BiocStyle
 biocViews: DNAMethylation, Epigenetics, MultipleComparison, Software,
