@@ -185,9 +185,6 @@ plotDMRs <- function(BSseq, regions = NULL, testCovariate=NULL,
         stop("No overlap between BSseq data and regions")
     if(!is.null(main) && length(main) != length(gr))
         main <- rep(main, length = length(gr))
-    
-    opar <- par(mar = c(0,4.1,0,0), oma = c(0,0,2.5,1))
-    on.exit(par(opar))
    	
    	if (length(extend)==1){
    		extend <- rep(extend, length(gr))
@@ -212,6 +209,13 @@ plotDMRs <- function(BSseq, regions = NULL, testCovariate=NULL,
         pData(BSseq)$label <- paste0(pData(BSseq)[,testCovariate])
       }
     }
+    
+    if (!is.null(label) | "label" %in% names(pData(BSseq))){
+      opar <- par(mar = c(0,4.1,0,1.75), oma = c(0,0,2.5,1), xpd=NA)
+    }else{
+      opar <- par(mar = c(0,4.1,0,0), oma = c(0,0,2.5,1), xpd=NA)
+    }
+    on.exit(par(opar))
     
     for(ii in seq(along = gr)) {
         if(verbose & ii%%100==0){

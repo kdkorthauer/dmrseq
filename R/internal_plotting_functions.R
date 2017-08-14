@@ -36,10 +36,11 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
   secondvector <- (1:length(legtext))-1
   textwidths <- xcoords/secondvector # this works for all but the first element
   textwidths[1] <- start(gr) + 0.69*w 
-  legend(start(gr) + 0.05*w, 2, bty = "n", xpd=TRUE, cex=0.9,
+  legend(start(gr) + 0.05*w, 2.1, bty = "n", xpd=NA, cex=0.9,
          legend = legtext,
-         fill = c("forestgreen", "goldenrod2", "dodgerblue", "blue3"),
-         border = c("forestgreen", "goldenrod2", "dodgerblue", "blue3"),
+         #fill = c("forestgreen", "goldenrod2", "dodgerblue", "blue3"),
+         #border = c("forestgreen", "goldenrod2", "dodgerblue", "blue3"),
+         text.col=c("forestgreen", "goldenrod2", "dodgerblue", "blue3"),
          x.intersp = 0.5, 
          text.width=textwidths,
          horiz=TRUE)     
@@ -73,7 +74,7 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
         color[color=="islands"] <- "forestgreen"
         bord <- color
         
-        rect(start(ir), jj - 0.15, end(ir), jj + 0.15, 
+        rect(start(ir), jj - 0.06, end(ir), jj + 0.17, 
              col=color, border = bord)
       }
       
@@ -82,7 +83,7 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
         used <- NULL
         for(k in 1:length(unique(ir$symbol))){
           irk <- ir[ir$symbol ==  unique(ir$symbol)[k],]
-          rect(min(start(irk)), jj - 0.075, max(end(irk)), jj + 0.075, 
+          rect(min(start(irk)), jj - 0.065, max(end(irk)), jj + 0.065, 
                col=.alpha("black", 0.1), border = .alpha("black", 0.1))
           if(!(unique(ir$symbol)[k] %in% used)){
             rwidth <- end(gr)-start(gr)
@@ -106,11 +107,11 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
             }
             lastPos[k] <- textPos		  
             text(textPos, jj-0.35, 
-                 labels=unique(irk$symbol), cex=1.0)
+                 labels=unique(irk$symbol), cex=0.85)
             jj <- jj.orig
             used <- c(used, unique(ir$symbol)[k])
           }
-          rect(sg, jj - 0.15, eg, jj + 0.15, 
+          rect(sg, jj - 0.11, eg, jj + 0.12, 
                col=unique(color)[k], border = bord)
         }
       }
@@ -204,18 +205,18 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
                             format(stat, big.mark=",", scientific=FALSE))
       regionFDR <- sprintf("FDR: %s", format(qval, big.mark=",", 
                                              scientific=FALSE))
-      regionCoord <- sprintf("%s (%s), %s, %s", regionCoord, 
-                             regionWidth, regionFDR,
-                             regionStat)
+      regionCoord <- sprintf(paste0("%s (%s)\n%s, %s"), regionCoord, 
+                             regionWidth, regionStat,
+                             regionFDR)
     }else if(!is.null(stat)){
       regionStat <- sprintf("Stat: %s", 
                             format(stat, big.mark=",", scientific=FALSE))
-      regionCoord <- sprintf("%s (%s), %s", regionCoord, 
+      regionCoord <- sprintf(paste0("%s (%s)\n%s"), regionCoord, 
                              regionWidth, regionStat)
     }else if(!is.null(qval)){
       regionFDR <- sprintf("FDR: %s", format(qval, big.mark=",", 
                                              scientific=FALSE))
-      regionCoord <- sprintf("%s (%s), %s", regionCoord, regionWidth, 
+      regionCoord <- sprintf(paste0("%s (%s)\n%s"), regionCoord, regionWidth, 
                              regionFDR)
     }else{
       regionCoord <- sprintf("%s (%s)", regionCoord, regionWidth)
@@ -227,18 +228,18 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
                             format(stat, big.mark=",", scientific=FALSE))
       regionFDR <- sprintf("FDR: %s", format(qval, big.mark=",", 
                                              scientific=FALSE))
-      regionCoord <- sprintf("%s (%s), %s, %s", regionCoord, 
-                             regionFDR, regionStat)
+      regionCoord <- sprintf(paste0("%s\n%s, %s"), regionCoord, 
+                             regionStat, regionFDR)
     }else if(!is.null(stat)){
       regionStat <- sprintf("Stat: %s", 
                             format(stat, big.mark=",", scientific=FALSE))
-      regionCoord <- sprintf("%s (%s), %s", regionCoord, regionStat)
+      regionCoord <- sprintf(paste0("%s\n%s"), regionCoord, regionStat)
     }else if(!is.null(qval)){
       regionFDR <- sprintf("FDR: %s", format(qval, big.mark=",", 
                                              scientific=FALSE))
-      regionCoord <- sprintf("%s (%s), %s", regionCoord, regionFDR)
+      regionCoord <- sprintf(paste0("%s\n%s"), regionCoord, regionFDR)
     }else{
-      regionCoord <- sprintf("%s (%s)", regionCoord)
+      regionCoord <- sprintf("%s", regionCoord)
     }    
   }
   if(main != "") {
@@ -258,15 +259,10 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
     col <- unique(col)
     label <-  unique(label)
   }
-  w <- plotRange[2]-plotRange[1]
   
-  legend(plotRange[1] - 0.03*w, 0.9, bg = .alpha("antiquewhite", 0.75),
-         legend = label, cex=0.75,
-         pch = c(20,20),
-         col = col,
-         y.intersp = 0.8,
-         box.lwd=0)
-  
+  for(lg in 1:length(label)){
+    mtext(label[lg], side=4, line=lg-1, col=col[lg])
+  }
 }
 
 .dmrPlotLines0 <- function(x, y, col, lty, lwd, plotRange) {
