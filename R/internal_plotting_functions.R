@@ -30,20 +30,23 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
        xlab = "", ylab = "")
   
   #add legend
-  w <- end(gr) - start(gr)
-  legtext <- c("Island", "Shore", "Shelf", "Open Sea")
-  xcoords <- c(0, 0.08*w , 0.16*w, 0.225*w)
-  secondvector <- (1:length(legtext))-1
-  textwidths <- xcoords/secondvector # this works for all but the first element
-  textwidths[1] <- start(gr) + 0.69*w 
-  legend(start(gr) + 0.05*w, 2.1, bty = "n", xpd=NA, cex=0.9,
-         legend = legtext,
-         #fill = c("forestgreen", "goldenrod2", "dodgerblue", "blue3"),
-         #border = c("forestgreen", "goldenrod2", "dodgerblue", "blue3"),
-         text.col=c("forestgreen", "goldenrod2", "dodgerblue", "blue3"),
-         x.intersp = 0.5, 
-         text.width=textwidths,
-         horiz=TRUE)     
+  vars <- list(Island="Island   ",
+               Shore="Shore   ",
+               Shelf="Shelf   ",
+               OpenSea1="Open ",
+               OpenSea2="Sea")
+  cols <- c("forestgreen", "goldenrod2", "dodgerblue", "blue3", "blue3")
+  for (i in 1:length(vars)) {
+    tmpvars <- vars
+    tmpvars[-i] <- paste("phantom(\'",tmpvars[-i],"\')",sep="")
+    expr <- paste(tmpvars, collapse="*")
+    text(start(gr), 1.8,
+         parse(text=expr),
+         col=cols[i],
+         adj = c(0,1),
+         cex=0.85)
+  }
+  
   lapply(seq(along = annoTrack), function(ii) {
     jj <- length(annoTrack) + 1 - ii
     ir <- subsetByOverlaps(annoTrack[[ii]], gr)
@@ -106,8 +109,9 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
               }
             }
             lastPos[k] <- textPos		  
-            text(textPos, jj-0.35, 
-                 labels=unique(irk$symbol), cex=0.85)
+            text(textPos, jj-0.375, 
+                 labels=unique(irk$symbol), cex=0.85,
+                 col=unique(color)[k])
             jj <- jj.orig
             used <- c(used, unique(ir$symbol)[k])
           }
@@ -261,7 +265,7 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
   }
   
   for(lg in 1:length(label)){
-    mtext(label[lg], side=4, line=lg-1, col=col[lg])
+    mtext(label[lg], side=4, line=lg-1, col=col[lg], cex=0.9)
   }
 }
 
