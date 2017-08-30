@@ -35,3 +35,9 @@ you'll first need to install it with:
 
 See the vignette for information on how to use the package to perform
 typical methylation analysis workflows.
+
+
+## License/Copyright
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![License: CC BY-NC-ND 4.0](https://img.shields.io/badge/License-CC%20BY--NC--ND%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-nd/4.0/)  
+All code in this package is made available under a MIT license.  
+All non-code text in this project is made available under a CC BY-NC-ND 4.0 license.
