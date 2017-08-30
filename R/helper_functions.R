@@ -448,7 +448,7 @@ regionScanner <- function(meth.mat=meth.mat, cov.mat=cov.mat, pos=pos, chr=chr,
   }
   
   # refine edges -> start = first (stop = last) position with a raw difference
-  # that meets the threshold - biggest impact on small regions
+  # that meets the threshold 
   Indexes <- refineEdges(y=y[ind], candidates=Indexes, cutoff=cutoff,
                          verbose=FALSE, minNumRegion=minNumRegion,
                          sampleSize=sampleSize)
@@ -459,7 +459,7 @@ regionScanner <- function(meth.mat=meth.mat, cov.mat=cov.mat, pos=pos, chr=chr,
   
   # refine edges II -> for larger regions, when effect size changes over the 
   # region, remove portions at the beginning and end where effect size is 
-  # less than 75% of the 
+  # drastically different than overall effect size
   Indexes <- trimEdges(x=x[ind], candidates=Indexes, 
                        verbose=FALSE, minNumRegion=minNumRegion)
   

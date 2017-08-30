@@ -120,6 +120,18 @@
 #' @param includeYlab a logical indicating whether to include the Y axis
 #'  label "Methylation" (useful to turn off if combining multiple region
 #'  figures and you do not want to include redundant y axis label information)
+#'  
+#' @param compareTrack a named GenomicRangesList item that contains up to four
+#' custom tracks (GenomicRanges objects) which will be plotted below the region.
+#' Only one of `compareTrack` or `annoTrack` can be specified since there is
+#' only for plotting either the built in GpG category and exon tracks, *or* a
+#' custom set of tracks.
+#' 
+#' @param labelCols a character vector with names of the mcols slot of the 
+#' GenomicRanges items in `compareTrack'. Only used if plotting custom
+#' tracks using the `compareTrack' argument. If specified, the (first) value
+#' in that column is printed along with a label that includes the name of the
+#' list item. If NULL (default), just the name of the track is printed.
 #' 
 #' @export
 #' 
@@ -155,7 +167,8 @@ plotDMRs <- function(BSseq, regions = NULL, testCovariate=NULL,
                             pointsMinCov = 1, 
                             highlightMain = FALSE, 
                             qval=TRUE, stat=TRUE,
-                            verbose = TRUE, includeYlab=TRUE) {
+                            verbose = TRUE, includeYlab=TRUE,
+                            compareTrack=NULL, labelCols=NULL) {
   # adapted from plotManyRegions from bsseq plot to 
   # take in a vector of qval values 
   # (1 per region in regions 
@@ -180,6 +193,9 @@ plotDMRs <- function(BSseq, regions = NULL, testCovariate=NULL,
     }
     gr <- resize(gr, width = 2*extend + width(gr), fix = "center")
     BSseq <- subsetByOverlaps(BSseq, gr)
+    
+    if(!is.null(annoTrack) & !is.null(compareTrack))
+      stop("Choose either annoTrack or compareTrack; can't plot both")
     
     if(length(start(BSseq)) == 0)
         stop("No overlap between BSseq data and regions")
@@ -232,7 +248,8 @@ plotDMRs <- function(BSseq, regions = NULL, testCovariate=NULL,
                       addPoints = addPoints,
                       pointsMinCov = pointsMinCov, 
                       highlightMain = highlightMain,
-                      qval=qval, stat=stat, includeYlab=includeYlab)
+                      qval=qval, stat=stat, includeYlab=includeYlab,
+                      compareTrack=compareTrack, labelCols=labelCols)
     }
 }
 

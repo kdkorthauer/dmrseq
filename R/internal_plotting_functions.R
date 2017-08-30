@@ -501,7 +501,8 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
                            regionCol = .alpha("orchid1", 0.2), addTicks = TRUE, 
                            addPoints = FALSE, pointsMinCov = 5, 
                            highlightMain = FALSE, 
-                           qval=NULL, stat=NULL, includeYlab=TRUE) {
+                           qval=NULL, stat=NULL, includeYlab=TRUE,
+                           compareTrack=NULL, labelCols=NULL) {
 
   layout(matrix(1:2, ncol = 1), heights = c(2,1.5))
   .dmrPlotSmoothData(BSseq = BSseq, region = region, extend = extend, 
@@ -534,8 +535,11 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
     mtext(side = 3, text = main, outer = FALSE, cex = 0.8, line=0 )
   }
   
-  if(!is.null(annoTrack))
+  if(!is.null(annoTrack)){
     dmrPlotAnnotations(gr, annoTrack)
+  }else if(!is.null(compareTrack)){
+    dmrPlotComparisons(gr, compareTrack, labelCols=labelCols) 
+  }
 }
 
 # pasting bsseq's .bsGetGr function since not exported
@@ -577,4 +581,67 @@ bsseq.bsHighlightRegions <- function (regions, gr, ylim,
 gg_color_hue <- function(n) {
   hues = seq(15, 375, length = n + 1)
   hcl(h = hues, l = 65, c = 100)[1:n]
+}
+
+# function to draw nonoverlapping comparison regions (up to 3) below
+# the main region plot (instead of annotations)
+dmrPlotComparisons <- function(gr, annoTrack, labelCols=NULL) {
+  
+  if(!all(sapply(annoTrack, function(xx) is(xx, "GRanges"))))
+    stop("all elements in 'annoTrack' needs to be 'GRanges'")
+  if(length(annoTrack)>4)
+    stop("Can't plot more than 4 tracks")
+  
+  plot(start(gr), 1, type = "n", xaxt = "n", yaxt = "n", bty = "n",
+       ylim = c(0, length(annoTrack) + 0.5), xlim = c(start(gr), end(gr)), 
+       xlab = "", ylab = "")
+  
+  colourCount = length(annoTrack)
+  getPalette = colorRampPalette(.alpha(brewer.pal(
+    max(length(annoTrack),3), 
+    "Dark2"), 0.4))
+  color <- getPalette(colourCount)
+  bord <- "black"
+   
+  lapply(seq(along = annoTrack), function(ii) {
+    jj <- length(annoTrack) + 1 - ii
+    ir <- subsetByOverlaps(annoTrack[[ii]], gr)
+    start(ir) <- pmax(start(ir), start(gr))
+    end(ir) <- pmin(end(ir), end(gr))
+    
+    top.pos <- 4.1 - (4-length(annoTrack))
+    bot.pos <- 0 + (4-length(annoTrack))*0.10
+    jj.between <- (top.pos-bot.pos)/length(annoTrack)
+    
+    if(length(ir) > 0){  
+        jj <- top.pos - (ii-1)*jj.between 
+        
+        arrows(start(ir), jj, end(ir), jj, 
+               code=3, length=0.05, angle=90,
+               col=.makeTransparent(color[ii], alpha=185))
+        if (is.null(labelCols)){
+          text((end(gr)+start(gr))/2, jj-0.4, names(annoTrack)[[ii]])
+        }else if (sum(labelCols %in% colnames(mcols(annoTrack[[ii]])))>0){
+          whichLabelCols <- match(labelCols, colnames(mcols(annoTrack[[ii]])))
+          notmiss <- !is.na(whichLabelCols)
+          whichLabelCols <- whichLabelCols[notmiss]
+          if (class(unlist(mcols(annoTrack[[ii]])[1,whichLabelCols,drop=TRUE]))=="numeric"){
+            comps <- round(unlist(mcols(ir)[1,whichLabelCols,drop=TRUE]),3)
+          }else{
+            comps <- unlist(mcols(ir)[1,whichLabelCols,drop=TRUE])
+          }
+          if (sum(grepl("\\.", labelCols)) > 0){
+            labelCols <- gsub("\\.", " ", labelCols)
+          }
+          Label <- paste0(names(annoTrack)[ii], ": ", 
+                          paste0(labelCols[notmiss], "=", 
+                                 comps,
+                                 collapse=", ") )
+          text((end(gr)+start(gr))/2, jj-0.4, Label, cex=0.85, 
+               col=color[ii])
+        }else{
+          text((end(gr)+start(gr))/2, jj-0.4, names(annoTrack)[[ii]])
+        }
+    }
+  })
 }
