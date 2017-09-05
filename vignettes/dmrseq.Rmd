@@ -53,14 +53,14 @@ knitr::opts_chunk$set(tidy=FALSE, cache=TRUE,
 > Korthauer, K., Chakraborty, S., Benjamini, Y., and Irizarry, R.A.
 > Detection and accurate False Discovery Rate control of differentially 
 methylated regions from Whole Genome Bisulfite Sequencing
-> *BioRxiv* 2017.
-> [doi](placelinkhere)
+> *BioRxiv* 183210, 2017.
+> [10.1101/183210](http://www.biorxiv.org/content/early/2017/08/31/183210)
 
 This package builds upon the 
 [bsseq](http://bioconductor.org/packages/bsseq) package [@Hansen2012], 
 which provides efficient storage and manipulation of bisulfite 
 sequencing data and inference for differentially methylated CpGs. 
-The main goal of **dmrseq**
+The main goal of **dmrseq** [@Korthauer183210]
 is to provide inference for differentially methylated *regions*, or 
 groups of CpGs.
 

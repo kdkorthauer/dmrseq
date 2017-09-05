@@ -36,6 +36,16 @@ you'll first need to install it with:
 See the vignette for information on how to use the package to perform
 typical methylation analysis workflows.
 
+## Learn more
+
+More details of the **dmrseq** framework can be found in the manuscript
+
+> Korthauer, K., Chakraborty, S., Benjamini, Y., and Irizarry, R.A.
+> Detection and accurate False Discovery Rate control of differentially 
+methylated regions from Whole Genome Bisulfite Sequencing
+> *BioRxiv* 183210, 2017.
+> [10.1101/183210](http://www.biorxiv.org/content/early/2017/08/31/183210)
+
 
 ## License/Copyright
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![License: CC BY-NC-ND 4.0](https://img.shields.io/badge/License-CC%20BY--NC--ND%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-nd/4.0/)  
