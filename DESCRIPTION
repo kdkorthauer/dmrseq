@@ -2,7 +2,7 @@ Package: dmrseq
 Type: Package
 Title: Detection and inference of differentially methylated regions 
   from Whole Genome Bisulfite Sequencing 
-Version: 0.1.0
+Version: 0.99.0
 Date: 2017-07-14
 Author: Keegan D. Korthauer
 Maintainer: Keegan D. Korthauer <keegan@jimmy.harvard.edu>
