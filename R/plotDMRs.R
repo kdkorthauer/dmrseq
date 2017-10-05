@@ -139,6 +139,7 @@
 #' 
 #' @importFrom RColorBrewer brewer.pal
 #' @importFrom grDevices hcl
+#' @importFrom graphics arrows
 #' 
 #' @examples
 #' 

@@ -30,6 +30,14 @@
 #' 
 #' @import annotatr
 #' @import TxDb.Hsapiens.UCSC.hg18.knownGene
+#' @importFrom AnnotationDbi mappedkeys select
+#' @importFrom GenomicFeatures transcripts cdsBy promoters exonsBy 
+#' @importFrom GenomicFeatures fiveUTRsByTranscript threeUTRsByTranscript
+#' @importFrom GenomicFeatures intronsByTranscript
+#' @importFrom AnnotationHub AnnotationHub query
+#' @importFrom GenomeInfoDb Seqinfo
+#' @importFrom S4Vectors elementNROWS Rle queryHits
+#' @importFrom readr read_tsv
 #' 
 #' @examples
 #' 
@@ -375,7 +383,7 @@ build_annotations2 = function(genome, annotations) {
   if(length(other_annotations) > 0) {
     annots_grl = c(annots_grl, 
                    GenomicRanges::GRangesList(sapply(other_annotations, 
-                            function(ca){annotatr:::annotatr_cache$get(ca)})))
+                            function(ca){annotatr::annotatr_cache$get(ca)})))
   }
   # Take the builtin_annotations piece by piece
   if(length(enh_annotations) != 0) {
@@ -431,7 +439,7 @@ builtin_genomes2 = function() {
 #' @return A character vector of available annotations.
 #'
 #' @examples
-#' builtin_annotations()
+#' builtin_annotations2()
 #'
 #' @export
 builtin_annotations2 = function() {

@@ -15,6 +15,6 @@ This includes the shortcuts. The \code{expand_annotations()} function helps
 handle the shortcuts.
 }
 \examples{
-builtin_annotations()
+builtin_annotations2()
 
 }

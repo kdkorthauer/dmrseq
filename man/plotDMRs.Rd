@@ -10,7 +10,8 @@ plotDMRs(BSseq, regions = NULL, testCovariate = NULL,
   lwd = NULL, label = NULL, mainWithWidth = TRUE,
   regionCol = .alpha("#C77CFF", 0.2), addTicks = TRUE, addPoints = TRUE,
   pointsMinCov = 1, highlightMain = FALSE, qval = TRUE, stat = TRUE,
-  verbose = TRUE, includeYlab = TRUE)
+  verbose = TRUE, includeYlab = TRUE, compareTrack = NULL,
+  labelCols = NULL)
 }
 \arguments{
 \item{BSseq}{An object of class BSseq.}
@@ -125,6 +126,18 @@ should be printed to the screen.}
 \item{includeYlab}{a logical indicating whether to include the Y axis
 label "Methylation" (useful to turn off if combining multiple region
 figures and you do not want to include redundant y axis label information)}
+
+\item{compareTrack}{a named GenomicRangesList item that contains up to four
+custom tracks (GenomicRanges objects) which will be plotted below the region.
+Only one of `compareTrack` or `annoTrack` can be specified since there is
+only for plotting either the built in GpG category and exon tracks, *or* a
+custom set of tracks.}
+
+\item{labelCols}{a character vector with names of the mcols slot of the 
+GenomicRanges items in `compareTrack'. Only used if plotting custom
+tracks using the `compareTrack' argument. If specified, the (first) value
+in that column is printed along with a label that includes the name of the
+list item. If NULL (default), just the name of the track is printed.}
 }
 \value{
 None (generates a plot)

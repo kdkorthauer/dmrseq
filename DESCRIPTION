@@ -17,12 +17,14 @@ Description: This package implements an approach for scanning the
   correlated error structure for the effect of interest on transformed  
   methylation proportions. 
 License: GPL-2
-Depends: R (>= 3.3.0), bsseq
+Depends: R (>= 3.4), bsseq
 Imports: GenomicRanges, nlme, ggplot2, 
   RColorBrewer, bumphunter, matrixStats, BiocParallel,
   outliers, reshape2, methods, locfit, IRanges, 
   grDevices, graphics, stats, utils, parallel,
-  annotatr, TxDb.Hsapiens.UCSC.hg18.knownGene
+  annotatr, TxDb.Hsapiens.UCSC.hg18.knownGene,
+  AnnotationDbi, AnnotationHub, GenomeInfoDb, GenomicFeatures,
+  S4Vectors, readr
 Suggests: knitr, rmarkdown, BiocStyle
 biocViews: DNAMethylation, Epigenetics, MultipleComparison, Software,
   Sequencing, DifferentialMethylation, WholeGenome, Regression, 

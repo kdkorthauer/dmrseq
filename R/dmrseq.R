@@ -122,7 +122,6 @@
 #' 
 #' @importClassesFrom bsseq BSseq 
 #' @importMethodsFrom bsseq pData seqnames sampleNames start width 
-#' @importMethodsFrom bsseq subsetByOverlaps
 #' 
 #' @importFrom grDevices col2rgb colorRampPalette dev.off pdf rgb
 #' @importFrom graphics axis layout legend lines mtext par 
@@ -166,7 +165,6 @@ dmrseq <- function(bs, testCovariate, adjustCovariate=NULL,
                    matchCovariate=NULL,
                    parallel=FALSE,
                    BPPARAM=bpparam(),
-                   workers = workers, 
                    stat="stat"){
   
   stopifnot(class(bs) == "BSseq")
@@ -333,8 +331,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate=NULL,
                  smooth = smooth,
                  bpSpan=bpSpan,
                  verbose = verbose,
-                 parallel=parallel,
-                 workers = workers) 
+                 parallel=parallel) 
   # check that at least one candidate region was found; if there were none there
   # is no need to go on to compute permutation tests...
   
@@ -447,8 +444,7 @@ Performing balanced permutations of condition across samples ",
                                     smooth = smooth,
                                     bpSpan=bpSpan,
                                     verbose = verbose,
-                                    parallel=parallel,
-                                    workers=workers) 
+                                    parallel=parallel) 
       
       if (!is.null(res.flip.p)){
         res.flip.p$permNum <- permLabel
