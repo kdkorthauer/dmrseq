@@ -12,7 +12,7 @@ dmrseq(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
   stat = "stat")
 }
 \arguments{
-\item{bs}{bsseq object containing the methylation values as well as the
+\item{bs}{bsseq object containing the methylation values as well as the 
 phenotype matrix that contains sample level covariates}
 
 \item{testCovariate}{Character value or vector indicating which variables
@@ -112,14 +112,14 @@ OS with, say 4
 cores by setting \code{BPPARAM=BiocParallel::MulticoreParam(workers=4)}}
 
 \item{stat}{a character vector indicating the name of the column of the 
-output to use as the region-level test statistic. Default value is "stat"
+output to use as the region-level test statistic. Default value is 'stat'
 which is the region level-statistic designed to be comparable across the
 genome.
 It is not recommended to change this argument, but it can be done for
-experimental purposes. Possible values are: "L" - the number of loci
-in the region, "area" - the sum of the smoothed loci statistics,
-"beta" - the effect size of the region, "stat" - the test statistic for
-the region, or "avg" - the average smoothed loci statistic.}
+experimental purposes. Possible values are: 'L' - the number of loci
+in the region, 'area' - the sum of the smoothed loci statistics,
+'beta' - the effect size of the region, 'stat' - the test statistic for
+the region, or 'avg' - the average smoothed loci statistic.}
 }
 \value{
 a data.frame that contains the results of the inference. The
@@ -150,8 +150,8 @@ permuation test on the pooled null distribution of scores.
 # load example data 
 data(BS.chr21)
 
-# the covariate of interest is the "CellType" column of pData(BS.chr21)
-testCovariate <- "CellType"
+# the covariate of interest is the 'CellType' column of pData(BS.chr21)
+testCovariate <- 'CellType'
 
 # run dmrseq on a subset of the chromosome (20K CpGs)
 regions <- dmrseq(bs=BS.chr21[240001:260000,],

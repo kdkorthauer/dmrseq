@@ -20,11 +20,13 @@ both.}
 None
 }
 \description{
-Function to add visual representation of CpG categories and/or coding 
+Function to add visual representation of CpG categories 
+and/or coding 
 sequences to DMR plot
 }
 \details{
-An internal function that takes an annotation \code{GRangesList} object that
+An internal function that takes an annotation \code{GRangesList} 
+object that
 contains CpG category information in the first element (optional) and / or
 coding gene sequence information in the second element (optional). If neither
 of these are present, then nothing will be plotted.

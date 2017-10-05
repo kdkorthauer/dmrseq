@@ -11,7 +11,8 @@ get_txdb_name2(genome = builtin_genomes2())
 \item{genome}{A string giving the genome assembly.}
 }
 \value{
-A string giving the name of the correct TxDb.* package name based on \code{genome}.
+A string giving the name of the correct TxDb.* package name based 
+on \code{genome}.
 }
 \description{
 Function to get correct TxDb.* package name based on genome

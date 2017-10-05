@@ -58,7 +58,7 @@
 #' @param lwd The line width of the methylation estimates. It is recommended to
 #' pass this information through the \code{pData} slot of the
 #' object \code{BSseq} (a \code{data.frame} that houses metadata). To do 
-#' so, place the line width value for each sample in a column titled \code{lwd}, 
+#' so, place the line width value for each sample in a column titled \code{lwd},
 #' and leave this argument as its default value of NULL. Alternatively,
 #' you may specify a vector of line width values (one for each sample), but 
 #' you *must* make sure that this vector is in the same order as the samples
@@ -118,7 +118,7 @@
 #'  design matrix for the test statistic calculation.
 #'  
 #' @param includeYlab a logical indicating whether to include the Y axis
-#'  label "Methylation" (useful to turn off if combining multiple region
+#'  label 'Methylation' (useful to turn off if combining multiple region
 #'  figures and you do not want to include redundant y axis label information)
 #'  
 #' @param compareTrack a named GenomicRangesList item that contains up to four
@@ -157,100 +157,96 @@
 #' plotDMRs(BS.chr21, regions=dmrs.ex[1,], testCovariate=1,
 #'    annoTrack=annot.chr21)
 #' 
-plotDMRs <- function(BSseq, regions = NULL, testCovariate=NULL,
-                            extend = (regions$end-regions$start+1)/2, 
-                            main = "", 
-                            addRegions = regions, annoTrack = NULL, 
-                            col = NULL, lty = NULL, lwd = NULL, label=NULL,
-                            mainWithWidth = TRUE, 
-                            regionCol = .alpha("#C77CFF", 0.2), 
-                            addTicks = TRUE, addPoints = TRUE, 
-                            pointsMinCov = 1, 
-                            highlightMain = FALSE, 
-                            qval=TRUE, stat=TRUE,
-                            verbose = TRUE, includeYlab=TRUE,
-                            compareTrack=NULL, labelCols=NULL) {
-  # adapted from plotManyRegions from bsseq plot to 
-  # take in a vector of qval values 
-  # (1 per region in regions 
-  # argument) to be displayed in the plot title.
-  # set addPoints = TRUE to plot individual points sized by coverage 
-  # and one smooth (loess)
-  # line per sample instead of a uniform-sized verbatim line going through 
-  # each observation
-  if (verbose) message(paste0("[plotDMRs] Plotting ", nrow(regions), 
-                              " DMRs"))
-    if(!is.null(regions)) {
-        if(is(regions, "data.frame"))
+plotDMRs <- function(BSseq, regions = NULL, testCovariate = NULL, 
+    extend = (regions$end - regions$start + 1)/2, main = "", 
+    addRegions = regions, annoTrack = NULL, col = NULL, 
+    lty = NULL, lwd = NULL, label = NULL, mainWithWidth = TRUE, 
+    regionCol = .alpha("#C77CFF", 
+        0.2), addTicks = TRUE, addPoints = TRUE, pointsMinCov = 1, 
+    highlightMain = FALSE, 
+    qval = TRUE, stat = TRUE, verbose = TRUE, includeYlab = TRUE, 
+    compareTrack = NULL, 
+    labelCols = NULL) {
+    # adapted from plotManyRegions from bsseq plot to take 
+    # in a vector of qval values
+    # (1 per region in regions argument) to be displayed in
+    # the plot title.  set
+    # addPoints = TRUE to plot individual points sized by coverage
+    # and one smooth
+    # (loess) line per sample instead of a uniform-sized verbatim 
+    # line going through
+    # each observation
+    if (verbose) 
+        message(paste0("[plotDMRs] Plotting ", nrow(regions), " DMRs"))
+    if (!is.null(regions)) {
+        if (is(regions, "data.frame")){
             gr <- data.frame2GRanges(regions, keepColumns = FALSE)
-        else
-            gr <- regions
-        if(!is(gr, "GRanges"))
-          stop(paste0("'regions' needs to be either a 'data.frame' ", 
+        }else{ 
+          gr <- regions
+        }
+        if (!is(gr, "GRanges")) 
+            stop(paste0("'regions' needs to be either a 'data.frame' ",
                         "(with a single row) or a 'GRanges' ", 
-                        "(with a single element)")) 
+                "(with a single element)"))
     } else {
         gr <- granges(BSseq)
     }
-    gr <- resize(gr, width = 2*extend + width(gr), fix = "center")
+    gr <- resize(gr, width = 2 * extend + width(gr), fix = "center")
     BSseq <- subsetByOverlaps(BSseq, gr)
     
-    if(!is.null(annoTrack) & !is.null(compareTrack))
-      stop("Choose either annoTrack or compareTrack; can't plot both")
+    if (!is.null(annoTrack) & !is.null(compareTrack)) 
+        stop("Choose either annoTrack or compareTrack; can't plot both")
     
-    if(length(start(BSseq)) == 0)
+    if (length(start(BSseq)) == 0) 
         stop("No overlap between BSseq data and regions")
-    if(!is.null(main) && length(main) != length(gr))
+    if (!is.null(main) && length(main) != length(gr)) 
         main <- rep(main, length = length(gr))
-   	
-   	if (length(extend)==1){
-   		extend <- rep(extend, length(gr))
-   	}
     
-    if(!is.null(testCovariate)){
-      coeff <- 2:(2+length(testCovariate)-1)
-      design <- model.matrix( ~ pData(BSseq)[,testCovariate])
-
-      if(is.null(col)){
-        cov.unique <- unique(design[,coeff])
-        colors <- gg_color_hue(length(cov.unique))
-        if (length(cov.unique) == 2){
-          colors <- c("mediumblue", "deeppink1")
-        }
-        colors <- cbind(cov.unique, colors[rank(as.numeric(cov.unique))])
-        z <- colors[,2][match(design[,coeff], colors[,1])]
-        pData(BSseq)$col <- as.character(z)
-      }
-      
-      if(is.null(label)){
-        pData(BSseq)$label <- paste0(pData(BSseq)[,testCovariate])
-      }
+    if (length(extend) == 1) {
+        extend <- rep(extend, length(gr))
     }
     
-    if (!is.null(label) | "label" %in% names(pData(BSseq))){
-      opar <- par(mar = c(0,4.1,0,1.4), oma = c(0,0,2.5,1), xpd=NA)
-    }else{
-      opar <- par(mar = c(0,4.1,0,0), oma = c(0,0,2.5,1), xpd=NA)
+    if (!is.null(testCovariate)) {
+        coeff <- 2:(2 + length(testCovariate) - 1)
+        design <- model.matrix(~pData(BSseq)[, testCovariate])
+        
+        if (is.null(col)) {
+            cov.unique <- unique(design[, coeff])
+            colors <- gg_color_hue(length(cov.unique))
+            if (length(cov.unique) == 2) {
+                colors <- c("mediumblue", "deeppink1")
+            }
+            colors <- cbind(cov.unique, colors[rank(as.numeric(cov.unique))])
+            z <- colors[, 2][match(design[, coeff], colors[, 1])]
+            pData(BSseq)$col <- as.character(z)
+        }
+        
+        if (is.null(label)) {
+            pData(BSseq)$label <- paste0(pData(BSseq)[, testCovariate])
+        }
+    }
+    
+    if (!is.null(label) | "label" %in% names(pData(BSseq))) {
+        opar <- par(mar = c(0, 4.1, 0, 1.4), oma = c(0, 0, 2.5, 1), xpd = NA)
+    } else {
+        opar <- par(mar = c(0, 4.1, 0, 0), oma = c(0, 0, 2.5, 1), xpd = NA)
     }
     on.exit(par(opar))
     
-    for(ii in seq(along = gr)) {
-        if(verbose & ii%%100==0){
-          cat(sprintf("..... Plotting region %d (out of %d)\n",
-                      ii, nrow(regions)))
-        } 
-
-        .plotSingleDMR(BSseq = BSseq, region = regions[ii,], 
-                      extend = extend[ii], main = main[ii], 
-                      col = col, lty = lty, lwd = lwd, label=label,
-                      addRegions = addRegions, regionCol = regionCol, 
-                      mainWithWidth = mainWithWidth,
-                      annoTrack = annoTrack, addTicks = addTicks, 
-                      addPoints = addPoints,
-                      pointsMinCov = pointsMinCov, 
-                      highlightMain = highlightMain,
-                      qval=qval, stat=stat, includeYlab=includeYlab,
-                      compareTrack=compareTrack, labelCols=labelCols)
+    for (ii in seq(along = gr)) {
+        if (verbose & ii%%100 == 0) {
+            cat(sprintf("..... Plotting region %d (out of %d)\n", ii, 
+                        nrow(regions)))
+        }
+        
+        .plotSingleDMR(BSseq = BSseq, region = regions[ii, ], 
+            extend = extend[ii], main = main[ii], col = col, lty = lty, 
+            lwd = lwd, label = label, addRegions = addRegions, 
+            regionCol = regionCol, mainWithWidth = mainWithWidth, 
+            annoTrack = annoTrack, addTicks = addTicks, addPoints = addPoints, 
+            pointsMinCov = pointsMinCov, highlightMain = highlightMain, 
+            qval = qval, stat = stat, includeYlab = includeYlab, 
+            compareTrack = compareTrack, labelCols = labelCols)
     }
 }
 

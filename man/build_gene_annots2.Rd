@@ -11,11 +11,20 @@ build_gene_annots2(genome = builtin_genomes2(),
 \arguments{
 \item{genome}{The genome assembly.}
 
-\item{annotations}{A character vector with entries of the form \code{[genome]_genes_{1to5kb,promoters,5UTRs,cds,exons,firstexons,introns,intronexonboundaries,exonintronboundaries,3UTRs,intergenic}}.}
+\item{annotations}{A character vector with entries of the form 
+\code{[genome]_genes_{1to5kb,promoters,5UTRs,cds,exons,firstexons,introns,
+intronexonboundaries,exonintronboundaries,3UTRs,intergenic}}.}
 }
 \value{
-A list of \code{GRanges} objects with unique \code{id} of the form \code{[type]:i}, \code{tx_id} being the UCSC knownGene transcript name, \code{gene_id} being the Entrez Gene ID, \code{symbol} being the gene symbol from the Entrez ID to symbol mapping in \code{org.db} for that species, and \code{type} being the annotation type.
+A list of \code{GRanges} objects with unique \code{id} of the 
+form \code{[type]:i}, \code{tx_id} being the UCSC knownGene transcript name,
+ \code{gene_id} being the Entrez Gene ID, \code{symbol} being the gene symbol
+ from the Entrez ID to symbol mapping in \code{org.db} for that species, and 
+ \code{type} being the annotation type.
 }
 \description{
-Using the \code{TxDb.*} group of packages, construct genic annotations consisting of any combination of 1-5kb upstream of a TSS, promoters (< 1kb from TSS), 5UTRs, CDS, exons, first exons, introns, intron/exon and exon/intron boundaries, 3UTRs, and intergenic.
+Using the \code{TxDb.*} group of packages, construct genic annotations 
+consisting of any combination of 1-5kb upstream of a TSS, promoters 
+(< 1kb from TSS), 5UTRs, CDS, exons, first exons, introns, intron/exon and
+ exon/intron boundaries, 3UTRs, and intergenic.
 }

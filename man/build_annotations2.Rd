@@ -9,11 +9,26 @@ build_annotations2(genome, annotations)
 \arguments{
 \item{genome}{The genome assembly.}
 
-\item{annotations}{A character vector of annotations to build. Valid annotation codes are listed with \code{builtin_annotations2()}. The "basicgenes" shortcut builds the following regions: 1-5Kb upstream of TSSs, promoters, 5UTRs, exons, introns, and 3UTRs. The "cpgs" shortcut builds the following regions: CpG islands, shores, shelves, and interCGI regions. NOTE: Shortcuts need to be appended by the genome, e.g. \code{hg19_basicgenes}.
-Custom annotations whose names are of the form \code{[genome]_custom_[name]} should also be included. Custom annotations should be read in and converted to \code{GRanges} with \code{read_annotations()}. They can be for a \code{supported_genome()}, or for an unsupported genome.}
+\item{annotations}{A character vector of annotations to build. Valid 
+annotation codes are listed with \code{builtin_annotations2()}. The 
+'basicgenes' shortcut builds the following regions: 1-5Kb upstream of TSSs,
+ promoters, 5UTRs, exons, introns, and 3UTRs. The 'cpgs' shortcut builds the
+  following regions: CpG islands, shores, shelves, and interCGI regions. 
+  NOTE: Shortcuts need to be appended by the genome, e.g. 
+  \code{hg19_basicgenes}. Custom annotations whose names are of the form 
+  \code{[genome]_custom_[name]} should also be included. Custom annotations
+   should be read in and converted to \code{GRanges} with
+    \code{read_annotations()}. They can be for a \code{supported_genome()}, 
+    or for an unsupported genome.}
 }
 \value{
-A \code{GRanges} object of all the \code{annotations} combined. The \code{mcols} are \code{id, tx_id, gene_id, symbol, type}. The \code{id} column is a unique name, the \code{tx_id} column is either a UCSC knownGene transcript ID (genic annotations) or a Ensembl transcript ID (lncRNA annotations), the \code{gene_id} is the Entrez ID, the \code{symbol} is the gene symbol from the \code{org.*.eg.db} mapping from the Entrez ID, and the \code{type} is of the form \code{[genome]_[type]_[name]}.
+A \code{GRanges} object of all the \code{annotations} combined. 
+The \code{mcols} are \code{id, tx_id, gene_id, symbol, type}. The \code{id} 
+column is a unique name, the \code{tx_id} column is either a UCSC knownGene
+transcript ID (genic annotations) or a Ensembl transcript ID 
+(lncRNA annotations), the \code{gene_id} is the Entrez ID, the \code{symbol}
+ is the gene symbol from the \code{org.*.eg.db} mapping from the Entrez ID, 
+ and the \code{type} is of the form \code{[genome]_[type]_[name]}.
 }
 \description{
 Create a \code{GRanges} object consisting of all the desired 

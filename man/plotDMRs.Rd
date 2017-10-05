@@ -124,7 +124,7 @@ should be displayed in the plot title. The value is extracted from the
 should be printed to the screen.}
 
 \item{includeYlab}{a logical indicating whether to include the Y axis
-label "Methylation" (useful to turn off if combining multiple region
+label 'Methylation' (useful to turn off if combining multiple region
 figures and you do not want to include redundant y axis label information)}
 
 \item{compareTrack}{a named GenomicRangesList item that contains up to four

@@ -19,19 +19,19 @@
 #' 
 #' BS.chr21 <- filterLoci(BS.chr21)
 #' 
-filterLoci <- function(bs, minCoverage=1){
-  message(paste0("Filtering out loci with coverage less than ",
-                 minCoverage, " read in at least one sample"))
-          
-  Cov = as.matrix(getCoverage(bs, type = "Cov"))
-  nLoci.original <- nrow(Cov)
-  which.zero = which(rowSums(Cov==0) > 0)
-  rm(Cov)
-  nLoci.removed <- length(which.zero)
-  if(length(which.zero)>0){
-      bs = bs[-which.zero]
-  }
-  message(paste0("Removed ", nLoci.removed, " out of ", 
-                 nLoci.original, " loci"))
-  return(bs)
+filterLoci <- function(bs, minCoverage = 1) {
+    message(paste0("Filtering out loci with coverage less than ", minCoverage,
+                   " read in at least one sample"))
+    
+    Cov <- as.matrix(getCoverage(bs, type = "Cov"))
+    nLoci.original <- nrow(Cov)
+    which.zero <- which(rowSums(Cov == 0) > 0)
+    rm(Cov)
+    nLoci.removed <- length(which.zero)
+    if (length(which.zero) > 0) {
+        bs <- bs[-which.zero]
+    }
+    message(paste0("Removed ", nLoci.removed, " out of ", 
+                   nLoci.original, " loci"))
+    return(bs)
 }

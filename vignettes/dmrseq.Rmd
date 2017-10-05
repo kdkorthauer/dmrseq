@@ -42,9 +42,9 @@ vignette: >
 
 ```{r setup, echo=FALSE, results="hide"}
 knitr::opts_chunk$set(tidy=FALSE, cache=TRUE,
-                      dev="png",
-                      message=FALSE, error=FALSE, warning=TRUE)
-```	
+    dev="png", 
+    message=FALSE, error=FALSE, warning=TRUE)
+```
 
 # Standard workflow
 
@@ -281,8 +281,8 @@ with a separate function. In addition, you should not use bbseq's bsmooth
 function to smooth the methylation levels, since **dmrseq** smooths in a very 
 different way. Briefly, **dmrseq** smooths methylation *differences*, so it 
 carries out the smoothing step once. This is automatically done with the main
-`dmrseq` function. **bsseq** on the other hand, smooths each sample independently,
-so smoothing needs to be carried out once per sample.
+`dmrseq` function. **bsseq** on the other hand, smooths each sample 
+independently, so smoothing needs to be carried out once per sample.
 
 ### Removing CpGs with no coverage
 
@@ -383,7 +383,7 @@ sum(sigRegions$stat > 0) / nrow(sigRegions)
 ```
 
 To interpret the direction of effect, note that for a two-group comparison 
-**dmrseq** uses alphabetical order of the covariate of interest. For example, if 
+**dmrseq** uses alphabetical order of the covariate of interest. For example, if
 the two conditions are "A" and "B", a positive direction of effect means that 
 "A" is hyper-methylated relative to "B". Conversely, a negative direction of 
 effect means that "A" is hypo-methylated relative to "B". 

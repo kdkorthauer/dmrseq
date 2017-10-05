@@ -4,8 +4,8 @@ Title: Detection and inference of differentially methylated regions
   from Whole Genome Bisulfite Sequencing 
 Version: 0.99.0
 Date: 2017-07-14
-Author: Keegan D. Korthauer
-Maintainer: Keegan D. Korthauer <keegan@jimmy.harvard.edu>
+Author: Keegan Korthauer
+Maintainer: Keegan Korthauer <keegan@jimmy.harvard.edu>
 Description: This package implements an approach for scanning the
   genome to detect and perform accurate inference on differentially 
   methylated regions from Whole Genome Bisulfite Sequencing data. 
