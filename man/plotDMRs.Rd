@@ -69,7 +69,7 @@ are in the BSseq object. If NULL and no \code{lty} column is found in
 \item{lwd}{The line width of the methylation estimates. It is recommended to
 pass this information through the \code{pData} slot of the
 object \code{BSseq} (a \code{data.frame} that houses metadata). To do 
-so, place the line width value for each sample in a column titled \code{lwd}, 
+so, place the line width value for each sample in a column titled \code{lwd},
 and leave this argument as its default value of NULL. Alternatively,
 you may specify a vector of line width values (one for each sample), but 
 you *must* make sure that this vector is in the same order as the samples

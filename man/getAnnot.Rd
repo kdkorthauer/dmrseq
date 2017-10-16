@@ -8,9 +8,7 @@ getAnnot(genomeName)
 }
 \arguments{
 \item{genomeName}{a character object that indicates which organism is 
-under study. Use the function \code{builtin_genomes2()} (modified from
-the annotatr
-package) to see
+under study. Use the function \code{builtin_genomes()} to see
 a character vector of available genome names to choose from (see 
 \code{annotatr} documentation for more details).}
 }
