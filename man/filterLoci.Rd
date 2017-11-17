@@ -4,17 +4,33 @@
 \alias{filterLoci}
 \title{Filter loci for coverage}
 \usage{
-filterLoci(bs, minCoverage = 1)
+filterLoci(bs, minCoverage = 1, numSamples = "all", testCovariate = NULL)
 }
 \arguments{
 \item{bs}{a \code{BSseq} object}
 
 \item{minCoverage}{the minimum coverage value allowed for any given loci.
-The default value (recommended) is 1. This means that any loci with zero
-reads mapping to it in at least one sample are removed.}
+The default value (recommended) is 1.}
+
+\item{numSamples}{an option that specifies how many samples in each group 
+must have \code{minCoverage} in order to keep a loci. The default option is
+"all", which means that all samples in each group must have
+\code{minCoverage} in order to keep a loci. The other option is "one" 
+which keeps all loci that have have a coverage of at least \code{minCoverage}
+in at least one sample per group. The \code{testCovariate} must be a two
+group comparison if this argument is "one".}
+
+\item{testCovariate}{Character value or vector indicating which variables
+(column names) in \code{pData(bs)} to test
+ for association of methylation levels. 
+ Can alternatively specify an integer value or vector indicating
+ which of columns of
+ \code{pData(bs)} to use. This is used to construct the 
+ design matrix for the test statistic calculation. Required if 
+ \code{numSamples} is not "all", and required to be a two group comparison.}
 }
 \value{
-a \code{BSseq} object with the offending loci removed.
+a \code{BSseq} object with the offending loci removed
 }
 \description{
 Helper function to remove loci that have low coverage.

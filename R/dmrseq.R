@@ -192,18 +192,6 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
     # subset bs
     bs <- bs[, sampleIndex]
     
-    # check for loci with missing data
-    which.zero <- which(rowSums(as.matrix(getCoverage(bs, type = "Cov")) == 0) >
-        0)
-    
-    if (length(which.zero) > 0) {
-        stop(paste0(which.zero, " loci have zero coverage in one or more ",
-                    "samples. Please remove these with the filterLoci ", 
-            "function before running dmrseq"))
-    } else {
-        rm(which.zero)
-    }
-    
     # convert covariates to column numbers if characters
     if (is.character(testCovariate)) {
         tc <- testCovariate
@@ -289,6 +277,23 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
         } else {
             stopifnot(matchCovariate <= ncol(pData(bs)))
         }
+    }
+    
+    # check for loci with missing data
+    if (length(unique(testCov)) == 2){
+      which.zero <- which(rowSums(as.matrix(getCoverage(
+                    bs[,which(design[, coeff] == 0)], type = "Cov")) == 0) == 
+                      sum(design[, coeff] == 0))
+      which.zero <- unique(which.zero, which(rowSums(as.matrix(getCoverage(
+                    bs[,which(design[, coeff] == 1)], type = "Cov")) == 0) ==
+                      sum(design[, coeff] == 1)))
+    
+      if (length(which.zero) > 0) {
+        stop(length(which.zero), " loci have zero coverage in all samples ",
+             "of at least one condition. Please remove with the filterLoci ", 
+            "function before running dmrseq")
+      }
+    
     }
     
     # register the parallel backend

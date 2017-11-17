@@ -286,16 +286,29 @@ independently, so smoothing needs to be carried out once per sample.
 
 ### Removing CpGs with no coverage
 
-**dmrseq** analyzes all CpGs that have at least one read in all samples in the
-dataset. Thus, if your dataset contains CpGs with zero reads in some samples,
+For pairwise comparisons, **dmrseq** analyzes all CpGs that have at least one
+read in at least one sample per group.
+Thus, if your dataset contains CpGs with zero reads in every sample within a 
+group,
 you should filter them out. This can be done with the helper function 
-`filter` loci which will remove the loci with no reads in a sample by default.
-The function is used as follows (note that the zero
+`filterLoci`.  By default, this function will only keep Loci with at least one
+read in every sample (note that the zero
 sites have already been filtered out on this example dataset):
 
 ```{r filter, message=TRUE}
 bs <- filterLoci(bs)
 ```
+
+However, by specifying `numSamples="one"`, it will keep all loci with at least
+one read in at least *one* sample per group. You can also change the minimum
+number of reads parameter (default `minreads=1`).
+
+```{r filter, message=TRUE}
+bs <- filterLoci(bs, numSamples="one", testCovariate = "CellType")
+```
+
+You may also change the minimum
+number of reads parameter (default `minCoverage=1`).
 
 ## Differentially Methylated Regions
 

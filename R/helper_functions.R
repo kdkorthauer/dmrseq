@@ -101,11 +101,19 @@ getEstimatePooled <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
           rowSums(meth.mat[, design[, coeff] == lev2])/
           rowSums(cov.mat[, design[, coeff] == lev2])
         
-        sd <- 1.4826 * 
-          sqrt(rowSums(cbind(rowMads(meth.mat[, design[, coeff] == lev1]/
-                  cov.mat[, design[, coeff] == lev1])^2, 
+        sd <- cbind(rowMads(meth.mat[, design[, coeff] == lev1]/
+                  cov.mat[, design[, coeff] == lev1], na.rm=TRUE)^2, 
                   rowMads(meth.mat[, design[, coeff] == lev2]/
-                  cov.mat[, design[, coeff] == lev2])^2)))
+                  cov.mat[, design[, coeff] == lev2], na.rm=TRUE)^2)
+        # when sd is zero because one of the groups had only a single sample
+        # with nonzero coverage, impute with the other group's sd est
+        sd[rowSums(cov.mat[, design[, coeff] == lev1] > 0) == 1 &
+           rowSums(cov.mat[, design[, coeff] == lev2] > 0) == 1,] <- 1
+        sd[rowSums(cov.mat[, design[, coeff] == lev1] > 0) == 1,1] <- 
+          sd[rowSums(cov.mat[, design[, coeff] == lev1] > 0) == 1,2]
+        sd[rowSums(cov.mat[, design[, coeff] == lev2] > 0) == 1,2] <- 
+          sd[rowSums(cov.mat[, design[, coeff] == lev2] > 0) == 1,1]
+        sd <- 1.4826 * sqrt(rowSums(sd))
         
         return(list(rawBeta = est, sd = sd))
     } else {
@@ -489,6 +497,11 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
             
             dat$MedCov <- rep(as.numeric(by(dat$cov, dat$pos, median)), 
                               sampleSize * 2)
+            # remove rows with zero coverage
+            whichZ <- which(dat$cov==0)
+            if (length(whichZ)>0){
+              dat <- dat[-whichZ,]
+            }
             
             # tol is the convergence criteria (for difference Between two 
             # iterations of the dispersion parameter estimate
