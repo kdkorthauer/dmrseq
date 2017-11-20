@@ -488,9 +488,11 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
             X <- model.matrix(~dat$g.fac)
             colnames(X)[2] <- "grp"
             
-            if (nrow(X) <= ncol(X)) 
-                stop(paste0("Not enough degree of freedom to fit the linear ", 
-                            "model. Drop some terms in formula"))
+            if (nrow(X) <= ncol(X)){
+                message("Not enough degree of freedom to fit the linear ", 
+                            "model. Drop some terms in formula")
+                return(data.frame(beta = NA, stat = NA, constant = FALSE))
+            }
             
             Y <- as.matrix(dat$meth)
             N <- as.matrix(dat$cov)
@@ -520,10 +522,10 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
                 N <- N[ixn]
                 ## check design not enough df for regression
                 if (nrow(X) < ncol(X) + 1) 
-                  return(NULL)
+                  return(data.frame(beta = NA, stat = NA, constant = FALSE))
                 ## design is not of full rank because of missing. Skip
                 if (any(abs(svd(X)$d) < 1e-08)) 
-                  return(NULL)
+                  return(data.frame(beta = NA, stat = NA, constant = FALSE))
             }
             
             ## Transform the methylation levels.  Add a small constant to bound 
