@@ -61,7 +61,7 @@ getAnnot <- function(genomeName) {
                 "hg19 annotations from annotatr")
         liftTo <- 'hg18'
         genomeName <- 'hg19'
-    }else if (!genomeName %in% builtin_genomes()) {
+    }else if (!genomeName %in% annotatr::builtin_genomes()) {
         message(paste0("Genome ", genomeName, " is not supported by ", 
                        "annotatr at this time"))
         return(NULL)
@@ -81,7 +81,7 @@ getAnnot <- function(genomeName) {
         # throwing an error
         
         for (attempt in 1:5) {
-            cpg <- try(build_annotations(genome = genomeName, 
+            cpg <- try(annotatr::build_annotations(genome = genomeName, 
                                           annotations = annot_CpG), 
                 silent = TRUE)
             if (!is(cpg, "try-error")) {
@@ -97,7 +97,7 @@ getAnnot <- function(genomeName) {
         }
         
         for (attempt in 1:5) {
-            genes <- try(build_annotations(genome = genomeName,
+            genes <- try(annotatr::build_annotations(genome = genomeName,
                                             annotations = annot_genes), 
                 silent = TRUE)
             if (!is(genes, "try-error")) {
