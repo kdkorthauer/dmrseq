@@ -48,7 +48,9 @@
 #' 
 #' 
 getAnnot <- function(genomeName) {
-    builtin_annotations <- annotatr::builtin_annotations # correct namespace issue
+    # correct namespace issue 
+    builtin_annotations <- annotatr::builtin_annotations 
+    builtin_genomes <- annotatr::builtin_genomes 
     if (!requireNamespace("annotatr", quietly = TRUE)) {
         message(paste0("annotatr could not be loaded. Please make sure it is ",
             "installed, or skip the annotation step and leave as NULL", 
