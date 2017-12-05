@@ -48,16 +48,13 @@
 #' 
 #' 
 getAnnot <- function(genomeName) {
-    if (!requireNamespace("annotatr", quietly = TRUE)) {
+    if (!require("annotatr", quietly = TRUE)) {
         message(paste0("annotatr could not be loaded. Please make sure it is ",
             "installed, or skip the annotation step and leave as NULL", 
             "(default value) in plotDMRs."))
         return(NULL)
     }
-    # correct namespace issue 
-    builtin_annotations <- annotatr::builtin_annotations 
-    builtin_genomes <- annotatr::builtin_genomes 
-  
+
     liftTo <- NULL
     if(genomeName == 'hg18'){
         message("Genome ", genomeName, " will be built by lifting over ",
