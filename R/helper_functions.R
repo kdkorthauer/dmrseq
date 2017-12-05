@@ -404,7 +404,7 @@ meanDiff <- function(bs, dmrs, testCovariate, adjustCovariate) {
             "methylation differences. ", "Returning beta estimates instead"))
         return(dmrs$beta)
     } else {
-        prop.mat <- getCoverage(bs, type = "M")/getCoverage(bs, type = "Cov")
+        prop.mat <- as.matrix(getCoverage(bs, type = "M")/getCoverage(bs, type = "Cov"))
         levs <- unique(design[, coeff])
         
         meanDiff <- sapply(1:nrow(dmrs), function(x) {
