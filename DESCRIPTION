@@ -16,7 +16,7 @@ Description: This package implements an approach for scanning the
   least squares (GLS) regression model with a nested autoregressive  
   correlated error structure for the effect of interest on transformed  
   methylation proportions. 
-License: GPL-2
+License: MIT + file LICENSE.md
 Depends: R (>= 3.4), bsseq
 Imports: GenomicRanges, nlme, ggplot2, 
   RColorBrewer, bumphunter, matrixStats, BiocParallel,
