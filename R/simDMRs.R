@@ -71,8 +71,8 @@ simDMRs <- function(simFile = NULL, bs, num.dmrs = 3000, delta.max0 = 0.3) {
         return(y)
     }
     
-    meth.mat <- getCoverage(bs, type = "M")
-    unmeth.mat <- getCoverage(bs, type = "Cov") - meth.mat
+    meth.mat <- as.matrix(getCoverage(bs, type = "M"))
+    unmeth.mat <- as.matrix(getCoverage(bs, type = "Cov")) - meth.mat
     chr <- as.character(seqnames(bs))
     pos <- start(bs)
     
@@ -96,11 +96,11 @@ simDMRs <- function(simFile = NULL, bs, num.dmrs = 3000, delta.max0 = 0.3) {
     fnc <- function(index) {
         gr.dmr <- GRanges(seqnames = unique(as.character(seqnames(bs)[index])),
                           IRanges(start = min(start(bs)[index]), 
-            end = max(start(bs)[index])))
+                                  end = max(start(bs)[index])))
         return(gr.dmr)
     }
     ## GenomicRanges Object for the Simulated DMRs
-    gr.dmrs <- Reduce("c", lapply(dmrs.ind, fnc))
+    gr.dmrs <- suppressWarnings(Reduce("c", lapply(dmrs.ind, fnc)))
     
     ## Generating the Methylated and Unmethylated Read Counts 
     ## for the CpG sites in the
@@ -220,9 +220,9 @@ simDMRs <- function(simFile = NULL, bs, num.dmrs = 3000, delta.max0 = 0.3) {
     # get everything in order to run bumphunter functions
     bsNew <- BSseq(pos = pos, chr = chr, M = meth.mat, 
                    Cov = (meth.mat + unmeth.mat), 
-        sampleNames = paste0("Condition", c(rep(1, sampleSize), 
-                                            rep(2, sampleSize)), 
-            "_Rep", seq(1:sampleSize)))
+                   sampleNames = paste0("Condition", c(rep(1, sampleSize), 
+                                                       rep(2, sampleSize)), 
+                                        "_Rep", seq(1:sampleSize)))
     
     sim.dat.red <- list(gr.dmrs = gr.dmrs, dmr.mncov = dmr.mncov, dmr.L = dmr.L,
         bs = bsNew, delta = deltas)
