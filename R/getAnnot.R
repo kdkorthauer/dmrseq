@@ -43,8 +43,8 @@
 #' # need to load annotatr package with 'library(annotatr)' before 
 #' # running this command to retrieve annotations
 #' 
-#' # get annotation information for hg18
-#' annoTrack <- getAnnot('hg18')
+#' # get annotation information for hg19
+#' annoTrack <- getAnnot('hg19')
 #' 
 #' 
 getAnnot <- function(genomeName) {
