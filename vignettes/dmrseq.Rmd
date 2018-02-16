@@ -415,7 +415,7 @@ helper function `getAnnot`, and pass this annotation object to the `plotDMRs`
 function as the `annoTrack` parameter.
 
 ```{r plot, out.width='\\textwidth', fig.height = 2.5}
-# load the annotatr package & get annotations for hg19
+# load the annotatr package & get annotations for hg18
 library(annotatr)
 annoTrack <- getAnnot("hg18")
 
