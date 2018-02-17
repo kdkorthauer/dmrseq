@@ -27,15 +27,7 @@
 #' @export
 #' 
 #' @import annotatr
-#' @import TxDb.Hsapiens.UCSC.hg18.knownGene
-#' @importFrom AnnotationDbi mappedkeys select
-#' @importFrom GenomicFeatures transcripts cdsBy promoters exonsBy 
-#' @importFrom GenomicFeatures fiveUTRsByTranscript threeUTRsByTranscript
-#' @importFrom GenomicFeatures intronsByTranscript
 #' @importFrom AnnotationHub AnnotationHub query
-#' @importFrom GenomeInfoDb Seqinfo
-#' @importFrom S4Vectors elementNROWS Rle queryHits
-#' @importFrom readr read_tsv
 #' @importFrom rtracklayer liftOver
 #' 
 #' @examples
