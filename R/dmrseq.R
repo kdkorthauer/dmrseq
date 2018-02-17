@@ -57,19 +57,10 @@
 #'    1000.
 #' @param verbose logical value that indicates whether progress messages
 #'    should be printed to stdout. Defaults value is TRUE.
-#' @param BPPARAM a \code{MulticoreParam} or \code{SnowParam} object of 
-#' the \code{BiocParallel}
-#' package that defines a parallel backend.  The default option is 
-#' \code{BiocParallel::bpparam()} which will automatically creates a cluster 
-#' appropriate for 
-#' the operating system (if \code{parallel} is set to TRUE).
-#' Alternatively, the user can specify the number
-#' of cores they wish to use by first creating the corresponding 
-#' \code{MulticoreParam} (for Linux-like OS) or \code{SnowParam} (for Windows)
-#' object, and then passing it into the \code{dmrseq}
-#' function. This could be done to specify a parallel backend on a Linux-like
-#' OS with, say 4 
-#' cores by setting \code{BPPARAM=BiocParallel::MulticoreParam(workers=4)}
+#' @param BPPARAM a \code{BiocParallelParam} object to specify the parallel 
+#'    backend. The default 
+#'    option is \code{BiocParallel::bpparam()} which will automatically creates
+#'    a cluster appropriate for the operating system. 
 #' @param sampleIndex vector of positive integers that represents the 
 #'   index of samples to use in the analysis (corresponds to sample ordering
 #'   in \code{bs} (e.g. the order of the rows in \code{pData(bs)}. 
@@ -83,11 +74,6 @@
 #' in between neighboring CpGs to be included in the same 
 #' cluster when performing smoothing (should generally be larger than
 #' \code{maxGap})
-#' @param parallel a logical value that indicates whether the computation
-#' should be carried out in parallel using the parallel backend defined 
-#' by the \code{BPPARAM} argument (see the description of that parameter
-#' for details on how to specify the number of cores for your system). 
-#' Parallelization will reduce computation time.
 #' @param stat a character vector indicating the name of the column of the 
 #'   output to use as the region-level test statistic. Default value is 'stat'
 #'   which is the region level-statistic designed to be comparable across the
@@ -159,7 +145,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
                    minInSpan = 30, maxGapSmooth = 2500, maxGap = 1000, 
                    verbose = TRUE, sampleIndex = seq(1, nrow(pData(bs))), 
                    maxPerms = 10, matchCovariate = NULL, 
-    parallel = FALSE, BPPARAM = bpparam(), stat = "stat") {
+                   BPPARAM = bpparam(), stat = "stat") {
     
     stopifnot(class(bs) == "BSseq")
     
@@ -290,31 +276,31 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
     
       if (length(which.zero) > 0) {
         stop(length(which.zero), " loci have zero coverage in all samples ",
-             "of at least one condition. Please remove with the filterLoci ", 
-            "function before running dmrseq")
+             "of at least one condition. Please remove these loci ", 
+             "before running dmrseq")
       }
     
     }
     
     # register the parallel backend
-    if (parallel) {
-        BiocParallel::register(BPPARAM)
-        backend <- "BiocParallel"
-        
-        if (verbose) {
-            if (bpparam()$workers == 1) {
-                mes <- "Using a single core (backend: %s).
-                "
-                message(sprintf(mes, backend))
-            } else {
-                mes <- paste0("Parallelizing using %s workers/cores ", 
-                    "(backend: %s).
-                    ")
-                message(sprintf(mes, bpparam()$workers, backend))
-            }
-        }
+    BiocParallel::register(BPPARAM)
+    backend <- "BiocParallel"
+    
+    if (bpparam()$workers == 1) {
+      if (verbose) {
+        mes <- "Using a single core (backend: %s).
+                  "
+        message(sprintf(mes, backend))
+      }
+      parallel <- FALSE
     } else {
-        message("Using a single core")
+      if (verbose) {
+        mes <- paste0("Parallelizing using %s workers/cores ", 
+                      "(backend: %s).
+                        ")
+        message(sprintf(mes, bpparam()$workers, backend))
+      }
+      parallel <- TRUE
     }
     
     meth.mat <- as.matrix(getCoverage(bs, type = "M"))
