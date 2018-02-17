@@ -22,7 +22,7 @@ Imports: GenomicRanges, nlme, ggplot2,
   RColorBrewer, bumphunter, matrixStats, BiocParallel,
   outliers, reshape2, methods, locfit, IRanges, 
   grDevices, graphics, stats, utils, parallel,
-  annotatr
+  annotatr, AnnotationHub, rtracklayer
 Suggests: knitr, rmarkdown, BiocStyle
 biocViews: DNAMethylation, Epigenetics, MultipleComparison, Software,
   Sequencing, DifferentialMethylation, WholeGenome, Regression, 

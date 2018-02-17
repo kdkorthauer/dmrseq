@@ -422,6 +422,26 @@ plotDMRs(bs, regions=regions[1,], testCovariate="CellType",
     annoTrack=annoTrack)
 ```
 
+### Plot distribution of methylation values and coverage
+
+It can also be helpful to visualize overall distributions of methylation values
+and / or coverage. The function `plotEmpiricalDistribution` will plot the 
+methylation values of
+the covariate of interest (specified with `testCovariate`).
+
+```{r plot2}
+plotEmpiricalDistribution(bs, testCovariate="CellType")
+```
+
+By changing the `type` argument to `Cov`, it will also plot the distribution of 
+coverage values. In addition, samples can be plotted separately by setting 
+`bySample` to true.
+
+```{r plot2}
+plotEmpiricalDistribution(bs, testCovariate="CellType", 
+                          type="Cov", bySample=TRUE)
+```
+
 ### Exporting results to CSV files
 
 A plain-text file of the results can be exported using the 
