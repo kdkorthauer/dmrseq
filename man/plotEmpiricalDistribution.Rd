@@ -2,40 +2,43 @@
 % Please edit documentation in R/plotEmpiricalDistribution.R
 \name{plotEmpiricalDistribution}
 \alias{plotEmpiricalDistribution}
-\title{Plot the empirical distribution of the methylation beta vals}
+\title{Plot the empirical distribution of the methylation beta vals or coverage}
 \usage{
-plotEmpiricalDistribution(bs, plotFile, tiss1, tiss2, time = NULL,
-  time2 = NULL, matchCovariate = NULL, genomeName = NULL)
+plotEmpiricalDistribution(bs, testCovariate = NULL, bySample = FALSE,
+  type = "M", adj = 2.5)
 }
 \arguments{
 \item{bs}{a BSseq object}
 
-\item{plotFile}{a character string specifying the filename (and full path,
-or else file will be saved to the current working directory) for the 
-pdf file that will contain the output plot.}
-
-\item{tiss1}{character indicating the label of population 1}
-
-\item{tiss2}{character indicating the lable of population 2}
-
-\item{time}{character indicating a secondary label of population 1 (e.g.
-time point if each population is measured at multiple time points)}
-
-\item{time2}{character indicating a secondary label of population 2 (e.g.
-time point if each population is measured at multiple time points)}
-
-\item{matchCovariate}{character specifying the column name of the
+\item{testCovariate}{character specifying the column name of the
 \code{pData} slot of the BSseq object to include in the plot legend.}
 
-\item{genomeName}{character specifying the genome name if plots of
-beta values by CpG category should be made. See package \code{annotatr}
-for details of available genomes.}
+\item{bySample}{logical whether to plot a separate line for each sample.
+Default value is FALSE (so samples with the same value of 
+\code{testCovariate} will be collapsed into the same line).}
+
+\item{type}{a character indicating which type of density to plot - the 
+methylation (beta) values ("M") or the coverage ("Cov"). Default is "M".}
+
+\item{adj}{a numeric value for the \code{adjust} parameter to pass to the 
+\code{geom_line} function. Specifies how smooth the make the function.}
 }
 \value{
-None. Produces a plot saved to a pdf file with filename 
-\code{plotFile}
+a ggplot object
 }
 \description{
 Uses ggplot2 to plot smoothed density histograms of methylation
-proportions (beta values)
+proportions (beta values), or coverage. The number of curves plotted 
+will be equal to the number of different values of \code{testCovariate},
+unless \code{bySample} is TRUE. This can take quite some time to 
+execute for a large object, so it is recommended to first take a random
+sample of loci (say one million) before plotting.
+}
+\examples{
+
+data(BS.chr21)
+
+# plot beta values by sample group
+plotEmpiricalDistribution(BS.chr21, testCovariate="CellType")
+
 }

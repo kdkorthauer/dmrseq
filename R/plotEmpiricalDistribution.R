@@ -19,8 +19,8 @@
 #' @param type a character indicating which type of density to plot - the 
 #' methylation (beta) values ("M") or the coverage ("Cov"). Default is "M".
 #' 
-#' @param adj a numeric value for the \Code{adjust} parameter to pass to the 
-#' \Code{geom_line} function. Specifies how smooth the make the function.
+#' @param adj a numeric value for the \code{adjust} parameter to pass to the 
+#' \code{geom_line} function. Specifies how smooth the make the function.
 #' 
 #' @return a ggplot object
 #' 
