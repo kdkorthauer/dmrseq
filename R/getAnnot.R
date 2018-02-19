@@ -16,7 +16,7 @@
 #' a character vector of available genome names to choose from (see 
 #' \code{annotatr} documentation for more details).
 #' 
-#' @return a \code{GRangesList} object with two elements returned
+#' @return a \code{SimpleGenomicRangesList} object with two elements returned
 #' by \code{\link{getAnnot}}. The first
 #' contains CpG category information in the first element (optional)
 #' coding gene sequence information in the second element (optional).
@@ -126,7 +126,7 @@ getAnnot <- function(genomeName) {
             genes <- genes[keep, ]
             cpg$type <- substr(cpg$type, 10, nchar(cpg$type))
             
-            annot <- list(CpGs = cpg, Exons = genes)
+            annot <- GenomicRangesList(CpGs = cpg, Exons = genes)
             return(annot)
         } else {
             stop("Annotation could not be retrieved.")

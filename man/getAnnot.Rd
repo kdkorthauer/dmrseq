@@ -13,7 +13,7 @@ a character vector of available genome names to choose from (see
 \code{annotatr} documentation for more details).}
 }
 \value{
-a \code{GRangesList} object with two elements returned
+a \code{SimpleGenomicRangesList} object with two elements returned
 by \code{\link{getAnnot}}. The first
 contains CpG category information in the first element (optional)
 coding gene sequence information in the second element (optional).

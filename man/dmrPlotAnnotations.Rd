@@ -9,8 +9,8 @@ dmrPlotAnnotations(gr, annoTrack)
 \arguments{
 \item{gr}{a \code{GRanges} object that contains the DMRs to be plotted}
 
-\item{annoTrack}{a \code{GRangesList} object with two elements. The first
-contains CpG category information in the first element (optional)
+\item{annoTrack}{a \code{SimpleGenomicRangesList} object with two elements. 
+The first contains CpG category information in the first element (optional)
 coding gene sequence information in the second element (optional).
 At least one of these elements needs to be non-null in order for 
 any annotation to be plotted, but it is not necessary to contain

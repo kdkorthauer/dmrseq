@@ -745,23 +745,6 @@ estim <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
     return(out)
 }
 
-# pasting bumphunter's reduceIt function since not exported
-bumphunter.reduceIt <- function(x, elem, bind = rbind) {
-    if (missing(elem)) 
-        elem <- names(x[[1]])
-    ret <- lapply(elem, function(el) {
-        xx <- lapply(x, "[[", el)
-        if (is.matrix(xx[[1]])){
-            return(do.call(bind, xx)) 
-        }else if (is.vector(xx[[1]])){
-            return(do.call("c", xx))
-        }else{
-          stop("reduce can only handle matrices or vectors")
-        }
-    })
-    names(ret) <- elem
-    ret
-}
 
 # pasting bumphunter's greaterOrEqual function since not exported
 bumphunter.greaterOrEqual <- function(x, y) {

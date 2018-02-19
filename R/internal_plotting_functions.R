@@ -12,8 +12,8 @@
 #' 
 #' @param gr a \code{GRanges} object that contains the DMRs to be plotted
 #' 
-#' @param annoTrack a \code{GRangesList} object with two elements. The first
-#' contains CpG category information in the first element (optional)
+#' @param annoTrack a \code{SimpleGenomicRangesList} object with two elements. 
+#' The first contains CpG category information in the first element (optional)
 #' coding gene sequence information in the second element (optional).
 #' At least one of these elements needs to be non-null in order for 
 #' any annotation to be plotted, but it is not necessary to contain
@@ -25,8 +25,8 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
     # Code adapted from bsseq package
     
     ## check may need to be modified
-    if (!all(sapply(annoTrack, function(xx) is(xx, "GRanges")))) 
-        stop("all elements in 'annoTrack' needs to be 'GRanges'")
+    if (!is(annoTrack, "SimpleGenomicRangesList"))
+        stop("'annoTrack' needs to be a 'SimpleGenomicRangesList'")
     plot(start(gr), 1, type = "n", xaxt = "n", yaxt = "n", bty = "n", 
         ylim = c(0, length(annoTrack) + 0.5), xlim = c(start(gr), end(gr)), 
         xlab = "", ylab = "")
