@@ -3,8 +3,10 @@ Type: Package
 Title: Detection and inference of differentially methylated regions 
   from Whole Genome Bisulfite Sequencing 
 Version: 0.99.1
-Author: Keegan Korthauer, Sutirtha Chakraborty, Yuval Benjamini, and 
-  Rafael Irizarry
+Author: Keegan Korthauer <keegan@jimmy.harvard.edu>, 
+  Sutirtha Chakraborty <statistuta@gmail.com>, 
+  Yuval Benjamini <yuvalbenj@gmail.com>, 
+  Rafael Irizarry <rafa@jimmy.harvard.edu>
 Maintainer: Keegan Korthauer <keegan@jimmy.harvard.edu>
 Description: This package implements an approach for scanning the
   genome to detect and perform accurate inference on differentially 
@@ -16,16 +18,17 @@ Description: This package implements an approach for scanning the
   least squares (GLS) regression model with a nested autoregressive  
   correlated error structure for the effect of interest on transformed  
   methylation proportions. 
-License: MIT + file LICENSE.md
-Depends: R (>= 3.5), bsseq
+License: MIT + file LICENSE
+Depends: R (>= 3.4), bsseq
 Imports: GenomicRanges, nlme, ggplot2, 
   RColorBrewer, bumphunter, matrixStats, BiocParallel,
   outliers, reshape2, methods, locfit, IRanges, 
   grDevices, graphics, stats, utils, parallel,
-  annotatr, AnnotationHub, rtracklayer
+  annotatr, AnnotationHub, rtracklayer, GenomeInfoDb
 Suggests: knitr, rmarkdown, BiocStyle
 biocViews: DNAMethylation, Epigenetics, MultipleComparison, Software,
   Sequencing, DifferentialMethylation, WholeGenome, Regression, 
   FunctionalGenomics
+LazyData: true
 VignetteBuilder: knitr
 RoxygenNote: 6.0.1
