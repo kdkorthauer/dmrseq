@@ -26,7 +26,7 @@ abstract: >
   use of the package and demonstrates typical workflows. This vignette was 
   generated with dmrseq package version `r packageVersion("dmrseq")`
 output:
-  rmarkdown::html_document:
+  BiocStyle::html_document:
     highlight: pygments
     toc: true
     fig_width: 5
@@ -288,26 +288,7 @@ independently, so smoothing needs to be carried out once per sample.
 For pairwise comparisons, **dmrseq** analyzes all CpGs that have at least one
 read in at least one sample per group.
 Thus, if your dataset contains CpGs with zero reads in every sample within a 
-group,
-you should filter them out. This can be done with the helper function 
-`filterLoci`.  By default, this function will only keep Loci with at least one
-read in every sample (note that the zero
-sites have already been filtered out on this example dataset):
-
-```{r filter, message=TRUE}
-bs <- filterLoci(bs)
-```
-
-However, by specifying `numSamples="one"`, it will keep all loci with at least
-one read in at least *one* sample per group. You can also change the minimum
-number of reads parameter (default `minreads=1`).
-
-```{r filter, message=TRUE}
-bs <- filterLoci(bs, numSamples="one", testCovariate = "CellType")
-```
-
-You may also change the minimum
-number of reads parameter (default `minCoverage=1`).
+group, you should filter them out prior to running `dmrseq`.
 
 ## Differentially Methylated Regions
 
@@ -413,9 +394,8 @@ To retrieve annotations for genomes supported by **annotatr**, use the
 helper function `getAnnot`, and pass this annotation object to the `plotDMRs` 
 function as the `annoTrack` parameter.
 
-```{r plot, out.width='\\textwidth', fig.height = 2.5}
-# load the annotatr package & get annotations for hg18
-library(annotatr)
+```{r plot, out.width='\\textwidth', fig.height = 2.5, warning='hide'}
+# get annotations for hg18
 annoTrack <- getAnnot("hg18")
 
 plotDMRs(bs, regions=regions[1,], testCovariate="CellType",
@@ -429,7 +409,7 @@ and / or coverage. The function `plotEmpiricalDistribution` will plot the
 methylation values of
 the covariate of interest (specified with `testCovariate`).
 
-```{r plot2}
+```{r plot2, fig.height=3}
 plotEmpiricalDistribution(bs, testCovariate="CellType")
 ```
 
@@ -437,7 +417,7 @@ By changing the `type` argument to `Cov`, it will also plot the distribution of
 coverage values. In addition, samples can be plotted separately by setting 
 `bySample` to true.
 
-```{r plot2}
+```{r plot3, fig.height=3}
 plotEmpiricalDistribution(bs, testCovariate="CellType", 
                           type="Cov", bySample=TRUE)
 ```
