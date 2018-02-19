@@ -36,9 +36,6 @@ just by leaving the \code{annoTrack} argument as NULL.
 }
 \examples{
 
-# need to load annotatr package with 'library(annotatr)' before 
-# running this command to retrieve annotations
-
 # get annotation information for hg19
 annoTrack <- getAnnot('hg19')
 

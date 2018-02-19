@@ -29,24 +29,16 @@
 #' @import annotatr
 #' @importFrom AnnotationHub AnnotationHub query
 #' @importFrom rtracklayer liftOver
+#' @importFrom GenomeInfoDb genome
 #' 
 #' @examples
-#' 
-#' # need to load annotatr package with 'library(annotatr)' before 
-#' # running this command to retrieve annotations
 #' 
 #' # get annotation information for hg19
 #' annoTrack <- getAnnot('hg19')
 #' 
 #' 
 getAnnot <- function(genomeName) {
-    if (!require("annotatr", quietly = TRUE)) {
-        message(paste0("annotatr could not be loaded. Please make sure it is ",
-            "installed, or skip the annotation step and leave as NULL", 
-            "(default value) in plotDMRs."))
-        return(NULL)
-    }
-
+    requireNamespace("annotatr")
     liftTo <- NULL
     if(genomeName == 'hg18'){
         message("Genome ", genomeName, " will be built by lifting over ",
@@ -126,8 +118,8 @@ getAnnot <- function(genomeName) {
               cpg.new <- unlist(liftOver(cpg, chain))
               genes.new <- unlist(liftOver(genes, chain))
               
-              genome(cpg) <- liftTo
-              genome(genes) <- liftTo
+              GenomeInfoDb::genome(cpg) <- liftTo
+              GenomeInfoDb::genome(genes) <- liftTo
             }
            
             keep <- which(!is.na(genes$symbol))
