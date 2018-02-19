@@ -1,6 +1,6 @@
 ---
 title: "Analyzing Bisulfite-seq data with dmrseq"
-author: "Keegan D. Korthauer"
+author: "Keegan Korthauer"
 date: "`r BiocStyle::doc_date()`"
 package: "`r BiocStyle::pkg_ver('dmrseq')`"
 bibliography: dmrseqBib.bib
@@ -46,7 +46,7 @@ knitr::opts_chunk$set(tidy=FALSE, cache=TRUE,
     message=FALSE, error=FALSE, warning=TRUE)
 ```
 
-# Standard workflow
+# Quick start
 
 **If you use dmrseq in published research, please cite:**
 
@@ -62,8 +62,6 @@ sequencing data and inference for differentially methylated CpGs.
 The main goal of **dmrseq** [@Korthauer183210]
 is to provide inference for differentially methylated *regions*, or 
 groups of CpGs.
-
-## Quick start
 
 Here we show the most basic steps for a differential methylation 
 analysis. There are a variety of steps upstream of **dmrseq** that result
@@ -131,7 +129,7 @@ see the [bsseq](http://bioconductor.org/packages/bsseq) vignettes.
   you can use the `read.bismark` function to read bismark files
   into `BSseq` objects. See below for more details.
 
-## How to get help for dmrseq
+# How to get help for dmrseq
 
 Please post **dmrseq** questions to the 
 **Bioconductor support site**, which serves as a searchable knowledge
@@ -144,9 +142,9 @@ an alert to the package authors to respond on the support site.  See
 the first question in the list of [Frequently Asked Questions](#FAQ)
 (FAQ) for information about how to construct an informative post. 
 
-## Input data
+# Input data
 
-### Why counts instead of methylation proportions?
+## Why counts instead of methylation proportions?
 
 As input, the **dmrseq** package expects count data as obtained, e.g.,
 from Bisulfite-sequencing. The value in the *i*-th row and the *j*-th column of
@@ -161,14 +159,21 @@ and naturally, we have more confidence in those with many reads mapping to them.
 If we only kept the proportions, a CpG with 2 out of 2 reads methylated would
 be treated the same as a CpG with 30 out of 30 reads methylated.
 
-### How many samples do I need?
+## How many samples do I need?
 
 To use **dmrseq**, you need to have at least 2 samples in each condition. 
 Without this replicates, it is impossible to distinguish between biological
 variability due to condition/covariate of interest, and inter-individual 
 variability within condition.
 
-### Bismark input
+If your experiment contains additional samples, perhaps from other conditions
+that are not of interest in the current test, these should be filtered out 
+prior to running **dmrseq**. Rather than creating a new filtered object,
+the filtering step can be included in the call to the main function `dmrseq`.
+For more details, see the 
+[Filtering CpGs and samples Section](#filtering-cpgs-and-samples).
+
+## Bismark input
 
 If you used Bismark for mapping and methylation level extraction, you can 
 use the `read.bismark` function from the **bsseq** package to read the 
@@ -200,7 +205,7 @@ bismarkBSseq
 See the [bsseq](http://bioconductor.org/packages/bsseq) help pages for 
 more information on using this function.
 
-### Count matrix input
+## Count matrix input
 
 If you haven't used Bismark but you have count data for number of methylated
 reads and total coverage for each CpG, along with their corresponding chromosome
@@ -253,7 +258,7 @@ will be used by the `dmrseq` function to decide
 which samples to compare to one another. The next section shows how to add
 this information to the `BSseq` object.
 
-### Sample metadata
+## Sample metadata
 
 To add sample metadata, including the covariate of interest, you can add it 
 to the 
@@ -273,7 +278,7 @@ We will then tell the `dmrseq` function which metadata variable to use
 for testing for methylation differences by setting the `testCovariate` 
 parameter equal to its column name. 
 
-### Smoothing
+## Smoothing
 
 Note that unlike in **bsseq**, you do not need to carry out the smoothing step
 with a separate function. In addition, you should not use bbseq's bsmooth
@@ -283,14 +288,41 @@ carries out the smoothing step once. This is automatically done with the main
 `dmrseq` function. **bsseq** on the other hand, smooths each sample 
 independently, so smoothing needs to be carried out once per sample.
 
-### Removing CpGs with no coverage
+## Filtering CpGs and samples
 
 For pairwise comparisons, **dmrseq** analyzes all CpGs that have at least one
 read in at least one sample per group.
 Thus, if your dataset contains CpGs with zero reads in every sample within a 
-group, you should filter them out prior to running `dmrseq`.
+group, you should filter them out prior to running `dmrseq`. Likewise,
+if your `bsseq` object contains extraneous samples that are part of the 
+experiment but not the differential methylation testing of interest, these
+should be filtered out as well.
 
-## Differentially Methylated Regions
+Filtering `bsseq` objects is straightforward: 
+
+* Subset rows to filter CpG loci
+* Subset columns to filter samples
+
+If we wish to remove all CpGs that have no coverage in at least one sample 
+and only keep samples with a CellType of "imr90" or "h1", we would do so with:
+
+```{r, filter}
+# which loci and sample indices to keep
+loci.idx <- which(rowSums(getCoverage(BS.chr21, type="Cov")==0) == 0)
+sample.idx <- which(pData(BS.chr21)$CellType %in% c("imr90", "h1"))
+
+BS.chr21.filtered <- BS.chr21[loci.idx, sample.idx]
+```
+
+Note that this is a trivial example, since our toy example object `BS.chr21` 
+already contains only loci with coverage at least one in all samples as well
+as only samples from the "imr90" and "h1" conditions. 
+
+Also note that instead of creating a separate object, the filtering step 
+can be combined with the call to `dmrseq` by replacing the `bs` input with a
+filtered version `bs[loci.idx, sample.idx]`.
+
+# Differentially Methylated Regions
 
 The standard differential expression analysis steps are wrapped
 into a single function, `dmrseq`. The estimation steps performed
@@ -329,7 +361,7 @@ split computation over these cores.
 library("BiocParallel")
 register(MulticoreParam(4))
 ```
-### Steps of the dmrseq method
+## Steps of the dmrseq method
 
 **dmrseq** is a two-stage approach that first detects candidate regions and then
 explicitly evaluates statistical significance at the region level while 
@@ -348,11 +380,11 @@ distribution that can be generated from as few as two biological replicates,
 and false discovery rate is controlled using the Benjamini-Hochberg 
 procedure.
 
-For more details, refer to the **dmrseq** paper.
+For more details, refer to the **dmrseq** paper [@Korthauer183210].
 
-## Exploring and exporting results
+# Exploring and exporting results
 
-### Explore how many regions were signifiant
+## Explore how many regions were signifiant
 
 How many regions were significant at the FDR (q-value) cutoff of 0.05? We
 can find this by counting how many values in the `qval` column of the results
@@ -366,7 +398,7 @@ sum(regions$qval < 0.05)
 sigRegions <- regions[regions$qval < 0.05,]
 ```
 
-### Hypo- or Hyper- methylation?
+## Hypo- or Hyper- methylation?
 
 You can determine the proportion of regions with hyper-methylation by counting
 how many had a positive direction of effect (positive statistic).
@@ -381,7 +413,7 @@ the two conditions are "A" and "B", a positive direction of effect means that
 "A" is hyper-methylated relative to "B". Conversely, a negative direction of 
 effect means that "A" is hypo-methylated relative to "B". 
 
-### Plot DMRs 
+## Plot DMRs 
 
 It can be useful to visualize individual DMRs, so we provide a plotting 
 function that is based off of **bsseq**'s plotting functions. There is also
@@ -402,7 +434,7 @@ plotDMRs(bs, regions=regions[1,], testCovariate="CellType",
     annoTrack=annoTrack)
 ```
 
-### Plot distribution of methylation values and coverage
+## Plot distribution of methylation values and coverage
 
 It can also be helpful to visualize overall distributions of methylation values
 and / or coverage. The function `plotEmpiricalDistribution` will plot the 
@@ -422,7 +454,7 @@ plotEmpiricalDistribution(bs, testCovariate="CellType",
                           type="Cov", bySample=TRUE)
 ```
 
-### Exporting results to CSV files
+## Exporting results to CSV files
 
 A plain-text file of the results can be exported using the 
 base R functions *write.csv* or *write.delim*. 
