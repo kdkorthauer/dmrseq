@@ -154,21 +154,14 @@ bumphunt <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
         rawBeta <- tmp$meth.diff
         sd.raw <- tmp$sd.meth.diff
     }
-    rm(tmp)
     
     sd.raw[sd.raw < 1e-05] <- 1e-05
     
     # truncate coverage at 75th percentile
-    cov.means <- pmin(cov.means, quantile(cov.means, 0.75))
-    
     # minimum sd proportional to median coverage
-    sd.adj <- pmax(sd.raw, 1/pmax(cov.means, 5))
-    
-    weights <- (cov.means)/sd.adj
-    
-    rm(sd.adj)
-    rm(cov.means)
-    gc()
+ 
+    weights <- pmin(cov.means, quantile(cov.means, 0.75)) / 
+      pmax(sd.raw, 1/pmax(cov.means, 5))
     
     if (smooth) {
         if (verbose) 
@@ -190,7 +183,6 @@ bumphunt <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
         }
         
         names(beta) <- names(beta.tmp)
-        rm(beta.tmp)
         Index <- which(beta$smoothed)
         beta <- beta$fitted
         
@@ -200,21 +192,14 @@ bumphunt <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
     }
     
     rawBeta <- rawBeta/(sd.raw * sqrt(2/sampleSize))
-    rm(sd.raw)
-    gc()
     
-    betaSmooth <- rawBeta
-    betaSmooth[Index] <- beta[Index]
-    beta <- betaSmooth
-    rm(betaSmooth)
+    beta[-Index] <- rawBeta[-Index]
     
     tab <- regionScanner(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos, 
         chr = chr, x = beta, y = rawBeta, maxGap = maxGap, cutoff = cutoff, 
         minNumRegion = minNumRegion, design = design, coeff = coeff, 
         verbose = verbose, sampleSize = sampleSize, parallel = parallel)
-    rm(beta)
-    rm(rawBeta)
-    gc()
+
     if (nrow(tab) == 0) {
         if (verbose) 
             message("No regions found.")
@@ -364,13 +349,11 @@ trimEdges <- function(x, candidates = NULL, verbose = FALSE, minNumRegion) {
 meanDiff <- function(bs, dmrs, testCovariate, adjustCovariate) {
     # convert covariates to column numbers if characters
     if (is.character(testCovariate)) {
-        tc <- testCovariate
         testCovariate <- which(colnames(pData(bs)) == testCovariate)
         if (length(testCovariate) == 0) {
-            stop(paste0("testCovariate named ", tc, " not found in pData(). ", 
+            stop(paste0("testCovariate not found in pData(). ", 
                         "Please specify a valid testCovariate"))
         }
-        rm(tc)
     }
     
     if (ncol(pData(bs)) < max(testCovariate, adjustCovariate)) {
@@ -652,10 +635,6 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
     
     # remove regions that had constant meth values
     res <- res[!ret$constant, ]
-    
-    rm(meth.mat)
-    rm(cov.mat)
-    rm(pos)
     
     t2 <- proc.time()
     if (verbose) {

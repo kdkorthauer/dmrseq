@@ -180,23 +180,19 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
     
     # convert covariates to column numbers if characters
     if (is.character(testCovariate)) {
-        tc <- testCovariate
         testCovariate <- which(colnames(pData(bs)) == testCovariate)
         if (length(testCovariate) == 0) {
-            stop(paste0("testCovariate named ", tc, " not found in pData(). ",
+            stop(paste0("testCovariate not found in pData(). ",
                         "Please specify a valid testCovariate"))
         }
-        rm(tc)
     }
     
     if (is.character(adjustCovariate)) {
-        tc <- adjustCovariate
         adjustCovariate <- which(colnames(pData(bs)) == adjustCovariate)
         if (length(adjustCovariate) == 0) {
-            stop(paste0("adjustCovariate named ", tc, " not found in pData(). ",
+            stop(paste0("adjustCovariate not found in pData(). ",
                 "Please specify a valid adjustCovariate"))
         }
-        rm(tc)
     }
     
     
@@ -308,8 +304,6 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
     pos <- start(bs)
     chr <- as.character(seqnames(bs))
     meta <- pData(bs)
-    rm(bs)
-    gc()
     
     message(paste0("Detecting candidate regions with coefficient larger than ",
                    unique(abs(cutoff)), 
@@ -444,8 +438,6 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
                      "))
             }
         }
-        rm(res.flip.p)
-        
         
         # if there are more than 1 million candidate null regions, 
         # take a random sample
