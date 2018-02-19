@@ -71,7 +71,7 @@ simDMRs <- function(bs, num.dmrs = 3000, delta.max0 = 0.3) {
     
     cluster <- bumphunter::clusterMaker(chr, pos, maxGap = 500)
     Indexes <- split(seq(along = cluster), cluster)
-    lns <- sapply(Indexes, length)
+    lns <- lengths(Indexes)
     Indexes <- Indexes[lns >= 5 & lns <= 500]
     
     # sample regions with intermediate methylation values preferentially

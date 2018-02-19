@@ -212,137 +212,129 @@ bumphunt <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
 refineEdges <- function(y, candidates = NULL, 
     cutoff = qt(0.975, 2 * sampleSize - 2), verbose = FALSE, 
     minNumRegion, sampleSize) {
-    stopifnot(length(cutoff) <= 2)
-    stopifnot(is.list(candidates) & length(candidates) == 2)
     
-    if (verbose) 
-        message("refineEdges: refining")
-    direction <- as.integer(bumphunter.greaterOrEqual(y, cutoff))
-    direction[y <= -cutoff] <- -1L
+  stopifnot(length(cutoff) <= 2)
+  stopifnot(is.list(candidates) & length(candidates) == 2)
     
-    trimmed <- candidates
-    for (ii in 1:2) {
-        if (ii == 1) {
-            sig <- 1
-        } else {
-            sig <- -1
-        }
-        if (length(candidates[[ii]]) > 0) {
-            which.long <- which(sapply(candidates[[ii]], length) > minNumRegion)
-            if (length(which.long) > 1) {
-                trimmed[[ii]][which.long] <-sapply(candidates[[ii]][which.long],
-                  function(x) {
-                    idx <- which(direction[x] == sig)
-                    if (length(idx) > 0) {
-                      if (length(min(idx):max(idx)) >= minNumRegion) {
-                        x[min(idx):max(idx)]
-                      } else {
-                        x
-                      }
-                    } else {
-                      x
-                    }
-                  })
-                trimmed[[ii]][sapply(trimmed[[ii]], is.null)] <- NULL
-            } else if (length(which.long) == 1) {
-                trimmed[[ii]][[which.long]] <- sapply(
-                  candidates[[ii]][which.long], 
-                  function(x) {
-                    idx <- which(direction[x] == sig)
-                    if (length(idx) > 0) {
-                      if (length(min(idx):max(idx)) >= minNumRegion) {
-                        x[min(idx):max(idx)]
-                      } else {
-                        x
-                      }
-                    } else {
-                      x
-                    }
-                  })
-            }
-        }
+  if (verbose) 
+      message("refineEdges: refining")
+  direction <- as.integer(bumphunter.greaterOrEqual(y, cutoff))
+  direction[y <= -cutoff] <- -1L
+    
+  refineOne <- function(x, sig) {
+    idx <- which(direction[x] == sig)
+    if (length(idx) > 0) {
+      if (length(min(idx):max(idx)) >= minNumRegion) {
+        x[min(idx):max(idx)]
+      } else {
+        x
+      }
+    } else {
+      x
     }
+  }
     
-    return(trimmed)
+  refineLong <- function(candidates, direction, minNumRegion, sig){
+    if (length(candidates) > 0) {
+      which.long <- which(lengths(candidates) > minNumRegion)
+      if (length(which.long) > 1) {
+        candidates[which.long] <- lapply(candidates[which.long], 
+                                        FUN=refineOne, sig=sig)
+        candidates[vapply(candidates, is.null, FUN.VALUE=logical(1))] <- NULL
+      } else if (length(which.long) == 1) {
+        candidates[[which.long]] <- lapply(candidates[which.long], 
+                                           FUN=refineOne, sig=sig)
+      }
+    }
+    return(candidates)
+  }
+    
+  trimmed <- vector("list", 2)
+  trimmed[[1]] <- refineLong(candidates[[1]], direction, 
+                             minNumRegion, sig = 1)
+  trimmed[[2]] <- refineLong(candidates[[2]], direction, 
+                             minNumRegion, sig = -1)
+    
+  return(trimmed)
 }
 
 trimEdges <- function(x, candidates = NULL, verbose = FALSE, minNumRegion) {
     
-    stopifnot(is.list(candidates) & length(candidates) == 2)
+  stopifnot(is.list(candidates) & length(candidates) == 2)
     
-    if (verbose) 
-        message("trimEdges: trimming")
-    
-    trimmed <- candidates
-    for (ii in 1:2) {
-        if (length(candidates[[ii]]) > 0) {
-            if (ii == 1) {
-                sig <- 1
-            } else {
-                sig <- -1
+  if (verbose) 
+      message("trimEdges: trimming")
+  
+  trimOne <- function(w, x, sig) {
+      mid <- which.max(x[w])
+      new.start <- 1
+      new.end <- length(w)
+      
+      if (x[w[mid]]/min(x[w]) > 4/3) {
+        if (w[mid] - w[1] + 1 > 4) {
+          fit1 <- lm(x[w[1:mid]] ~ w[1:mid])
+          if (length(summary(fit1)) > 0) {
+            if (nrow(summary(fit1)$coef) == 2) {
+              if (summary(fit1)$coef[2, 1] > 0 & 
+                  summary(fit1)$coef[2, 4] < 0.01) {
+                new.cut <- (0.5 * (x[w[mid]] - min(x[w])) + 
+                              min(x[w]) +  0.75 * mean(x[w]))/2
+                new.start <- min(max(1, round(mid - 0.125 * length(w))), 
+                                 max(1, mid - 2), 
+                                 (1:mid)[min(which(x[w[1:mid]] >= new.cut))])
+              }
             }
-            x <- x * sig
-            which.long2 <- which(sapply(candidates[[ii]], length) > 
-                                   minNumRegion)
-            if (length(which.long2) > 0) {
-                repl <- sapply(candidates[[ii]][which.long2], function(w) {
-                  mid <- which.max(x[w])
-                  new.start <- 1
-                  new.end <- length(w)
-                  
-                  if (x[w[mid]]/min(x[w]) > 4/3) {
-                    if (w[mid] - w[1] + 1 > 4) {
-                      fit1 <- lm(x[w[1:mid]] ~ w[1:mid])
-                      if (length(summary(fit1)) > 0) {
-                        if (nrow(summary(fit1)$coef) == 2) {
-                          if (summary(fit1)$coef[2, 1] > 0 & 
-                              summary(fit1)$coef[2, 
-                            4] < 0.01) {
-                            new.cut <- (0.5 * (x[w[mid]] - min(x[w])) + 
-                                          min(x[w]) +  0.75 * mean(x[w]))/2
-                            new.start <- min(max(1, 
-                                          round(mid - 0.125 * length(w))), 
-                              max(1, mid - 2), 
-                              (1:mid)[min(which(x[w[1:mid]] >= new.cut))])
-                            
-                          }
-                        }
-                      }
-                    }
-                    
-                    if (w[length(w)] - w[mid] + 1 > 4) {
-                      fit2 <- lm(x[w[mid:length(w)]] ~ w[mid:length(w)])
-                      if (length(fit2) > 0) {
-                        if (nrow(summary(fit2)$coef) == 2) {
-                          if (summary(fit2)$coef[2, 1] < 0 & 
-                              summary(fit2)$coef[2, 
-                            4] < 0.01) {
-                            new.cut <- (0.5 * (x[w[mid]] - min(x[w])) + 
-                                          min(x[w]) + 0.75 * mean(x[w]))/2
-                            new.end <- max(min(round(mid + 0.125 * length(w)),
-                                      length(w)), min(mid + 2, length(w)), 
-                                (mid:length(w))[max(which(x[w[mid:length(w)]] >=
-                                new.cut))])
-                          }
-                        }
-                      }
-                    }
-                  }
-                  if (length(new.start:new.end) >= minNumRegion) {
-                    return(w[new.start:new.end])
-                  } else {
-                    return(w)
-                  }
-                })
-                if (length(which.long2) > 1) {
-                  trimmed[[ii]][which.long2] <- repl
-                } else {
-                  trimmed[[ii]][[which.long2]] <- repl
-                }
-            }
+          }
         }
+        
+        if (w[length(w)] - w[mid] + 1 > 4) {
+          fit2 <- lm(x[w[mid:length(w)]] ~ w[mid:length(w)])
+          if (length(fit2) > 0) {
+            if (nrow(summary(fit2)$coef) == 2) {
+              if (summary(fit2)$coef[2, 1] < 0 & 
+                  summary(fit2)$coef[2, 4] < 0.01) {
+                new.cut <- (0.5 * (x[w[mid]] - min(x[w])) + 
+                              min(x[w]) + 0.75 * mean(x[w]))/2
+                new.end <- max(min(round(mid + 0.125 * length(w)),
+                                   length(w)), min(mid + 2, length(w)), 
+                               (mid:length(w))[max(which(x[w[mid:length(w)]] >=
+                                                           new.cut))])
+              }
+            }
+          }
+        }
+      }
+      
+      if (length(new.start:new.end) >= minNumRegion) {
+        return(w[new.start:new.end])
+      } else {
+        return(w)
+      }
+  }
+
+  trimLong <- function(x, candidates, direction, minNumRegion, sig){
+    if (length(candidates) > 0) {
+      x <- x * sig
+      which.long <- which(lengths(candidates) > minNumRegion)
+      if (length(which.long) > 1) {
+        candidates[which.long] <- lapply(candidates[which.long], 
+                                         FUN=trimOne, x=x, sig=sig)
+        candidates[vapply(candidates, is.null, FUN.VALUE=logical(1))] <- NULL
+      } else if (length(which.long) == 1) {
+        candidates[[which.long]] <- lapply(candidates[which.long], 
+                                           FUN=trimOne, x=x, sig=sig)
+      }
     }
-    return(trimmed)
+    return(candidates)
+  }
+  
+  trimmed <- vector("list", 2)
+  trimmed[[1]] <- trimLong(x, candidates[[1]], direction, 
+                             minNumRegion, sig = 1)
+  trimmed[[2]] <- trimLong(x, candidates[[2]], direction, 
+                             minNumRegion, sig = -1)
+  
+  return(trimmed)
 }
 
 # function to compute raw mean methylation differences
@@ -420,7 +412,7 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
     # only keep up and down indices
     Indexes <- Indexes[1:2]
     
-    if (sum(sapply(Indexes, length)) == 0) {
+    if (sum(lengths(Indexes)) == 0) {
         return(NULL)
     }
     
@@ -429,7 +421,7 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
     Indexes <- refineEdges(y = y[ind], candidates = Indexes, cutoff = cutoff, 
         verbose = FALSE, minNumRegion = minNumRegion, sampleSize = sampleSize)
     
-    if (sum(sapply(Indexes, length)) == 0) {
+    if (sum(lengths(Indexes)) == 0) {
         return(NULL)
     }
     
@@ -439,13 +431,13 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
     Indexes <- trimEdges(x = x[ind], candidates = Indexes, verbose = FALSE, 
                          minNumRegion = minNumRegion)
     
-    if (sum(sapply(Indexes, length)) == 0) {
+    if (sum(lengths(Indexes)) == 0) {
         return(NULL)
     }
     
     for (i in 1:2) {
         # get number of loci in region
-        lns <- sapply(Indexes[[i]], length)
+        lns <- lengths(Indexes[[i]])
         Indexes[[i]] <- Indexes[[i]][lns >= minNumRegion]
     }
     
@@ -587,7 +579,7 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
         }
     }
     
-    numCandidates <- sum(sapply(Indexes, length))
+    numCandidates <- sum(lengths(Indexes))
     
     if (verbose) {
         message(paste0(".....Evaluating ", numCandidates, 
@@ -600,7 +592,7 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
     
     Indexes <- c(Indexes[[1]], Indexes[[2]])
     
-    maxLength <- max(sapply(Indexes, length))
+    maxLength <- max(lengths(Indexes))
     if (maxLength > 1000) {
         message(paste0("Note: candidate regions with more than 1000 ",
                        "CpGs detected.", 
@@ -615,8 +607,7 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
             function(Index) max(pos[ind[Index]])), 
         indexStart = sapply(Indexes, function(Index) min(ind[Index])), 
         indexEnd = sapply(Indexes, function(Index) max(ind[Index])),
-        L = sapply(Indexes, 
-            length),
+        L = lengths(Indexes),
         area = sapply(Indexes, function(Index) abs(sum(x[ind[Index]]))), 
         stringsAsFactors = FALSE)
     
@@ -675,7 +666,7 @@ smoother <- function(y, x = NULL, weights = NULL, chr = chr,
             weightsi <- matrix(1, nrow = nrow(yi), ncol = ncol(yi))
         
         Indexes <- split(seq(along = clusteri), clusteri)
-        clusterL <- sapply(Indexes, length)
+        clusterL <- lengths(Indexes)
         smoothed <- rep(TRUE, nrow(yi))
         
         for (i in seq(along = Indexes)) {
