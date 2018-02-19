@@ -118,8 +118,8 @@ getEstimatePooled <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
         return(list(rawBeta = est, sd = sd))
     } else {
         # continuous or multi-level factor case
-        stop(paste0("Error: don't use pooled estimate when there ",
-                    "are more than 2 groups"))
+        stop("Error: don't use pooled estimate when there ",
+                    "are more than 2 groups")
     }
 }
 
@@ -527,8 +527,8 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
     numCandidates <- sum(lengths(Indexes))
     
     if (verbose) {
-        message(paste0(".....Evaluating ", numCandidates, 
-                       " candidate regions."))
+        message(".....Evaluating ", numCandidates, 
+                " candidate regions.")
     }
     
     if (numCandidates == 0) {
@@ -539,23 +539,21 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
     
     maxLength <- max(lengths(Indexes))
     if (maxLength > 1000) {
-        message(paste0("Note: candidate regions with more than 1000 ",
-                       "CpGs detected.", 
+        message("Note: candidate regions with more than 1000 ",
+                  "CpGs detected.", 
             " It is recommended to decrease the value of maxGap to ",
-            "increase computational efficiency."))
+            "increase computational efficiency.")
     }
     
     t1 <- proc.time()
-    res <- data.frame(chr = sapply(Indexes, function(Index) chr[ind[Index[1]]]),
-        start = sapply(Indexes, function(Index) min(pos[ind[Index]])),
-        end = sapply(Indexes, 
-            function(Index) max(pos[ind[Index]])), 
-        indexStart = sapply(Indexes, function(Index) min(ind[Index])), 
-        indexEnd = sapply(Indexes, function(Index) max(ind[Index])),
-        L = lengths(Indexes),
-        area = sapply(Indexes, function(Index) abs(sum(x[ind[Index]]))), 
-        stringsAsFactors = FALSE)
-    
+    df <- DataFrame(ind, x = x[ind], chr = chr[ind], pos = pos[ind])
+    res <- as.data.frame(aggregate(df, List(Indexes), 
+                     chr = unlist(phead(chr, 1L)),
+                     START = min(pos), END = max(pos),
+                     indexStart = min(ind), indexEnd = max(ind),
+                     L = lengths(chr), area = abs(sum(x))))[,-1]
+    colnames(res)[colnames(res)=="START"] <- "start"
+    colnames(res)[colnames(res)=="END"] <- "end"
     
     if (parallel) {
         ret <- do.call("rbind", bplapply(Indexes, 
@@ -574,8 +572,8 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
     
     t2 <- proc.time()
     if (verbose) {
-        message(paste0(".....Took ", round((t2 - t1)[3]/60, 2), 
-                       " min to score candidate regions."))
+        message(".....Took ", round((t2 - t1)[3]/60, 2), 
+                " min to score candidate regions.")
     }
     
     if (order & nrow(res) > 0) 
@@ -669,9 +667,8 @@ smoother <- function(y, x = NULL, weights = NULL, chr = chr,
     
     if (verbose) {
         t2 <- proc.time()
-        message(paste0("..........Done Smoothing Chromosome ", chr, ". Took ",
-                       round((t2 - 
-            t1)[3]/60, 2), " minutes"))
+        message("..........Done Smoothing Chromosome ", chr, ". Took ",
+                round((t2 - t1)[3]/60, 2), " minutes")
     }
     
     return(ret)
