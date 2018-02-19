@@ -4,12 +4,6 @@
 #' Add simulated DMRs to observed control data. Control data will be split
 #' into two (artificial) populations.
 #' 
-#' @param simFile Character representing a file name/path. If specified, then 
-#' nothing will be returned and the simulated object will be saved to the file 
-#' with filename \code{simFile}.
-#' If \code{simFile} is left as default (NULL) then the simulated object will
-#' be returned by the function. 
-#' 
 #' @param bs a BSseq object containing only control samples (from the same
 #' population) for which simulated DMRs will be added after dividing the 
 #' population into two artificial groups.
@@ -21,10 +15,7 @@
 #' actual value will be drawn from a scaled Beta distribution centered at 
 #' this value). Default value is 0.3.
 #' 
-#' @return if \code{simFile} is specified, then nothing will be returned and
-#' the simulated object will be saved to the file with filename \code{simFile}.
-#' If \code{simFile} is left as default (NULL) then the simulated object will
-#' be returned by the function. The object is a named list with 5 elements: (1) 
+#' @return A named list object with 5 elements: (1) 
 #' \code{gr.dmrs} is a \code{GenomicRanges} object with \code{num.dmrs} 
 #' ranges that represent the random DMRs added. (2) \code{dmr.mncov} is a 
 #' numeric vector that contains the mean coverage in each simulated DMR. (3)
@@ -43,10 +34,12 @@
 #' # This is just for illustrative purposes - ideally you would
 #' # add DMRs to a set of samples from the same condition (in our
 #' # example data, we have data from two different cell types)
+#' # In this case, we shuffle the samples by cell type to create
+#' # a null comparison.
 #' 
 #' data(BS.chr21)
 #' 
-#' BS.chr21.sim <- simDMRs(bs=BS.chr21, num.dmrs=300)
+#' BS.chr21.sim <- simDMRs(bs=BS.chr21[,c(1,3,2,4)], num.dmrs=300)
 #' 
 #' # show the simulated DMRs GRanges object
 #' show(BS.chr21.sim$gr.dmrs)
@@ -54,10 +47,10 @@
 #' # show the updated BSseq object that includes the simulated DMRs
 #' show(BS.chr21.sim$bs)
 #' 
-#' #' # examine effect sizes of the DMRs
+#' # examine effect sizes of the DMRs
 #' head(BS.chr21.sim$delta)
 #' 
-simDMRs <- function(simFile = NULL, bs, num.dmrs = 3000, delta.max0 = 0.3) {
+simDMRs <- function(bs, num.dmrs = 3000, delta.max0 = 0.3) {
     sampleSize <- nrow(pData(bs))/2
     
     # code to simulate DMRs if some number of simulated dmrs was specified
@@ -83,15 +76,11 @@ simDMRs <- function(simFile = NULL, bs, num.dmrs = 3000, delta.max0 = 0.3) {
     
     # sample regions with intermediate methylation values preferentially
     prop.mat <- rowMeans(meth.mat/(meth.mat + unmeth.mat))
-    med.prop.all <- unlist(lapply(Indexes, function(x) median(prop.mat[x])))
-    rm(prop.mat)
-    gc()
-    
+    prop.mat <- unlist(lapply(Indexes, function(x) median(prop.mat[x])))
+  
     dmrs.ind <- sample(1:length(Indexes), num.dmrs, replace = FALSE, 
                        prob = pmax(1 - sqrt(2) * 
-                                     abs(0.5 - med.prop.all)^0.5, 0))
-    rm(med.prop.all)
-    gc()
+                                     abs(0.5 - prop.mat)^0.5, 0))
     dmrs.ind <- Indexes[dmrs.ind]
     fnc <- function(index) {
         gr.dmr <- GRanges(seqnames = unique(as.character(seqnames(bs)[index])),
@@ -108,8 +97,6 @@ simDMRs <- function(simFile = NULL, bs, num.dmrs = 3000, delta.max0 = 0.3) {
     
     # set up null signal (smooth function of position) mcols(bs)$diff <- 0
     Diff <- Diff2 <- rep(0, length(bs))
-    rm(bs)
-    gc()
     
     dmr.mncov <- dmr.L <- deltas <- rep(NA, num.dmrs)
     
@@ -213,10 +200,7 @@ simDMRs <- function(simFile = NULL, bs, num.dmrs = 3000, delta.max0 = 0.3) {
             }
         }
     }
-    rm(cov)
-    rm(prop)
-    gc()
-    
+
     # get everything in order to run bumphunter functions
     bsNew <- BSseq(pos = pos, chr = chr, M = meth.mat, 
                    Cov = (meth.mat + unmeth.mat), 
@@ -226,10 +210,6 @@ simDMRs <- function(simFile = NULL, bs, num.dmrs = 3000, delta.max0 = 0.3) {
     
     sim.dat.red <- list(gr.dmrs = gr.dmrs, dmr.mncov = dmr.mncov, dmr.L = dmr.L,
         bs = bsNew, delta = deltas)
-    if (is.null(simFile)) {
-        return(sim.dat.red)
-    } else {
-        save(sim.dat.red, file = simFile)
-    }
+    return(sim.dat.red)
 }
 

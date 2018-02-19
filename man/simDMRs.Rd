@@ -4,15 +4,9 @@
 \alias{simDMRs}
 \title{Simulate Differentially Methylated Regions}
 \usage{
-simDMRs(simFile = NULL, bs, num.dmrs = 3000, delta.max0 = 0.3)
+simDMRs(bs, num.dmrs = 3000, delta.max0 = 0.3)
 }
 \arguments{
-\item{simFile}{Character representing a file name/path. If specified, then 
-nothing will be returned and the simulated object will be saved to the file 
-with filename \code{simFile}.
-If \code{simFile} is left as default (NULL) then the simulated object will
-be returned by the function.}
-
 \item{bs}{a BSseq object containing only control samples (from the same
 population) for which simulated DMRs will be added after dividing the 
 population into two artificial groups.}
@@ -25,10 +19,7 @@ actual value will be drawn from a scaled Beta distribution centered at
 this value). Default value is 0.3.}
 }
 \value{
-if \code{simFile} is specified, then nothing will be returned and
-the simulated object will be saved to the file with filename \code{simFile}.
-If \code{simFile} is left as default (NULL) then the simulated object will
-be returned by the function. The object is a named list with 5 elements: (1) 
+A named list object with 5 elements: (1) 
 \code{gr.dmrs} is a \code{GenomicRanges} object with \code{num.dmrs} 
 ranges that represent the random DMRs added. (2) \code{dmr.mncov} is a 
 numeric vector that contains the mean coverage in each simulated DMR. (3)
@@ -47,10 +38,12 @@ into two (artificial) populations.
 # This is just for illustrative purposes - ideally you would
 # add DMRs to a set of samples from the same condition (in our
 # example data, we have data from two different cell types)
+# In this case, we shuffle the samples by cell type to create
+# a null comparison.
 
 data(BS.chr21)
 
-BS.chr21.sim <- simDMRs(bs=BS.chr21, num.dmrs=300)
+BS.chr21.sim <- simDMRs(bs=BS.chr21[,c(1,3,2,4)], num.dmrs=300)
 
 # show the simulated DMRs GRanges object
 show(BS.chr21.sim$gr.dmrs)
@@ -58,7 +51,7 @@ show(BS.chr21.sim$gr.dmrs)
 # show the updated BSseq object that includes the simulated DMRs
 show(BS.chr21.sim$bs)
 
-#' # examine effect sizes of the DMRs
+# examine effect sizes of the DMRs
 head(BS.chr21.sim$delta)
 
 }
