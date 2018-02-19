@@ -247,7 +247,8 @@ show(bs)
 ```
 
 The example data contains CpGs from chromosome 21 for  four samples 
-from @Lister2009. Two of the samples are replicates of the cell type 'imr90' 
+from @Lister2009. To load this data directly, simply type `data(BS.chr21)`.
+Two of the samples are replicates of the cell type 'imr90' 
 and the other two are replicates of the cell type 'h1'. Now that we have the
 data loaded into a `BSseq` object, we can use **dmrseq**
 to find regions of the genome where these two cell types have significantly
@@ -308,10 +309,10 @@ and only keep samples with a CellType of "imr90" or "h1", we would do so with:
 
 ```{r, filter}
 # which loci and sample indices to keep
-loci.idx <- which(rowSums(getCoverage(BS.chr21, type="Cov")==0) == 0)
-sample.idx <- which(pData(BS.chr21)$CellType %in% c("imr90", "h1"))
+loci.idx <- which(rowSums(getCoverage(bs, type="Cov")==0) == 0)
+sample.idx <- which(pData(bs)$CellType %in% c("imr90", "h1"))
 
-BS.chr21.filtered <- BS.chr21[loci.idx, sample.idx]
+bs.filtered <- bs[loci.idx, sample.idx]
 ```
 
 Note that this is a trivial example, since our toy example object `BS.chr21` 
@@ -384,7 +385,7 @@ For more details, refer to the **dmrseq** paper [@Korthauer183210].
 
 # Exploring and exporting results
 
-## Explore how many regions were signifiant
+## Explore how many regions were significant
 
 How many regions were significant at the FDR (q-value) cutoff of 0.05? We
 can find this by counting how many values in the `qval` column of the results
@@ -466,15 +467,25 @@ write.csv(as.data.frame(regions),
           file="h1_imr90_results.csv")
 ```
 
+## Extract raw mean methylation differences
+
+For a two-group comparison, it might be of interest to extract the raw mean
+methylation differences over the DMRs. This can be done with the helper function
+`meanDiff`. For example, we can extract the raw mean difference values for 
+the regions at FDR level 0.05 (using the `sigRegions` object created 
+in the section
+[Explore how many regions were significant](#explore-how-many-regions-were-significant)).
+
+```{r, meandiff}
+rawDiff <- meanDiff(bs, dmrs=sigRegions, testCovariate="CellType")
+str(rawDiff)
+```
+
 # Simulating DMRs
 
 If you have multiple samples from the same condition (e.g. control samples), 
 the function `simDMRS` will split these into two artificial sample groups
-<<<<<<< HEAD
 and then add _in silico_ DMRs. This can then be used to assess sensitivity
-=======
-and then add __in silico__ DMRs. This can then be used to assess sensitivity
->>>>>>> b9862c08532b1f6744c6ac4a4fd8096d80e5598b
 and specificity of DMR approaches, since we hope to be able to recover the
 DMRs that were spiked in, but not identify too many other differences (since
 we don't expect any biological difference between the two artificial sample
@@ -486,6 +497,8 @@ split into two groups, so instead we shuffle the cell types to create a null
 sample comparison.
 
 ```{r, sim}
+data(BS.chr21)
+
 # reorder samples to create a null comparison 
 BS.null <- BS.chr21[,c(1,3,2,4)]
 

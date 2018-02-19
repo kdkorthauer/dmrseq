@@ -337,61 +337,6 @@ trimEdges <- function(x, candidates = NULL, verbose = FALSE, minNumRegion) {
   return(trimmed)
 }
 
-# function to compute raw mean methylation differences
-meanDiff <- function(bs, dmrs, testCovariate, adjustCovariate) {
-    # convert covariates to column numbers if characters
-    if (is.character(testCovariate)) {
-        testCovariate <- which(colnames(pData(bs)) == testCovariate)
-        if (length(testCovariate) == 0) {
-            stop(paste0("testCovariate not found in pData(). ", 
-                        "Please specify a valid testCovariate"))
-        }
-    }
-    
-    if (ncol(pData(bs)) < max(testCovariate, adjustCovariate)) {
-        stop(paste0("Error: pData(bs) has too few columns.  ", 
-                    "Please specify valid ", 
-            "covariates to use in the analysis"))
-    }
-    
-    coeff <- 2:(2 + length(testCovariate) - 1)
-    testCov <- pData(bs)[, testCovariate]
-    if (length(unique(testCov)) == 1) {
-        message(paste0("Warning: only one unique value of the specified ", 
-                       "covariate of interest.  Assuming null comparison and ", 
-            "splitting sample group into two equal groups"))
-        testCov <- rep(1, length(testCov))
-        testCov[1:round(length(testCov)/2)] <- 0
-    }
-    if (!is.null(adjustCovariate)) {
-        adjustCov <- pData(bs)[, adjustCovariate]
-        design <- model.matrix(~testCov + adjustCov)
-        colnames(design)[coeff] <- colnames(pData(bs))[testCovariate]
-        colnames(design)[, (max(coeff)+1):ncol(design)] <- colnames(pData(bs))[
-          adjustCovariate]
-    } else {
-        design <- model.matrix(~testCov)
-        colnames(design)[coeff] <- colnames(pData(bs))[testCovariate]
-    }
-    
-    if (length(unique(design[, coeff])) != 2) {
-        message(paste0("Not a two-group comparison. Can't compute simple mean ",
-            "methylation differences. ", "Returning beta estimates instead"))
-        return(dmrs$beta)
-    } else {
-        prop.mat <- as.matrix(getCoverage(bs, type = "M")/getCoverage(bs, type = "Cov"))
-        levs <- unique(design[, coeff])
-        
-        meanDiff <- sapply(1:nrow(dmrs), function(x) {
-            return(mean(rowMeans(prop.mat[(dmrs$indexStart[x]:dmrs$indexEnd[x]),
-                which(design[, coeff] == levs[2])]) - rowMeans(
-                  prop.mat[(dmrs$indexStart[x]:dmrs$indexEnd[x]), 
-                which(design[, coeff] == levs[1])]), na.rm = TRUE))
-        })
-        return(meanDiff)
-    }
-}
-
 regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos, 
     chr = chr, x, y = x, ind = seq(along = x), order = TRUE, minNumRegion = 5, 
     maxGap = 300, cutoff = quantile(abs(x), 0.99), assumeSorted = FALSE, 

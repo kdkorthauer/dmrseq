@@ -2,6 +2,7 @@
 
 export(dmrseq)
 export(getAnnot)
+export(meanDiff)
 export(plotDMRs)
 export(plotEmpiricalDistribution)
 export(simDMRs)
