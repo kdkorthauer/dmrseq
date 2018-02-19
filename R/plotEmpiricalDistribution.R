@@ -41,6 +41,9 @@ plotEmpiricalDistribution <- function(bs,
                                       bySample = FALSE,
                                       type="M",
                                       adj = 2.5) {
+    #satisfy check
+    M <- Cov <- group <- NULL
+  
     if (!(type %in% c("M", "Cov"))){
       stop("type must be either M or Cov")
     }
