@@ -470,7 +470,11 @@ write.csv(as.data.frame(regions),
 
 If you have multiple samples from the same condition (e.g. control samples), 
 the function `simDMRS` will split these into two artificial sample groups
+<<<<<<< HEAD
 and then add _in silico_ DMRs. This can then be used to assess sensitivity
+=======
+and then add __in silico__ DMRs. This can then be used to assess sensitivity
+>>>>>>> b9862c08532b1f6744c6ac4a4fd8096d80e5598b
 and specificity of DMR approaches, since we hope to be able to recover the
 DMRs that were spiked in, but not identify too many other differences (since
 we don't expect any biological difference between the two artificial sample
