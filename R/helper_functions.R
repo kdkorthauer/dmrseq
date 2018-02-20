@@ -214,7 +214,7 @@ refineEdges <- function(y, candidates = NULL,
     minNumRegion, sampleSize) {
     
   stopifnot(length(cutoff) <= 2)
-  stopifnot(is.list(candidates) & length(candidates) == 2)
+  stopifnot(is.list(candidates) && length(candidates) == 2)
     
   if (verbose) 
       message("refineEdges: refining")
@@ -260,7 +260,7 @@ refineEdges <- function(y, candidates = NULL,
 
 trimEdges <- function(x, candidates = NULL, verbose = FALSE, minNumRegion) {
     
-  stopifnot(is.list(candidates) & length(candidates) == 2)
+  stopifnot(is.list(candidates) && length(candidates) == 2)
     
   if (verbose) 
       message("trimEdges: trimming")
@@ -275,7 +275,7 @@ trimEdges <- function(x, candidates = NULL, verbose = FALSE, minNumRegion) {
           fit1 <- lm(x[w[seq_len(mid)]] ~ w[seq_len(mid)])
           if (length(summary(fit1)) > 0) {
             if (nrow(summary(fit1)$coef) == 2) {
-              if (summary(fit1)$coef[2, 1] > 0 & 
+              if (summary(fit1)$coef[2, 1] > 0 && 
                   summary(fit1)$coef[2, 4] < 0.01) {
                 new.cut <- (0.5 * (x[w[mid]] - min(x[w])) + 
                               min(x[w]) +  0.75 * mean(x[w]))/2
@@ -291,7 +291,7 @@ trimEdges <- function(x, candidates = NULL, verbose = FALSE, minNumRegion) {
           fit2 <- lm(x[w[seq(mid,length(w))]] ~ w[seq(mid,length(w))])
           if (length(fit2) > 0) {
             if (nrow(summary(fit2)$coef) == 2) {
-              if (summary(fit2)$coef[2, 1] < 0 & 
+              if (summary(fit2)$coef[2, 1] < 0 && 
                   summary(fit2)$coef[2, 4] < 0.01) {
                 new.cut <- (0.5 * (x[w[mid]] - min(x[w])) + 
                               min(x[w]) + 0.75 * mean(x[w]))/2
@@ -392,15 +392,16 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
         fixed = 0.5)) {
         sampleSize <- nrow(design)/2
         dat <- data.frame(g.fac = factor(rep(design[,coeff], each=length(ix))),
-                          sample = factor(rep(seq_len(sampleSize * 2), each=length(ix))),
+                          sample = factor(rep(seq_len(sampleSize * 2), 
+                                              each=length(ix))),
                           meth = as.vector(meth.mat[ix, ]),
                           cov = as.vector(cov.mat[ix, ]), 
                           L = as.vector(rep(pos[ix], nrow(design))))
         
         # condition to remove regions with constant methylation / unmeth values
-        if (!((length(unique(dat$meth)) == 1 & dat$meth[1] == 0) | 
-              (length(unique(dat$cov - 
-            dat$meth)) == 1 & (dat$cov - dat$meth)[1] == 0))) {
+        if (!((length(unique(dat$meth)) == 1 && dat$meth[1] == 0) || 
+              (length(unique(dat$cov - dat$meth)) == 1 && 
+               (dat$cov - dat$meth)[1] == 0))) {
             
             dat$pos <- as.numeric(factor(dat$L))
             X <- model.matrix(~dat$g.fac)
@@ -468,8 +469,8 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
             } else {
                 # check for presence of 1-2 coverage outliers that could end up
                 # driving the difference between the groups
-                if (length(unique(dat$MedCov[seq_len(length(ix))])) > 1 & length(ix) <=
-                  10) {
+                if (length(unique(dat$MedCov[seq_len(length(ix))])) > 1 && 
+                    length(ix) <= 10) {
                   grubbs.one <- suppressWarnings(grubbs.test(
                     dat$MedCov[seq_len(length(ix))])$p.value)
                   grubbs.two <- suppressWarnings(
@@ -479,7 +480,7 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
                   grubbs.one <- grubbs.two <- 1
                 }
                 
-                if (grubbs.one < 0.01 | grubbs.two < 0.01) {
+                if (grubbs.one < 0.01 || grubbs.two < 0.01) {
                   weights <- varIdent(form = ~1)
                 }
                 
@@ -576,7 +577,7 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
                 " min to score candidate regions.")
     }
     
-    if (order & nrow(res) > 0) 
+    if (order && nrow(res) > 0) 
         res <- res[order(-abs(res$stat)), ]
     
     return(res)
@@ -614,7 +615,7 @@ smoother <- function(y, x = NULL, weights = NULL, chr = chr,
         
         for (i in seq(along = Indexes)) {
             Index <- Indexes[[i]]
-            if (clusterL[i] >= minNumRegion & 
+            if (clusterL[i] >= minNumRegion && 
                 sum(rowSums(is.na(yi[Index, , drop = FALSE])) == 
                 0) >= minNumRegion) {
                 nn <- min(bpSpan2/(max(xi[Index]) - min(xi[Index]) + 1), 

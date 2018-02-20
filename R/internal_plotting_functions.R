@@ -96,7 +96,7 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
                     jj.orig <- jj
                     if (sum(!is.na(lastPos)) > 0) {
                       separation <- (textPos - lastPos[k - 1])/rwidth
-                      if (abs(separation) <= 0.2 & k < 3) {
+                      if (abs(separation) <= 0.2 && k < 3) {
                         jj <- jj - 0.29
                       } else {
                         separation <- min(abs((textPos - lastPos)/rwidth), 
@@ -196,7 +196,7 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
                                                     big.mark = ",",
                                                     scientific = FALSE))
         # add optional labels to plot titles
-        if (!is.null(qval) & !is.null(stat)) {
+        if (!is.null(qval) && !is.null(stat)) {
             regionStat <- sprintf("Stat: %s", format(stat, big.mark = ",",
                                                      scientific = FALSE))
             regionFDR <- sprintf("FDR: %s", format(qval, big.mark = ",",
@@ -218,7 +218,7 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
         }
     } else {
         # add optional labels to plot titles
-        if (!is.null(qval) & !is.null(stat)) {
+        if (!is.null(qval) && !is.null(stat)) {
             regionStat <- sprintf("Stat: %s", format(stat, big.mark = ",",
                                                      scientific = FALSE))
             regionFDR <- sprintf("FDR: %s", format(qval, big.mark = ",", 
@@ -266,7 +266,7 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
     # if there are many points to plot (as in the case of a block level 
     # analysis, increase the line width by one so that the lines will be more
     # visible
-    if (length(x) > 100 & !is.null(lwd)) {
+    if (length(x) > 100 && !is.null(lwd)) {
         lwd <- lwd + 1
     } else if (length(x) > 100) {
         lwd <- 2
@@ -416,7 +416,7 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
     if (addTicks) 
         rug(positions)
     
-    if (is.list(addRegions) & !is.data.frame(addRegions)) {
+    if (is.list(addRegions) && !is.data.frame(addRegions)) {
         if (length(addRegions) > 2) {
             stop("Only two sets of regions can be highlighted")
         }
@@ -496,7 +496,7 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
     gr <- bsseq.bsGetGr(BSseq, region, extend)
     
     if (!is.null(main)) {
-        if (qval & stat) {
+        if (qval && stat) {
             qval <- round(region$qval, 4)
             stat <- round(region$stat, 3)
             main <- .dmrPlotTitle(gr = region, extend = extend, main = main, 

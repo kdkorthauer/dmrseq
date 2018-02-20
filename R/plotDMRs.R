@@ -194,7 +194,7 @@ plotDMRs <- function(BSseq, regions = NULL, testCovariate = NULL,
     gr <- resize(gr, width = 2 * extend + width(gr), fix = "center")
     BSseq <- subsetByOverlaps(BSseq, gr)
     
-    if (!is.null(annoTrack) & !is.null(compareTrack)) 
+    if (!is.null(annoTrack) && !is.null(compareTrack)) 
         stop("Choose either annoTrack or compareTrack; can't plot both")
     
     if (length(start(BSseq)) == 0) 
@@ -226,7 +226,7 @@ plotDMRs <- function(BSseq, regions = NULL, testCovariate = NULL,
         }
     }
     
-    if (!is.null(label) | "label" %in% names(pData(BSseq))) {
+    if (!is.null(label) || "label" %in% names(pData(BSseq))) {
         opar <- par(mar = c(0, 4.1, 0, 1.4), oma = c(0, 0, 2.5, 1), xpd = NA)
     } else {
         opar <- par(mar = c(0, 4.1, 0, 0), oma = c(0, 0, 2.5, 1), xpd = NA)
@@ -234,7 +234,7 @@ plotDMRs <- function(BSseq, regions = NULL, testCovariate = NULL,
     on.exit(par(opar))
     
     for (ii in seq(along = gr)) {
-        if (verbose & ii%%100 == 0) {
+        if (verbose && ii%%100 == 0) {
             cat(sprintf("..... Plotting region %d (out of %d)\n", ii, 
                         nrow(regions)))
         }

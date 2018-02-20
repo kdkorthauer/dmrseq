@@ -220,7 +220,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
         colnames(design)[coeff] <- colnames(pData(bs))[testCovariate]
     }
     
-    if (length(unique(testCov)) == 2 & 
+    if (length(unique(testCov)) == 2 && 
         (is.character(pData(bs)[, testCovariate]) | 
         is.factor(pData(bs)[, testCovariate]))) {
         message("Condition ",
@@ -303,7 +303,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
         FLIP <- NULL
         # configure the permutation matrix first consider balanced, 
         # two group comparisons
-        if (nrow(design)%%2 == 0 & length(unique(design[, coeff])) == 2) {
+        if (nrow(design)%%2 == 0 && length(unique(design[, coeff])) == 2) {
             if (verbose) {
                 message("Performing balanced permutations of ",
                         "condition across samples ", 
@@ -314,7 +314,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
             
             if (maxPerms < ncol(perms)) {
                 # subset on 'balanced perms'
-                if (sampleSize > 3 & sampleSize < 6) {
+                if (sampleSize > 3 && sampleSize < 6) {
                   sg <- apply(perms, 2, function(x) sum(x > sampleSize))
                   perms <- perms[, sg < (sampleSize - 1) & sg >= 2]
                   maxPerms <- min(maxPerms, ncol(perms))
@@ -342,7 +342,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
                 # check that the permutation is not a duplicate
                 while (sum(apply(perms, 2, function(x) all.equal(x, 
                                                                  candidate)) == 
-                  TRUE) > 0 & tries <= 20) {
+                  TRUE) > 0 && tries <= 20) {
                   candidate <- sample(seq(seq_len(nrow(design))), nrow(design))
                   tries <- tries + 1
                 }

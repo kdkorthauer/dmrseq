@@ -97,7 +97,7 @@ getAnnot <- function(genomeName) {
         }
         
 
-        if (fail1 == 0 & fail2 == 0) {
+        if (fail1 == 0 && fail2 == 0) {
             # lift over hg19 coordinates to hg18 using annotationHub
             if (!is.null(liftTo)){
               ah = AnnotationHub()
