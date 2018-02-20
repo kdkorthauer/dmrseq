@@ -257,7 +257,6 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
              "of at least one condition. Please remove these loci ", 
              "before running dmrseq")
       }
-    
     }
     
     # register the parallel backend

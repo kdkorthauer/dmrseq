@@ -391,13 +391,11 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
         weights = varPower(form = ~1/MedCov, 
         fixed = 0.5)) {
         sampleSize <- nrow(design)/2
-        dat <- data.frame(g.fac = factor(as.vector(sapply(design[, coeff], 
-                                                          function(x) rep(x, 
-            length(ix))))), sample = factor(as.vector(sapply(seq_len(sampleSize * 2),
-            function(x) rep(x, length(ix))))), 
-            meth = as.vector(meth.mat[ix, ]),
-            cov = as.vector(cov.mat[ix, ]), 
-            L = as.vector(rep(pos[ix], nrow(design))))
+        dat <- data.frame(g.fac = factor(rep(design[,coeff], each=length(ix))),
+                          sample = factor(rep(seq_len(sampleSize * 2), each=length(ix))),
+                          meth = as.vector(meth.mat[ix, ]),
+                          cov = as.vector(cov.mat[ix, ]), 
+                          L = as.vector(rep(pos[ix], nrow(design))))
         
         # condition to remove regions with constant methylation / unmeth values
         if (!((length(unique(dat$meth)) == 1 & dat$meth[1] == 0) | 
@@ -546,14 +544,6 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
     }
     
     t1 <- proc.time()
-    df <- DataFrame(ind, x = x[ind], chr = chr[ind], pos = pos[ind])
-    res <- as.data.frame(aggregate(df, List(Indexes), 
-                     chr = unlist(IRanges::heads(chr, 1L)),
-                     START = min(pos), END = max(pos),
-                     indexStart = min(ind), indexEnd = max(ind),
-                     L = lengths(chr), area = abs(sum(x))))[,-1]
-    colnames(res)[colnames(res)=="START"] <- "start"
-    colnames(res)[colnames(res)=="END"] <- "end"
     
     if (parallel) {
         ret <- do.call("rbind", bplapply(Indexes, 
@@ -564,6 +554,16 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
             function(Index) asin.gls.cov(ix = ind[Index], 
             design = design, coeff = coeff)))
     }
+    
+    df <- DataFrame(ind, x = x[ind], chr = chr[ind], pos = pos[ind])
+    res <- as.data.frame(aggregate(df, List(Indexes), 
+                                   chr = unlist(IRanges::heads(chr, 1L)),
+                                   START = min(pos), END = max(pos),
+                                   indexStart = min(ind), indexEnd = max(ind),
+                                   L = lengths(chr), area = abs(sum(x))))[,-1]
+    colnames(res)[colnames(res)=="START"] <- "start"
+    colnames(res)[colnames(res)=="END"] <- "end"
+    
     res$beta <- ret$beta
     res$stat <- ret$stat
     
