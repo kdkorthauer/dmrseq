@@ -4,13 +4,15 @@
 #' and/or coding 
 #' sequences to DMR plot
 #' 
-#' @details An internal function that takes an annotation \code{GRangesList} 
+#' @details An internal function that takes an annotation 
+#' \code{SimpleGenomicRangesList} 
 #' object that
 #' contains CpG category information in the first element (optional) and / or
 #' coding gene sequence information in the second element (optional). If neither
 #' of these are present, then nothing will be plotted.
 #' 
-#' @param gr a \code{GRanges} object that contains the DMRs to be plotted
+#' @param gr a \code{SimpleGenomicRanges} object that contains the DMRs to be
+#'  plotted
 #' 
 #' @param annoTrack a \code{SimpleGenomicRangesList} object with two elements. 
 #' The first contains CpG category information in the first element (optional)
@@ -289,9 +291,8 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
 .alpha <- function(col, alpha = 1) {
     if (missing(col)) 
         stop("Please provide a vector of colours.")
-    apply(sapply(col, grDevices::col2rgb)/255, 2, 
-          function(x) grDevices::rgb(x[1], 
-        x[2], x[3], alpha = alpha))
+    apply(vapply(col, grDevices::col2rgb, matrix(rep(0,3)))/255, 2, 
+          function(x) grDevices::rgb(x[1], x[2], x[3], alpha = alpha))
 }
 
 
@@ -569,8 +570,9 @@ gg_color_hue <- function(n) {
 # region plot (instead of annotations)
 dmrPlotComparisons <- function(gr, annoTrack, labelCols = NULL) {
     
-    if (!all(sapply(annoTrack, function(xx) is(xx, "GRanges")))) 
-        stop("all elements in 'annoTrack' needs to be 'GRanges'")
+    if (!is(annoTrack, "SimpleGenomicRangesList"))
+      stop("'annoTrack' needs to be a 'SimpleGenomicRangesList'")
+  
     if (length(annoTrack) > 4) 
         stop("Can't plot more than 4 tracks")
     
