@@ -148,7 +148,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
     
     stopifnot(class(bs) == "BSseq")
     
-    if (!(is.null(cutoff) || length(cutoff) %in% 1:2)) 
+    if (!(is.null(cutoff) || length(cutoff) %in% seq_len(2))) 
         stop("'cutoff' has to be either NULL or a vector of length 1 or 2")
     if (length(cutoff) == 2) 
         cutoff <- sort(cutoff)
@@ -202,14 +202,14 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
             "covariates to use in the analysis")
     }
     
-    coeff <- 2:(2 + length(testCovariate) - 1)
+    coeff <- seq(2,(2 + length(testCovariate) - 1))
     testCov <- pData(bs)[, testCovariate]
     if (length(unique(testCov)) == 1) {
         message("Warning: only one unique value of the specified ", 
                 "covariate of interest.  Assuming null comparison and ",
                "splitting sample group into two equal groups")
         testCov <- rep(1, length(testCov))
-        testCov[1:round(length(testCov)/2)] <- 0
+        testCov[seq_len(round(length(testCov)/2))] <- 0
     }
     
     if (length(unique(testCov)) > 2) {
@@ -230,7 +230,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
         adjustCov <- pData(bs)[, adjustCovariate]
         design <- model.matrix(~testCov + adjustCov)
         colnames(design)[coeff] <- colnames(pData(bs))[testCovariate]
-        colnames(design)[,(max(coeff) + 1):ncol(design)] <- colnames(pData(bs))[
+        colnames(design)[,seq((max(coeff) + 1),ncol(design))] <- colnames(pData(bs))[
           adjustCovariate]
     } else {
         design <- model.matrix(~testCov)
@@ -328,7 +328,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
                   "to generate a null distribution of region test statistics")
             }
             perms <- combn(seq(1, nrow(design)), sampleSize)
-            perms <- perms[, 2:(ncol(perms)/2)]
+            perms <- perms[, seq(2,(ncol(perms)/2))]
             
             if (maxPerms < ncol(perms)) {
                 # subset on 'balanced perms'
@@ -341,7 +341,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
                   perms <- perms[, sg >= floor(sampleSize/2) & 
                                    sg <= ceiling(sampleSize/2)]
                 }
-                perms <- perms[, sort(sample(1:ncol(perms), maxPerms, 
+                perms <- perms[, sort(sample(seq_len(ncol(perms)), maxPerms, 
                                              replace = FALSE))]
             }
         } else if (length(unique(design[, coeff])) > 2) {
@@ -352,16 +352,16 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
                   " covariate of interest across samples ", 
                   "to generate a null distribution of region test statistics")
             }
-            perms <- as.matrix(sample(seq(1:nrow(design)), nrow(design)))
+            perms <- as.matrix(sample(seq(seq_len(nrow(design))), nrow(design)))
             
-            for (p in 1:(maxPerms - 1)) {
+            for (p in seq_len(maxPerms - 1)) {
                 tries <- 0
-                candidate <- sample(seq(1:nrow(design)), nrow(design))
+                candidate <- sample(seq(seq_len(nrow(design))), nrow(design))
                 # check that the permutation is not a duplicate
                 while (sum(apply(perms, 2, function(x) all.equal(x, 
                                                                  candidate)) == 
                   TRUE) > 0 & tries <= 20) {
-                  candidate <- sample(seq(1:nrow(design)), nrow(design))
+                  candidate <- sample(seq(seq_len(nrow(design))), nrow(design))
                   tries <- tries + 1
                 }
                 # save the permutation to the permutation matrix
@@ -373,7 +373,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
         }
         
         # Now rerun on flipped designs and concatenate results
-        for (j in 1:ncol(perms)) {
+        for (j in seq_len(ncol(perms))) {
             if (verbose) {
                 message("Beginning permutation ", j)
             }
@@ -442,7 +442,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
         # take a random sample
         # of 1 million of them
         if (nrow(FLIP) > 1e+06) {
-            rs <- sample(1:nrow(FLIP), 1e+06, replace = FALSE)
+            rs <- sample(seq_len(nrow(FLIP)), 1e+06, replace = FALSE)
             FLIP <- FLIP[rs, ]
         }
         

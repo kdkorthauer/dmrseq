@@ -35,7 +35,7 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
     vars <- list(Island = "Island   ", Shore = "Shore   ", Shelf = "Shelf   ", 
                  OpenSea1 = "Open ", OpenSea2 = "Sea")
     cols <- c("forestgreen", "goldenrod2", "dodgerblue", "blue3", "blue3")
-    for (i in 1:length(vars)) {
+    for (i in seq_len(length(vars))) {
         tmpvars <- vars
         tmpvars[-i] <- paste("phantom('", tmpvars[-i], "')", sep = "")
         expr <- paste(tmpvars, collapse = "*")
@@ -80,7 +80,7 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
             if (ii == 2) {
                 lastPos <- rep(NA, length(unique(ir$symbol)) - 1)
                 used <- NULL
-                for (k in 1:length(unique(ir$symbol))) {
+                for (k in seq_len(length(unique(ir$symbol)))) {
                   irk <- ir[ir$symbol == unique(ir$symbol)[k], ]
                   rect(min(start(irk)), jj - 0.065, max(end(irk)), jj + 0.065, 
                        col = .alpha("black", 
@@ -253,7 +253,7 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
         label <- unique(label)
     }
     
-    for (lg in 1:length(label)) {
+    for (lg in seq_len(length(label))) {
         mtext(label[lg], side = 4, line = lg - 1, col = col[lg], cex = 0.9)
     }
 }
@@ -439,29 +439,30 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
         meth <- as.matrix(bsseq::getCoverage(BSseq2, type = "M"))
         unmeth <- as.matrix(bsseq::getCoverage(BSseq2, type = "Cov")) - meth
         
-        sapply(1:ncol(BSseq), function(sampIdx) {
-            .dmrPlotPoints(positions, rawPs[, sampIdx], coverage[, sampIdx], 
-                           col = colEtc$col[sampIdx], 
-                pointsMinCov = pointsMinCov, maxCov = quantile(coverage, 0.95), 
-                regionWidth = end(gr) - 
-                  start(gr), fit = NULL)
-        })
+        for(sampIdx in seq_len(ncol(BSseq))){
+          .dmrPlotPoints(positions, rawPs[, sampIdx], coverage[, sampIdx], 
+                         col = colEtc$col[sampIdx], 
+                         pointsMinCov = pointsMinCov, maxCov = quantile(coverage, 0.95), 
+                         regionWidth = end(gr) - 
+                           start(gr), fit = NULL)
+        }
         
-        sapply(1:ncol(BSseq), function(sampIdx) {
-            .dmrPlotLines(positions, rawPs[, sampIdx], coverage[, sampIdx], 
-                          col = colEtc$col[sampIdx], 
-                pointsMinCov = pointsMinCov, maxCov = quantile(coverage, 0.95), 
-                regionWidth = end(gr) - 
-                  start(gr), fit = NULL)
-        })
+        for(sampIdx in seq_len(ncol(BSseq))){
+          .dmrPlotLines(positions, rawPs[, sampIdx], coverage[, sampIdx], 
+                        col = colEtc$col[sampIdx], 
+                        pointsMinCov = pointsMinCov, maxCov = quantile(coverage, 0.95), 
+                        regionWidth = end(gr) - 
+                          start(gr), fit = NULL)
+        }
+        
     } else {
-        sapply(1:ncol(BSseq), function(sampIdx) {
-            .dmrPlotLines0(positions, rawPs[, sampIdx], 
-                           col = colEtc$col[sampIdx], 
-                lty = colEtc$lty[sampIdx], lwd = colEtc$lwd[sampIdx], 
-                plotRange = c(start(gr), 
-                  end(gr)))
-        })
+        for(sampIdx in seq_len(ncol(BSseq))){
+          .dmrPlotLines0(positions, rawPs[, sampIdx], 
+                         col = colEtc$col[sampIdx], 
+                         lty = colEtc$lty[sampIdx], lwd = colEtc$lwd[sampIdx], 
+                         plotRange = c(start(gr), 
+                                       end(gr)))
+        }
     }
     
     # if colEtc$label contains characters that are not null or missing, then 
@@ -483,7 +484,7 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
     qval = NULL, stat = NULL, includeYlab = TRUE, compareTrack = NULL, 
     labelCols = NULL) {
     
-    layout(matrix(1:2, ncol = 1), heights = c(2, 1.5))
+    layout(matrix(seq_len(2), ncol = 1), heights = c(2, 1.5))
     .dmrPlotSmoothData(BSseq = BSseq, region = region, extend = extend, 
         addRegions = addRegions, 
         col = col, lty = lty, lwd = lwd, label = label, 
@@ -561,7 +562,7 @@ bsseq.bsHighlightRegions <- function(regions, gr, ylim, regionCol,
 
 gg_color_hue <- function(n) {
     hues <- seq(15, 375, length = n + 1)
-    hcl(h = hues, l = 65, c = 100)[1:n]
+    hcl(h = hues, l = 65, c = 100)[seq_len(n)]
 }
 
 # function to draw nonoverlapping comparison regions (up to 3) below the main

@@ -64,7 +64,7 @@ getAnnot <- function(genomeName) {
         # Download has a nonzero fail rate; allow up to 5 retries before 
         # throwing an error
         
-        for (attempt in 1:5) {
+        for (attempt in seq_len(5)) {
             cpg <- try(annotatr::build_annotations(genome = genomeName, 
                                           annotations = annot_CpG), 
                 silent = TRUE)
@@ -80,7 +80,7 @@ getAnnot <- function(genomeName) {
             }
         }
         
-        for (attempt in 1:5) {
+        for (attempt in seq_len(5)) {
             genes <- try(annotatr::build_annotations(genome = genomeName,
                                             annotations = annot_genes), 
                 silent = TRUE)

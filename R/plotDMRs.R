@@ -207,7 +207,7 @@ plotDMRs <- function(BSseq, regions = NULL, testCovariate = NULL,
     }
     
     if (!is.null(testCovariate)) {
-        coeff <- 2:(2 + length(testCovariate) - 1)
+        coeff <- seq(2, (2 + length(testCovariate) - 1))
         design <- model.matrix(~pData(BSseq)[, testCovariate])
         
         if (is.null(col)) {

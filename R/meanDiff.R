@@ -30,14 +30,14 @@ meanDiff <- function(bs, dmrs, testCovariate) {
     }
   }
   
-  coeff <- 2:(2 + length(testCovariate) - 1)
+  coeff <- seq(2,(2 + length(testCovariate) - 1))
   testCov <- pData(bs)[, testCovariate]
   if (length(unique(testCov)) == 1) {
     message("Warning: only one unique value of the specified ", 
             "covariate of interest.  Assuming null comparison and ", 
             "splitting sample group into two equal groups")
     testCov <- rep(1, length(testCov))
-    testCov[1:round(length(testCov)/2)] <- 0
+    testCov[seq_len(round(length(testCov)/2))] <- 0
   }
 
   design <- model.matrix(~testCov)

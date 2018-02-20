@@ -70,8 +70,8 @@ plotEmpiricalDistribution <- function(bs,
     meth.levelsm$Cov <- utils::stack(cov.matm)$values
     
     meth.levelsm$group <- 
-      unlist(lapply(1:ncol(bs), function(x) rep(pData(bs)[x,mC],nrow(bs))))
-    meth.levelsm$sample <- sort(rep(1:ncol(bs), nrow(bs)))
+      unlist(lapply(seq_len(ncol(bs)), function(x) rep(pData(bs)[x,mC],nrow(bs))))
+    meth.levelsm$sample <- sort(rep(seq_len(ncol(bs)), nrow(bs)))
     
     if (!bySample){
       if (type=="M"){

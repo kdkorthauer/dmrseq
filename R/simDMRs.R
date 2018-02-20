@@ -78,7 +78,7 @@ simDMRs <- function(bs, num.dmrs = 3000, delta.max0 = 0.3) {
     prop.mat <- rowMeans(meth.mat/(meth.mat + unmeth.mat))
     prop.mat <- unlist(lapply(Indexes, function(x) median(prop.mat[x])))
   
-    dmrs.ind <- sample(1:length(Indexes), num.dmrs, replace = FALSE, 
+    dmrs.ind <- sample(seq_len(length(Indexes)), num.dmrs, replace = FALSE, 
                        prob = pmax(1 - sqrt(2) * 
                                      abs(0.5 - prop.mat)^0.5, 0))
     dmrs.ind <- Indexes[dmrs.ind]
@@ -100,7 +100,7 @@ simDMRs <- function(bs, num.dmrs = 3000, delta.max0 = 0.3) {
     
     dmr.mncov <- dmr.L <- deltas <- rep(NA, num.dmrs)
     
-    for (u in 1:num.dmrs) {
+    for (u in seq_len(num.dmrs)) {
         # coin flip for up or down
         up <- 1 - 2 * (rbinom(1, 1, 0.5) == 1)
         
@@ -172,7 +172,7 @@ simDMRs <- function(bs, num.dmrs = 3000, delta.max0 = 0.3) {
         cov <- meth.mat[dmrs.ind[[u]], ] + unmeth.mat[dmrs.ind[[u]], ]
         prop <- meth.mat[dmrs.ind[[u]], ]/cov
         grp <- runif(1) < 0.5
-        for (samp in 1:sampleSize) {
+        for (samp in seq_len(sampleSize)) {
             # randomly choose which condition is the one with the difference
             if (grp) {
                 # first generate M counts for sample samp of condition 1
@@ -206,7 +206,7 @@ simDMRs <- function(bs, num.dmrs = 3000, delta.max0 = 0.3) {
                    Cov = (meth.mat + unmeth.mat), 
                    sampleNames = paste0("Condition", c(rep(1, sampleSize), 
                                                        rep(2, sampleSize)), 
-                                        "_Rep", seq(1:sampleSize)))
+                                        "_Rep", seq(seq_len(sampleSize))))
     
     sim.dat.red <- list(gr.dmrs = gr.dmrs, dmr.mncov = dmr.mncov, dmr.L = dmr.L,
         bs = bsNew, delta = deltas)

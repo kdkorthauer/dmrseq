@@ -224,8 +224,8 @@ refineEdges <- function(y, candidates = NULL,
   refineOne <- function(x, sig) {
     idx <- which(direction[x] == sig)
     if (length(idx) > 0) {
-      if (length(min(idx):max(idx)) >= minNumRegion) {
-        x[min(idx):max(idx)]
+      if (length(seq(min(idx),max(idx))) >= minNumRegion) {
+        x[seq(min(idx),max(idx))]
       } else {
         x
       }
@@ -272,7 +272,7 @@ trimEdges <- function(x, candidates = NULL, verbose = FALSE, minNumRegion) {
       
       if (x[w[mid]]/min(x[w]) > 4/3) {
         if (w[mid] - w[1] + 1 > 4) {
-          fit1 <- lm(x[w[1:mid]] ~ w[1:mid])
+          fit1 <- lm(x[w[seq_len(mid)]] ~ w[seq_len(mid)])
           if (length(summary(fit1)) > 0) {
             if (nrow(summary(fit1)$coef) == 2) {
               if (summary(fit1)$coef[2, 1] > 0 & 
@@ -281,14 +281,14 @@ trimEdges <- function(x, candidates = NULL, verbose = FALSE, minNumRegion) {
                               min(x[w]) +  0.75 * mean(x[w]))/2
                 new.start <- min(max(1, round(mid - 0.125 * length(w))), 
                                  max(1, mid - 2), 
-                                 (1:mid)[min(which(x[w[1:mid]] >= new.cut))])
+                                 (seq_len(mid))[min(which(x[w[seq_len(mid)]] >= new.cut))])
               }
             }
           }
         }
         
         if (w[length(w)] - w[mid] + 1 > 4) {
-          fit2 <- lm(x[w[mid:length(w)]] ~ w[mid:length(w)])
+          fit2 <- lm(x[w[seq(mid,length(w))]] ~ w[seq(mid,length(w))])
           if (length(fit2) > 0) {
             if (nrow(summary(fit2)$coef) == 2) {
               if (summary(fit2)$coef[2, 1] < 0 & 
@@ -297,7 +297,7 @@ trimEdges <- function(x, candidates = NULL, verbose = FALSE, minNumRegion) {
                               min(x[w]) + 0.75 * mean(x[w]))/2
                 new.end <- max(min(round(mid + 0.125 * length(w)),
                                    length(w)), min(mid + 2, length(w)), 
-                               (mid:length(w))[max(which(x[w[mid:length(w)]] >=
+                               (seq(mid,length(w)))[max(which(x[w[seq(mid,length(w))]] >=
                                                            new.cut))])
               }
             }
@@ -305,8 +305,8 @@ trimEdges <- function(x, candidates = NULL, verbose = FALSE, minNumRegion) {
         }
       }
       
-      if (length(new.start:new.end) >= minNumRegion) {
-        return(w[new.start:new.end])
+      if (length(seq(new.start,new.end)) >= minNumRegion) {
+        return(w[seq(new.start,new.end)])
       } else {
         return(w)
       }
@@ -355,7 +355,7 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
                                        verbose = FALSE)
     
     # only keep up and down indices
-    Indexes <- Indexes[1:2]
+    Indexes <- Indexes[seq_len(2)]
     
     if (sum(lengths(Indexes)) == 0) {
         return(NULL)
@@ -380,7 +380,7 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
         return(NULL)
     }
     
-    for (i in 1:2) {
+    for (i in seq_len(2)) {
         # get number of loci in region
         lns <- lengths(Indexes[[i]])
         Indexes[[i]] <- Indexes[[i]][lns >= minNumRegion]
@@ -393,7 +393,7 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
         sampleSize <- nrow(design)/2
         dat <- data.frame(g.fac = factor(as.vector(sapply(design[, coeff], 
                                                           function(x) rep(x, 
-            length(ix))))), sample = factor(as.vector(sapply(1:(sampleSize * 2),
+            length(ix))))), sample = factor(as.vector(sapply(seq_len(sampleSize * 2),
             function(x) rep(x, length(ix))))), 
             meth = utils::stack(data.frame(meth.mat[ix, ]))$values,
             cov = utils::stack(data.frame(cov.mat[ix, ]))$values, 
@@ -470,12 +470,12 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
             } else {
                 # check for presence of 1-2 coverage outliers that could end up
                 # driving the difference between the groups
-                if (length(unique(dat$MedCov[1:length(ix)])) > 1 & length(ix) <=
+                if (length(unique(dat$MedCov[seq_len(length(ix))])) > 1 & length(ix) <=
                   10) {
                   grubbs.one <- suppressWarnings(grubbs.test(
-                    dat$MedCov[1:length(ix)])$p.value)
+                    dat$MedCov[seq_len(length(ix))])$p.value)
                   grubbs.two <- suppressWarnings(
-                    grubbs.test(dat$MedCov[1:length(ix)], 
+                    grubbs.test(dat$MedCov[seq_len(length(ix))], 
                     type = 20)$p.value)
                 } else {
                   grubbs.one <- grubbs.two <- 1
@@ -620,7 +620,7 @@ smoother <- function(y, x = NULL, weights = NULL, chr = chr,
                 nn <- min(bpSpan2/(max(xi[Index]) - min(xi[Index]) + 1), 
                           minInSpan/length(Index), 0.75)
                 
-                for (j in 1:ncol(yi)) {
+                for (j in seq_len(ncol(yi))) {
                   sdata <- data.frame(posi = xi[Index], yi = yi[Index, j], 
                                       weightsi = weightsi[Index, j])
                   fit <- locfit(yi ~ lp(posi, nn = nn, h = bpSpan), 
