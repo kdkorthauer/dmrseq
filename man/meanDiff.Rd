@@ -27,6 +27,7 @@ assuming a simple two-group comparison.
 \examples{
 
 data(BS.chr21)
-rawDiff <- meanDiff(BS.chr21, dmrs=sigRegions, testCovariate="CellType")
+data(dmrs.ex)
+rawDiff <- meanDiff(BS.chr21, dmrs=dmrs.ex, testCovariate="CellType")
 
 }

@@ -18,7 +18,8 @@
 #' @examples
 #' 
 #' data(BS.chr21)
-#' rawDiff <- meanDiff(BS.chr21, dmrs=sigRegions, testCovariate="CellType")
+#' data(dmrs.ex)
+#' rawDiff <- meanDiff(BS.chr21, dmrs=dmrs.ex, testCovariate="CellType")
 #' 
 meanDiff <- function(bs, dmrs, testCovariate) {
   # convert covariates to column numbers if characters
@@ -57,7 +58,7 @@ meanDiff <- function(bs, dmrs, testCovariate) {
     prop.mat.dmr <- extractROWS(prop.mat, indexRanges)
     prop.mat1.means <- rowMeans(prop.mat.dmr[,design[, coeff] == levs[1]])
     prop.mat2.means <- rowMeans(prop.mat.dmr[,design[, coeff] == levs[2]])
-    meanDiff <- IRanges::mean(relist(prop.mat2.means - prop.mat1.means,
+    meanDiff <- IRanges::mean(IRanges::relist(prop.mat2.means - prop.mat1.means,
                                           indexRanges), na.rm=TRUE)
     
     return(meanDiff)

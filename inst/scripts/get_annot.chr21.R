@@ -12,9 +12,8 @@ data(BS.chr21)
 annot.chr21 <- getAnnot("hg19")
 
 # only keep this information for chromosome 21 (for example dataset)
-annot.chr21  <- lapply(annot.chr21 , function(x){
-  x[seqnames(x)=="chr21",]
-})
+annot.chr21[[1]] <- annot.chr21[[1]][seqnames(annot.chr21[[1]])=="chr21",]
+annot.chr21[[2]] <- annot.chr21[[2]][seqnames(annot.chr21[[2]])=="chr21",]
 
 save(annot.chr21 , file = "./data/annot.chr21.rda")
 library(tools)
