@@ -7,7 +7,8 @@
 dmrPlotAnnotations(gr, annoTrack)
 }
 \arguments{
-\item{gr}{a \code{GRanges} object that contains the DMRs to be plotted}
+\item{gr}{a \code{GRanges} object that contains the DMRs to be
+plotted}
 
 \item{annoTrack}{a \code{SimpleGenomicRangesList} object with two elements. 
 The first contains CpG category information in the first element (optional)
@@ -25,7 +26,8 @@ and/or coding
 sequences to DMR plot
 }
 \details{
-An internal function that takes an annotation \code{GRangesList} 
+An internal function that takes an annotation 
+\code{SimpleGenomicRangesList} 
 object that
 contains CpG category information in the first element (optional) and / or
 coding gene sequence information in the second element (optional). If neither

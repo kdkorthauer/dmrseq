@@ -11,7 +11,7 @@
 #' coding gene sequence information in the second element (optional). If neither
 #' of these are present, then nothing will be plotted.
 #' 
-#' @param gr a \code{SimpleGenomicRanges} object that contains the DMRs to be
+#' @param gr a \code{GRanges} object that contains the DMRs to be
 #'  plotted
 #' 
 #' @param annoTrack a \code{SimpleGenomicRangesList} object with two elements. 
