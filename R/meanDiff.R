@@ -25,17 +25,17 @@ meanDiff <- function(bs, dmrs, testCovariate) {
   if (is.character(testCovariate)) {
     testCovariate <- which(colnames(pData(bs)) == testCovariate)
     if (length(testCovariate) == 0) {
-      stop(paste0("testCovariate not found in pData(). ", 
-                  "Please specify a valid testCovariate"))
+      stop("testCovariate not found in pData(). ", 
+           "Please specify a valid testCovariate")
     }
   }
   
   coeff <- 2:(2 + length(testCovariate) - 1)
   testCov <- pData(bs)[, testCovariate]
   if (length(unique(testCov)) == 1) {
-    message(paste0("Warning: only one unique value of the specified ", 
-                   "covariate of interest.  Assuming null comparison and ", 
-                   "splitting sample group into two equal groups"))
+    message("Warning: only one unique value of the specified ", 
+            "covariate of interest.  Assuming null comparison and ", 
+            "splitting sample group into two equal groups")
     testCov <- rep(1, length(testCov))
     testCov[1:round(length(testCov)/2)] <- 0
   }
@@ -44,9 +44,9 @@ meanDiff <- function(bs, dmrs, testCovariate) {
   colnames(design)[coeff] <- colnames(pData(bs))[testCovariate]
   
   if (length(unique(design[, coeff])) != 2) {
-    message(paste0("Not a two-group comparison. Can't compute simple mean ",
-                   "methylation differences. ", 
-                   "Returning beta estimates instead"))
+    message("Not a two-group comparison. Can't compute simple mean ",
+            "methylation differences. ", 
+            "Returning beta estimates instead")
     return(dmrs$beta)
   } else {
     prop.mat <- as.matrix(getCoverage(bs, type = "M") / 

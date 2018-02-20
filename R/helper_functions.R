@@ -548,7 +548,7 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
     t1 <- proc.time()
     df <- DataFrame(ind, x = x[ind], chr = chr[ind], pos = pos[ind])
     res <- as.data.frame(aggregate(df, List(Indexes), 
-                     chr = unlist(phead(chr, 1L)),
+                     chr = unlist(IRanges::heads(chr, 1L)),
                      START = min(pos), END = max(pos),
                      indexStart = min(ind), indexEnd = max(ind),
                      L = lengths(chr), area = abs(sum(x))))[,-1]

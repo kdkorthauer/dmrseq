@@ -535,8 +535,8 @@ bsseq.bsGetGr <- function(object, region, extend) {
               gr <- region
             }
         if (!is(gr, "GRanges") || length(gr) != 1) 
-            stop(paste0("'region' needs to be either a 'data.frame' ",
-                "(with a single row) or a 'GRanges' (with a single element)"))
+            stop("'region' needs to be either a 'data.frame' ",
+                "(with a single row) or a 'GRanges' (with a single element)")
         gr <- resize(gr, width = 2 * extend + width(gr), fix = "center")
     }
     gr

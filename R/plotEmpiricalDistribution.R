@@ -57,11 +57,11 @@ plotEmpiricalDistribution <- function(bs,
     
     if (!is.null(testCovariate)) {
         if (sum(grepl(testCovariate, colnames(pData(bs)))) == 0) {
-            stop(paste0("Error: no column in pData() found ", 
-                        "that matches the testCovariate"))
+            stop("Error: no column in pData() found ", 
+                "that matches the testCovariate")
         } else if (length(grep(testCovariate, colnames(pData(bs)))) > 1) {
-            stop(paste0("Error: testCovariate matches more ",
-                        "than one column in pData()"))
+            stop("Error: testCovariate matches more ",
+                "than one column in pData()")
         }
         mC <- grep(testCovariate, colnames(pData(bs)))
     }

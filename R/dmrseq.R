@@ -162,17 +162,17 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
         max(sampleIndex) > 
         nrow(pData(bs)) | 
         !(length(sampleIndex) == length(unique(sampleIndex)))) {
-        stop(paste0("Error: Invalid sampleIndex specified. Must be an integer",
-                    "vector with unique indices between 1 and the number of", 
-            "samples contained in bs"))
+        stop("Error: Invalid sampleIndex specified. Must be an integer",
+            "vector with unique indices between 1 and the number of", 
+            "samples contained in bs")
     }
     
     # check statistic name
     if (!(stat %in% c("L", "area", "beta", "stat", "avg"))) {
-        stop(paste0("Specified '", stat, 
-                    "' as the test statistic which is not ", 
+        stop("Specified '", stat, 
+            "' as the test statistic which is not ", 
             "in the results. Please specify a valid name from one of ",
-            "L, area, beta, stat, or avg"))
+            "L, area, beta, stat, or avg")
     }
     
     # subset bs
@@ -182,40 +182,40 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
     if (is.character(testCovariate)) {
         testCovariate <- which(colnames(pData(bs)) == testCovariate)
         if (length(testCovariate) == 0) {
-            stop(paste0("testCovariate not found in pData(). ",
-                        "Please specify a valid testCovariate"))
+            stop("testCovariate not found in pData(). ",
+                 "Please specify a valid testCovariate")
         }
     }
     
     if (is.character(adjustCovariate)) {
         adjustCovariate <- which(colnames(pData(bs)) == adjustCovariate)
         if (length(adjustCovariate) == 0) {
-            stop(paste0("adjustCovariate not found in pData(). ",
-                "Please specify a valid adjustCovariate"))
+            stop("adjustCovariate not found in pData(). ",
+                "Please specify a valid adjustCovariate")
         }
     }
     
     
     # construct the design matrix using the pData of bs
     if (ncol(pData(bs)) < max(testCovariate, adjustCovariate)) {
-        stop(paste0("Error: pData(bs) has too few columns.  ","
-                    Please specify valid ", 
-            "covariates to use in the analysis"))
+        stop("Error: pData(bs) has too few columns.  ","
+              Please specify valid ", 
+            "covariates to use in the analysis")
     }
     
     coeff <- 2:(2 + length(testCovariate) - 1)
     testCov <- pData(bs)[, testCovariate]
     if (length(unique(testCov)) == 1) {
-        message(paste0("Warning: only one unique value of the specified ", 
-                       "covariate of interest.  Assuming null comparison and ",
-            "splitting sample group into two equal groups"))
+        message("Warning: only one unique value of the specified ", 
+                "covariate of interest.  Assuming null comparison and ",
+               "splitting sample group into two equal groups")
         testCov <- rep(1, length(testCov))
         testCov[1:round(length(testCov)/2)] <- 0
     }
     
     if (length(unique(testCov)) > 2) {
-        message(paste0("Warning! testCovariate has more than two groups. ", 
-                       "Functionality is *experimental*!"))
+        message("Warning! testCovariate has more than two groups. ", 
+                "Functionality is *experimental*!")
     }
     
     # check sampleSize is even in both conditions
@@ -223,8 +223,8 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
     if (length(unique(table(testCov))) > 1 |
         !(sum(table(testCov) == rep(sampleSize, 
         length(unique(testCov)))) == length(unique(testCov)))) {
-        stop(paste0("Error: testCov is not balanced. Need to specify an equal",
-                    "number of samples at each level"))
+        stop("Error: testCov is not balanced. Need to specify an equal",
+             "number of samples at each level")
     }
     
     if (!is.null(adjustCovariate)) {
@@ -241,19 +241,19 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
     if (length(unique(testCov)) == 2 & 
         (is.character(pData(bs)[, testCovariate]) | 
         is.factor(pData(bs)[, testCovariate]))) {
-        message(paste0("Condition ",
+        message("Condition ",
             unique(pData(bs)[, testCovariate][which(design[, coeff] == 1)]), 
             " vs ", 
-            unique(pData(bs)[, testCovariate][which(design[, coeff] == 0)])))
+            unique(pData(bs)[, testCovariate][which(design[, coeff] == 0)]))
     }
     if (!is.null(matchCovariate)) {
         if (is.character(matchCovariate)) {
             if (sum(grepl(matchCovariate, colnames(pData(bs)))) == 0) {
-                stop(paste0("Error: no column in pData() found that matches ",
-                      "the matchCovariate"))
+                stop("Error: no column in pData() found that matches ",
+                      "the matchCovariate")
             } else if (length(grep(matchCovariate, colnames(pData(bs)))) > 1) {
-                stop(paste0("Error: matchCovariate matches more than one ",
-                      "column in pData()"))
+                stop("Error: matchCovariate matches more than one ",
+                      "column in pData()")
             }
             mC <- grep(matchCovariate, colnames(pData(bs)))
         } else {
@@ -305,8 +305,8 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
     chr <- as.character(seqnames(bs))
     meta <- pData(bs)
     
-    message(paste0("Detecting candidate regions with coefficient larger than ",
-                   unique(abs(cutoff)), 
+    message("Detecting candidate regions with coefficient larger than ",
+                   unique(abs(cutoff), 
         " in magnitude."))
     OBS <- bumphunt(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos, 
                     chr = chr, design = design, sampleSize = sampleSize, 
@@ -324,9 +324,9 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
         # two group comparisons
         if (nrow(design)%%2 == 0 & length(unique(design[, coeff])) == 2) {
             if (verbose) {
-                message(paste0("Performing balanced permutations of ",
-                               "condition across samples ", 
-                  "to generate a null distribution of region test statistics"))
+                message("Performing balanced permutations of ",
+                        "condition across samples ", 
+                  "to generate a null distribution of region test statistics")
             }
             perms <- combn(seq(1, nrow(design)), sampleSize)
             perms <- perms[, 2:(ncol(perms)/2)]
@@ -349,9 +349,9 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
             # Next consider a multilevel, or continuous covariate where the 
             # covariate will be permuted in an unrestricted manner
             if (verbose) {
-                message(paste0("Performing unrestricted permutation of", 
-                               " covariate of interest across samples ", 
-                  "to generate a null distribution of region test statistics"))
+                message("Performing unrestricted permutation of", 
+                  " covariate of interest across samples ", 
+                  "to generate a null distribution of region test statistics")
             }
             perms <- as.matrix(sample(seq(1:nrow(design)), nrow(design)))
             
@@ -369,14 +369,14 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
                 perms <- cbind(perms, candidate)
             }
         } else {
-            stop(paste0("Error: Currently only balanced designs ", 
-                        "supported for 2-group comparisons"))
+            stop("Error: Currently only balanced designs ", 
+                        "supported for 2-group comparisons")
         }
         
         # Now rerun on flipped designs and concatenate results
         for (j in 1:ncol(perms)) {
             if (verbose) {
-                message(paste0("Beginning permutation ", j))
+                message("Beginning permutation ", j)
             }
             reorder <- perms[, j]
             designr <- design
@@ -433,9 +433,9 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
             }
             
             if (verbose) {
-                message(paste0("* ", j, " out of ", ncol(perms), 
+                message("* ", j, " out of ", ncol(perms), 
                      " permutations completed
-                     "))
+                     ")
             }
         }
         
@@ -450,10 +450,10 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
         # which column of results to use as test statistic ?  
         # check statistic name
         if (!(stat %in% c(colnames(OBS), "avg"))) {
-            stop(paste0("Specified '", stat, 
+            stop("Specified '", stat, 
                         "' as the test statistic which is not ", 
                 "in the results. Please specify a valid name from one of ",
-                "L, area, beta, or stat"))
+                "L, area, beta, or stat")
         } else if (stat == "avg") {
             OBS$avg <- OBS$area/OBS$L
             FLIP$avg <- FLIP$area/FLIP$L

@@ -177,7 +177,7 @@ plotDMRs <- function(BSseq, regions = NULL, testCovariate = NULL,
     # line going through
     # each observation
     if (verbose) 
-        message(paste0("[plotDMRs] Plotting ", nrow(regions), " DMRs"))
+        message("[plotDMRs] Plotting ", nrow(regions), " DMRs")
     if (!is.null(regions)) {
         if (is(regions, "data.frame")){
             gr <- data.frame2GRanges(regions, keepColumns = FALSE)
@@ -185,9 +185,9 @@ plotDMRs <- function(BSseq, regions = NULL, testCovariate = NULL,
           gr <- regions
         }
         if (!is(gr, "GRanges")) 
-            stop(paste0("'regions' needs to be either a 'data.frame' ",
+            stop("'regions' needs to be either a 'data.frame' ",
                         "(with a single row) or a 'GRanges' ", 
-                "(with a single element)"))
+                "(with a single element)")
     } else {
         gr <- granges(BSseq)
     }

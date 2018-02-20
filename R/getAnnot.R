@@ -46,8 +46,8 @@ getAnnot <- function(genomeName) {
         liftTo <- 'hg18'
         genomeName <- 'hg19'
     }else if (!genomeName %in% annotatr::builtin_genomes()) {
-        message(paste0("Genome ", genomeName, " is not supported by ", 
-                       "annotatr at this time"))
+        message("Genome ", genomeName, " is not supported by ", 
+                       "annotatr at this time")
         return(NULL)
     }
     
@@ -73,9 +73,9 @@ getAnnot <- function(genomeName) {
                 fail1 <- 0
                 break
             } else {
-                message(paste0("Download of CpG annotation failed. ",
+                message("Download of CpG annotation failed. ",
                   5 - attempt, 
-                  " attempts left"))
+                  " attempts left")
                 fail1 <- 1
             }
         }
@@ -89,9 +89,9 @@ getAnnot <- function(genomeName) {
                 fail2 <- 0
                 break
             } else {
-                message(paste0("Download of Gene annotation failed. ",
+                message("Download of Gene annotation failed. ",
                   5 - attempt, 
-                  " attempts left"))
+                  " attempts left")
                 fail2 <- 1
             }
         }
