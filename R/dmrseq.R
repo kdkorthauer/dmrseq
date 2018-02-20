@@ -61,10 +61,6 @@
 #'    backend. The default 
 #'    option is \code{BiocParallel::bpparam()} which will automatically creates
 #'    a cluster appropriate for the operating system. 
-#' @param sampleIndex vector of positive integers that represents the 
-#'   index of samples to use in the analysis (corresponds to sample ordering
-#'   in \code{bs} (e.g. the order of the rows in \code{pData(bs)}. 
-#'   Default is to use all samples in the object.
 #' @param maxPerms a positive integer that represents the maximum number 
 #'    of permutations that will be used to generate the global null 
 #'    distribution of test statistics.  Default value is 20.
@@ -142,7 +138,7 @@
 dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1, 
                    minNumRegion = 5, smooth = TRUE, bpSpan = 1000, 
                    minInSpan = 30, maxGapSmooth = 2500, maxGap = 1000, 
-                   verbose = TRUE, sampleIndex = seq(1, nrow(pData(bs))), 
+                   verbose = TRUE,  
                    maxPerms = 10, matchCovariate = NULL, 
                    BPPARAM = bpparam(), stat = "stat") {
     
@@ -156,16 +152,6 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
         stop("Must specify a value for cutoff between 0 and 1")
     subverbose <- max(as.integer(verbose) - 1L, 0)
     
-    # check sampleIndex input
-    if (!(class(sampleIndex) == "integer") | min(sampleIndex) < 1 | 
-        max(sampleIndex) > 
-        nrow(pData(bs)) | 
-        !(length(sampleIndex) == length(unique(sampleIndex)))) {
-        stop("Error: Invalid sampleIndex specified. Must be an integer",
-            "vector with unique indices between 1 and the number of", 
-            "samples contained in bs")
-    }
-    
     # check statistic name
     if (!(stat %in% c("L", "area", "beta", "stat", "avg"))) {
         stop("Specified '", stat, 
@@ -173,9 +159,6 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
             "in the results. Please specify a valid name from one of ",
             "L, area, beta, stat, or avg")
     }
-    
-    # subset bs
-    bs <- bs[, sampleIndex]
     
     # convert covariates to column numbers if characters
     if (is.character(testCovariate)) {
@@ -218,7 +201,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
     }
     
     # check sampleSize is even in both conditions
-    sampleSize <- length(sampleIndex)/2
+    sampleSize <- ncol(bs)/2
     if (length(unique(table(testCov))) > 1 |
         !(sum(table(testCov) == rep(sampleSize, 
         length(unique(testCov)))) == length(unique(testCov)))) {

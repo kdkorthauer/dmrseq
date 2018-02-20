@@ -395,8 +395,8 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
                                                           function(x) rep(x, 
             length(ix))))), sample = factor(as.vector(sapply(seq_len(sampleSize * 2),
             function(x) rep(x, length(ix))))), 
-            meth = utils::stack(data.frame(meth.mat[ix, ]))$values,
-            cov = utils::stack(data.frame(cov.mat[ix, ]))$values, 
+            meth = as.vector(meth.mat[ix, ]),
+            cov = as.vector(cov.mat[ix, ]), 
             L = as.vector(rep(pos[ix], nrow(design))))
         
         # condition to remove regions with constant methylation / unmeth values
