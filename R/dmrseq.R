@@ -101,7 +101,6 @@
 #'    for multiple comparisons to control false discovery rate).
 #' @keywords inference
 #' @importFrom outliers grubbs.test
-#' @importFrom reshape2 melt
 #' @importFrom bumphunter clusterMaker getSegments
 #' @importFrom matrixStats colMedians
 #' @importFrom matrixStats rowMads

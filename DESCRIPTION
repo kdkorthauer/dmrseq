@@ -22,7 +22,7 @@ License: MIT + file LICENSE
 Depends: R (>= 3.5), bsseq
 Imports: GenomicRanges, nlme, ggplot2, 
   RColorBrewer, bumphunter, matrixStats, BiocParallel,
-  outliers, reshape2, methods, locfit, IRanges, 
+  outliers, methods, locfit, IRanges, 
   grDevices, graphics, stats, utils, parallel,
   annotatr, AnnotationHub, rtracklayer, GenomeInfoDb
 Suggests: knitr, rmarkdown, BiocStyle

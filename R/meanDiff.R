@@ -15,7 +15,7 @@
 #' 
 #' @export
 #' 
-#' @example 
+#' @examples
 #' 
 #' data(BS.chr21)
 #' rawDiff <- meanDiff(BS.chr21, dmrs=sigRegions, testCovariate="CellType")

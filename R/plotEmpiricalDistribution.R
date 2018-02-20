@@ -24,7 +24,6 @@
 #' 
 #' @return a ggplot object
 #' 
-#' @importFrom reshape2 melt
 #' @importFrom locfit locfit lp
 #' 
 #' @export
@@ -66,8 +65,9 @@ plotEmpiricalDistribution <- function(bs,
         mC <- grep(testCovariate, colnames(pData(bs)))
     }
     
-    meth.levelsm <- suppressMessages(melt(meth.levelsm, value.name = "M"))
-    meth.levelsm$Cov <- suppressMessages(melt(cov.matm)$value)
+    meth.levelsm <- utils::stack(meth.levelsm)
+    colnames(meth.levelsm)[1] <- "M"
+    meth.levelsm$Cov <- utils::stack(cov.matm)$values
     
     meth.levelsm$group <- 
       unlist(lapply(1:ncol(bs), function(x) rep(pData(bs)[x,mC],nrow(bs))))

@@ -24,3 +24,9 @@ This function calculates raw mean methylation differences for the
 covariate of interest over a set of DMRs (or regions of interest), 
 assuming a simple two-group comparison.
 }
+\examples{
+
+data(BS.chr21)
+rawDiff <- meanDiff(BS.chr21, dmrs=sigRegions, testCovariate="CellType")
+
+}
