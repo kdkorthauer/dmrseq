@@ -6,8 +6,7 @@
 \usage{
 dmrseq(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
   minNumRegion = 5, smooth = TRUE, bpSpan = 1000, minInSpan = 30,
-  maxGapSmooth = 2500, maxGap = 1000, verbose = TRUE,
-  sampleIndex = seq(1, nrow(pData(bs))), maxPerms = 10,
+  maxGapSmooth = 2500, maxGap = 1000, verbose = TRUE, maxPerms = 10,
   matchCovariate = NULL, BPPARAM = bpparam(), stat = "stat")
 }
 \arguments{
@@ -63,11 +62,6 @@ between neighboring CpGs to be included in the same DMR.}
 
 \item{verbose}{logical value that indicates whether progress messages
 should be printed to stdout. Defaults value is TRUE.}
-
-\item{sampleIndex}{vector of positive integers that represents the 
-index of samples to use in the analysis (corresponds to sample ordering
-in \code{bs} (e.g. the order of the rows in \code{pData(bs)}. 
-Default is to use all samples in the object.}
 
 \item{maxPerms}{a positive integer that represents the maximum number 
 of permutations that will be used to generate the global null 
