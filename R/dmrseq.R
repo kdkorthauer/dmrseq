@@ -287,8 +287,8 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
     meta <- pData(bs)
     
     message("Detecting candidate regions with coefficient larger than ",
-                   unique(abs(cutoff), 
-        " in magnitude."))
+                   unique(abs(cutoff)), 
+        " in magnitude.")
     OBS <- bumphunt(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos, 
                     chr = chr, design = design, sampleSize = sampleSize, 
                     coeff = coeff, minInSpan = minInSpan, 
@@ -453,10 +453,10 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
         # observed
         pval <- rep(NA, nrow(OBS))
         pval[!is.na(OBS[, whichStatO])] <- (1 + 
-                    sapply(abs(OBS[!is.na(OBS[, whichStatO]), whichStatO]),
-              function(x) length(perm.ordered) - 
-                min(which(x <= perm.ordered))))/(1 + 
-                sum(!is.na(FLIP[, whichStatF])))
+                    vapply(abs(OBS[!is.na(OBS[, whichStatO]), whichStatO]),
+          function(x) length(perm.ordered) - min(which(x <= perm.ordered)),
+          numeric(1))) /
+          (1 + sum(!is.na(FLIP[, whichStatF])))
         
         # missing test statistics cause Inf for the p-value calculation instead,
         # propagate the missing values
