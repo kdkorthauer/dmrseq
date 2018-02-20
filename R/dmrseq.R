@@ -79,22 +79,21 @@
 #'   in the region, 'area' - the sum of the smoothed loci statistics,
 #'   'beta' - the effect size of the region, 'stat' - the test statistic for
 #'   the region, or 'avg' - the average smoothed loci statistic.
-#' @return a data.frame that contains the results of the inference. The
-#'    data.frame contains one row for each candidate region, and 
-#'    10 columns, in the following order: 1. chr = 
-#'    chromosome, 2. start = 
-#'    start basepair position of the region, 3. end = end basepair position
-#'    of the region,
-#'    4. indexStart = the index of the region's first CpG, 
-#'    5. indexEnd = the index of the region's last CpG,
-#'    6. L = the number of CpGs contained in the region,
-#'    7. area = the sum of the smoothed beta values
-#'    8. beta = the coefficient value for the condition difference,
-#'    9. stat = the test statistic for the condition difference,
-#'    10. pval = the permutation p-value for the significance of the test
+#' @return a \code{GRanges} object that contains the results of the inference. 
+#'    The object contains one row for each candidate region. The standard 
+#'    \code{GRanges} chr, start, and end are included, along with 7 metadata
+#'    columns, in the following order: 
+#'    1. L = the number of CpGs contained in the region,
+#'    2. area = the sum of the smoothed beta values
+#'    3. beta = the coefficient value for the condition difference,
+#'    4. stat = the test statistic for the condition difference,
+#'    5. pval = the permutation p-value for the significance of the test
 #'    statistic, and 
-#'    11. qval = the q-value for the test statistic (adjustment
+#'    6. qval = the q-value for the test statistic (adjustment
 #'    for multiple comparisons to control false discovery rate).
+#'    7. index = an \code{IRanges} containing the indices of the region's 
+#'       first CpG to last CpG.
+#'
 #' @keywords inference
 #' @importFrom outliers grubbs.test
 #' @importFrom bumphunter clusterMaker getSegments
@@ -467,7 +466,11 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
         OBS$pval <- pval$x
         OBS$qval <- pval$y
         
-        return(OBS)
+        # convert output into GRanges, with indexStart/indexEnd as IRanges
+        indexIR <- IRanges(OBS$indexStart, OBS$indexEnd)
+        OBS.gr <- makeGRangesFromDataFrame(OBS[,-c(4:5)], keep.extra.columns = TRUE)
+        OBS.gr$index <- indexIR
+        return(OBS.gr)
     } else {
         message("No candidate regions pass the cutoff of ", unique(abs(cutoff)))
     }

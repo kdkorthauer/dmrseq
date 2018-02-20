@@ -100,22 +100,20 @@ in the region, 'area' - the sum of the smoothed loci statistics,
 the region, or 'avg' - the average smoothed loci statistic.}
 }
 \value{
-a data.frame that contains the results of the inference. The
-   data.frame contains one row for each candidate region, and 
-   10 columns, in the following order: 1. chr = 
-   chromosome, 2. start = 
-   start basepair position of the region, 3. end = end basepair position
-   of the region,
-   4. indexStart = the index of the region's first CpG, 
-   5. indexEnd = the index of the region's last CpG,
-   6. L = the number of CpGs contained in the region,
-   7. area = the sum of the smoothed beta values
-   8. beta = the coefficient value for the condition difference,
-   9. stat = the test statistic for the condition difference,
-   10. pval = the permutation p-value for the significance of the test
+a \code{GRanges} object that contains the results of the inference. 
+   The object contains one row for each candidate region. The standard 
+   \code{GRanges} chr, start, and end are included, along with 7 metadata
+   columns, in the following order: 
+   1. L = the number of CpGs contained in the region,
+   2. area = the sum of the smoothed beta values
+   3. beta = the coefficient value for the condition difference,
+   4. stat = the test statistic for the condition difference,
+   5. pval = the permutation p-value for the significance of the test
    statistic, and 
-   11. qval = the q-value for the test statistic (adjustment
+   6. qval = the q-value for the test statistic (adjustment
    for multiple comparisons to control false discovery rate).
+   7. index = an \code{IRanges} containing the indices of the region's 
+      first CpG to last CpG.
 }
 \description{
 Performs a two-step approach that (1) detects candidate regions, and

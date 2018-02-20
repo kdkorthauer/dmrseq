@@ -436,7 +436,7 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
     
     # add points first to avoid lines getting hidden by plotting many cpg points
     if (addPoints) {
-        ix <- region$indexStart:region$indexEnd
+        ix <- start(region$index):end(region$index)
         meth <- as.matrix(bsseq::getCoverage(BSseq2, type = "M"))
         unmeth <- as.matrix(bsseq::getCoverage(BSseq2, type = "Cov")) - meth
         

@@ -5,7 +5,7 @@
 \title{Plot Differentially Methylated Regions}
 \usage{
 plotDMRs(BSseq, regions = NULL, testCovariate = NULL,
-  extend = (regions$end - regions$start + 1)/2, main = "",
+  extend = (end(regions) - start(regions) + 1)/2, main = "",
   addRegions = regions, annoTrack = NULL, col = NULL, lty = NULL,
   lwd = NULL, label = NULL, mainWithWidth = TRUE,
   regionCol = .alpha("#C77CFF", 0.2), addTicks = TRUE, addPoints = TRUE,

@@ -341,10 +341,27 @@ regions <- dmrseq(bs=bs[240001:260000,],
 Progress messages are printed to the console if `verbose` is TRUE.
 The text, `condition h1 vs imr90`, tells you that positive methylation 
 differences mean h1 has higher methylation than imr90 (see below for
-more details).
+more details). The results object is a `GRanges` object with the coordiates 
+of each candidate region, and contains the following metadata columns (which 
+can be extracted with the `$` operator:
+
+1. L = the number of CpGs contained in the region,
+2. area = the sum of the smoothed beta values
+3. beta = the coefficient value for the condition difference,
+4. stat = the test statistic for the condition difference,
+5. pval = the permutation p-value for the significance of the test
+statistic, and 
+6. qval = the q-value for the test statistic (adjustment
+for multiple comparisons to control false discovery rate).
+7. index = an `IRanges` containing the indices of the region's 
+first CpG to last CpG.
+
+```{r, showresults}
+show(regions)
+```
 
 The above steps are carried out on a very small subset of data (20,000 CpGs).
-This package currently requires that all the data is loaded into system memory. 
+This package requires that all the data is loaded into system memory. 
 For on human data, this means objects with a maximum of 28.2 million entries, 
 per sample (since there are roughly 28.2 millions CpGs in the human genome). 
 This means that whole-genome `BSseq` objects for several samples can use up
