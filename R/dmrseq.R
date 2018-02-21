@@ -356,7 +356,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
         # Now rerun on flipped designs and concatenate results
         for (j in seq_len(ncol(perms))) {
             if (verbose) {
-                message("Beginning permutation ", j)
+                message("\nBeginning permutation ", j)
             }
             reorder <- perms[, j]
             designr <- design
@@ -414,9 +414,17 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
             
             if (verbose) {
                 message("* ", j, " out of ", ncol(perms), 
-                     " permutations completed
-                     ")
+                     " permutations completed")
             }
+        }
+        
+        # if no candidates were found in permutation
+        # provide informative error message
+        if (is.null(FLIP)){
+          stop("No candidate regions found in permutation, so inference ",
+               "can't be carried out. ",
+               "Try decreasing the cutoff, or running on a larger ",
+               "dataset if you are currently using a subset.")
         }
         
         # if there are more than 1 million candidate null regions, 
