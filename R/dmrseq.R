@@ -260,7 +260,11 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
     }
     
     # register the parallel backend
-    BiocParallel::register(BPPARAM)
+    if(.Platform$OS.type == "windows"){
+      BiocParallel::register(BiocParallel::SerialParam())
+    }else{
+      BiocParallel::register(BPPARAM)
+    }
     backend <- "BiocParallel"
     
     if (bpparam()$workers == 1) {
