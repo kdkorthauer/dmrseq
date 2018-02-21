@@ -200,10 +200,10 @@ bumphunt <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
         minNumRegion = minNumRegion, design = design, coeff = coeff, 
         verbose = verbose, sampleSize = sampleSize, parallel = parallel)
 
-    if (nrow(tab) == 0) {
+    if (length(tab) == 0) {
         if (verbose) 
             message("No regions found.")
-        return(NA)
+        return(NULL)
     }
     return(table = tab)
 }
@@ -525,15 +525,15 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
     
     numCandidates <- sum(lengths(Indexes))
     
+    if (numCandidates == 0) {
+      return(NULL)
+    }
+    
     if (verbose) {
         message(".....Evaluating ", numCandidates, 
                 " candidate regions.")
     }
-    
-    if (numCandidates == 0) {
-        return(NULL)
-    }
-    
+  
     Indexes <- c(Indexes[[1]], Indexes[[2]])
     
     maxLength <- max(lengths(Indexes))
