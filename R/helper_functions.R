@@ -655,15 +655,11 @@ smoother <- function(y, x = NULL, weights = NULL, chr = chr,
     
     idx <- NULL  ## for R CMD check
     if (parallel) {
-        ret <- do.call("rbind", mclapply(Indexes, function(idx) {
-            sm <- locfitByCluster2(idx)
-            return(sm)
-        }, mc.cores = bpparam()$workers))
+        ret <- do.call("rbind", bplapply(Indexes, 
+                                         function(idx) locfitByCluster2(idx)))
     } else {
-        ret <- do.call("rbind", lapply(Indexes, function(idx) {
-            sm <- locfitByCluster2(idx)
-            return(sm)
-        }))
+        ret <- do.call("rbind", lapply(Indexes, 
+                                       function(idx) locfitByCluster2(idx)))
     }
     
     if (verbose) {

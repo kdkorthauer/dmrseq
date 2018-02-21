@@ -517,10 +517,10 @@ sample comparison.
 data(BS.chr21)
 
 # reorder samples to create a null comparison 
-BS.null <- BS.chr21[,c(1,3,2,4)]
+BS.null <- BS.chr21[1:20000,c(1,3,2,4)]
 
-# add 300 DMRs
-BS.chr21.sim <- simDMRs(bs=BS.null, num.dmrs=300)
+# add 100 DMRs
+BS.chr21.sim <- simDMRs(bs=BS.null, num.dmrs=100)
 
 # bsseq object with original null + simulated DMRs
 show(BS.chr21.sim$bs)

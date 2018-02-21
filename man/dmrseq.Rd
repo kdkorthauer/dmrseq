@@ -129,8 +129,8 @@ data(BS.chr21)
 # the covariate of interest is the 'CellType' column of pData(BS.chr21)
 testCovariate <- 'CellType'
 
-# run dmrseq on a subset of the chromosome (20K CpGs)
-regions <- dmrseq(bs=BS.chr21[240001:260000,],
+# run dmrseq on a subset of the chromosome (10K CpGs)
+regions <- dmrseq(bs=BS.chr21[240001:250000,],
                  cutoff = 0.05,
                  testCovariate=testCovariate)
 

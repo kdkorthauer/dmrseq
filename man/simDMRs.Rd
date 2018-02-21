@@ -43,7 +43,8 @@ into two (artificial) populations.
 
 data(BS.chr21)
 
-BS.chr21.sim <- simDMRs(bs=BS.chr21[,c(1,3,2,4)], num.dmrs=300)
+BS.chr21.sim <- simDMRs(bs=BS.chr21[1:10000,c(1,3,2,4)], 
+                        num.dmrs=50)
 
 # show the simulated DMRs GRanges object
 show(BS.chr21.sim$gr.dmrs)
