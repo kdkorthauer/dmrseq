@@ -19,7 +19,7 @@ Description: This package implements an approach for scanning the
   correlated error structure for the effect of interest on transformed  
   methylation proportions. 
 License: MIT + file LICENSE
-Depends: R (>= 3.5), bsseq
+Depends: R (>= 3.4), bsseq
 Imports: GenomicRanges, nlme, ggplot2, S4Vectors,
   RColorBrewer, bumphunter, matrixStats, BiocParallel,
   outliers, methods, locfit, IRanges, 
