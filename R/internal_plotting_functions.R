@@ -443,7 +443,8 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
         for(sampIdx in seq_len(ncol(BSseq))){
           .dmrPlotPoints(positions, rawPs[, sampIdx], coverage[, sampIdx], 
                          col = colEtc$col[sampIdx], 
-                         pointsMinCov = pointsMinCov, maxCov = quantile(coverage, 0.95), 
+                         pointsMinCov = pointsMinCov, 
+                         maxCov = quantile(coverage, 0.95), 
                          regionWidth = end(gr) - 
                            start(gr), fit = NULL)
         }
@@ -451,7 +452,8 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
         for(sampIdx in seq_len(ncol(BSseq))){
           .dmrPlotLines(positions, rawPs[, sampIdx], coverage[, sampIdx], 
                         col = colEtc$col[sampIdx], 
-                        pointsMinCov = pointsMinCov, maxCov = quantile(coverage, 0.95), 
+                        pointsMinCov = pointsMinCov, 
+                        maxCov = quantile(coverage, 0.95), 
                         regionWidth = end(gr) - 
                           start(gr), fit = NULL)
         }

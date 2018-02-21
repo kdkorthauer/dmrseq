@@ -118,6 +118,7 @@
 #' @import nlme
 #' @import annotatr
 #' @import ggplot2
+#' @import S4Vectors
 #' 
 #' @export
 #' 
@@ -212,8 +213,8 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
         adjustCov <- pData(bs)[, adjustCovariate]
         design <- model.matrix(~testCov + adjustCov)
         colnames(design)[coeff] <- colnames(pData(bs))[testCovariate]
-        colnames(design)[,seq((max(coeff) + 1),ncol(design))] <- colnames(pData(bs))[
-          adjustCovariate]
+        colnames(design)[,seq((max(coeff) + 1), ncol(design))] <- 
+          colnames(pData(bs))[adjustCovariate]
     } else {
         design <- model.matrix(~testCov)
         colnames(design)[coeff] <- colnames(pData(bs))[testCovariate]
@@ -447,7 +448,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
         perm.ordered <- c(sort(abs(FLIP[, whichStatF]), method = "quick"), Inf)
         
         # Step 2: find the first instance in the sorted vector where the 
-        # permuted value is greater than the observed and use this to determine 
+        # permuted value is greater than the observed and use this to determine
         # the number of permuted values that are greater than or equal to the 
         # observed
         pval <- rep(NA, nrow(OBS))
@@ -468,7 +469,8 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
         
         # convert output into GRanges, with indexStart/indexEnd as IRanges
         indexIR <- IRanges(OBS$indexStart, OBS$indexEnd)
-        OBS.gr <- makeGRangesFromDataFrame(OBS[,-c(4:5)], keep.extra.columns = TRUE)
+        OBS.gr <- makeGRangesFromDataFrame(OBS[,-c(4:5)], 
+                                           keep.extra.columns = TRUE)
         OBS.gr$index <- indexIR
         return(OBS.gr)
     } else {

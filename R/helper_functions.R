@@ -281,7 +281,8 @@ trimEdges <- function(x, candidates = NULL, verbose = FALSE, minNumRegion) {
                               min(x[w]) +  0.75 * mean(x[w]))/2
                 new.start <- min(max(1, round(mid - 0.125 * length(w))), 
                                  max(1, mid - 2), 
-                                 (seq_len(mid))[min(which(x[w[seq_len(mid)]] >= new.cut))])
+                                 (seq_len(mid))[min(which(x[w[seq_len(mid)]] >=
+                                                            new.cut))])
               }
             }
           }
@@ -297,8 +298,8 @@ trimEdges <- function(x, candidates = NULL, verbose = FALSE, minNumRegion) {
                               min(x[w]) + 0.75 * mean(x[w]))/2
                 new.end <- max(min(round(mid + 0.125 * length(w)),
                                    length(w)), min(mid + 2, length(w)), 
-                               (seq(mid,length(w)))[max(which(x[w[seq(mid,length(w))]] >=
-                                                           new.cut))])
+                               (seq(mid,length(w)))[max(which(x[w[seq(mid,
+                                                  length(w))]] >= new.cut))])
               }
             }
           }
@@ -312,7 +313,7 @@ trimEdges <- function(x, candidates = NULL, verbose = FALSE, minNumRegion) {
       }
   }
 
-  trimLong <- function(x, candidates, direction, minNumRegion, sig){
+  trimLong <- function(x, candidates, minNumRegion, sig){
     if (length(candidates) > 0) {
       x <- x * sig
       which.long <- which(lengths(candidates) > minNumRegion)
@@ -329,10 +330,8 @@ trimEdges <- function(x, candidates = NULL, verbose = FALSE, minNumRegion) {
   }
   
   trimmed <- vector("list", 2)
-  trimmed[[1]] <- trimLong(x, candidates[[1]], direction, 
-                             minNumRegion, sig = 1)
-  trimmed[[2]] <- trimLong(x, candidates[[2]], direction, 
-                             minNumRegion, sig = -1)
+  trimmed[[1]] <- trimLong(x, candidates[[1]], minNumRegion, sig = 1)
+  trimmed[[2]] <- trimLong(x, candidates[[2]], minNumRegion, sig = -1)
   
   return(trimmed)
 }
@@ -386,8 +385,9 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
         Indexes[[i]] <- Indexes[[i]][lns >= minNumRegion]
     }
     
-    asin.gls.cov <- function(ix, design, coeff, correlation = corAR1(form = ~1 |
-        sample), correlationSmall = corCAR1(form = ~L | sample), 
+    asin.gls.cov <- function(ix, design, coeff, 
+        correlation = corAR1(form = ~1 |sample), 
+        correlationSmall = corCAR1(form = ~L | sample), 
         weights = varPower(form = ~1/MedCov, 
         fixed = 0.5)) {
         sampleSize <- nrow(design)/2
@@ -556,8 +556,8 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
             design = design, coeff = coeff)))
     }
     
-    df <- DataFrame(ind, x = x[ind], chr = chr[ind], pos = pos[ind])
-    res <- as.data.frame(aggregate(df, List(Indexes), 
+    df <- S4Vectors::DataFrame(ind, x = x[ind], chr = chr[ind], pos = pos[ind])
+    res <- as.data.frame(S4Vectors::aggregate(df, S4Vectors::List(Indexes), 
                                    chr = unlist(IRanges::heads(chr, 1L)),
                                    START = min(pos), END = max(pos),
                                    indexStart = min(ind), indexEnd = max(ind),
