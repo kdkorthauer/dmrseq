@@ -134,9 +134,13 @@ bumphunt <- function(bs,
     for (ch in chrs) {
       pos <- chrSelectBSseq(bs, ch)
       bpSpan2 <- c(bpSpan2, minInSpan * (max(start(pos)) - 
-                      min(start(pos)) + 1)/sum(chrs == ch))
+                      min(start(pos)) + 1)/sum(seqnames(pos) == ch))
     }
     bpSpan2 <- mean(bpSpan2, na.rm = TRUE)
+    
+    # get 75th percentile of mean coverage genomewide before subsetting
+    # by chromosome
+    covQ75 <- quantile(rowMeans(as.matrix(getCoverage(bs, type="Cov"))), 0.75)
   
     tab <- NULL
     for (chromosome in chrs) {
@@ -170,8 +174,8 @@ bumphunt <- function(bs,
     
       # truncate coverage at 75th percentile
       # minimum sd proportional to median coverage
- 
-      weights <- pmin(cov.means, quantile(cov.means, 0.75)) / 
+      
+      weights <- pmin(cov.means, covQ75) / 
         pmax(sd.raw, 1/pmax(cov.means, 5))
     
       if (smooth) {
