@@ -54,7 +54,7 @@ meanDiff <- function(bs, dmrs, testCovariate) {
                           getCoverage(bs, type = "Cov"))
     levs <- unique(design[, coeff])
     
-    indexRanges <- IRanges(dmrs$indexStart, dmrs$indexEnd)
+    indexRanges <- IRanges(start(dmrs$index), end(dmrs$index))
     prop.mat.dmr <- extractROWS(prop.mat, indexRanges)
     prop.mat1.means <- rowMeans(prop.mat.dmr[,design[, coeff] == levs[1]])
     prop.mat2.means <- rowMeans(prop.mat.dmr[,design[, coeff] == levs[2]])
