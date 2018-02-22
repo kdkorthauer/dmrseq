@@ -564,7 +564,7 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
     
     df <- S4Vectors::DataFrame(ind, x = x[ind], chr = chr[ind], pos = pos[ind])
     res <- as.data.frame(S4Vectors::aggregate(df, S4Vectors::List(Indexes), 
-                                   chr = unlist(IRanges::heads(chr, 1L)),
+                                   chr = unlist(S4Vectors::phead(chr, 1L)),
                                    START = min(pos), END = max(pos),
                                    indexStart = min(ind), indexEnd = max(ind),
                                    L = lengths(chr), area = abs(sum(x))))[,-1]
