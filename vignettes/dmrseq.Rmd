@@ -247,7 +247,8 @@ show(bs)
 ```
 
 The example data contains CpGs from chromosome 21 for  four samples 
-from @Lister2009. To load this data directly, simply type `data(BS.chr21)`.
+from @Lister2009. To load this data directly (already in the `BSseq` format), 
+simply type `data(BS.chr21)`.
 Two of the samples are replicates of the cell type 'imr90' 
 and the other two are replicates of the cell type 'h1'. Now that we have the
 data loaded into a `BSseq` object, we can use **dmrseq**
@@ -313,6 +314,9 @@ loci.idx <- which(rowSums(getCoverage(bs, type="Cov")==0) == 0)
 sample.idx <- which(pData(bs)$CellType %in% c("imr90", "h1"))
 
 bs.filtered <- bs[loci.idx, sample.idx]
+```
+```{r, results="hide", echo=FALSE}
+rm(bs.filtered)
 ```
 
 Note that this is a trivial example, since our toy example object `BS.chr21` 
