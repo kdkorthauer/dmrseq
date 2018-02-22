@@ -123,65 +123,73 @@ getEstimatePooled <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
     }
 }
 
-bumphunt <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos, 
-    chr = chr, design, sampleSize, coeff = 2, minInSpan = 30, minNumRegion = 5, 
+bumphunt <- function(bs, 
+    design, sampleSize, coeff = 2, minInSpan = 30, minNumRegion = 5, 
     cutoff = NULL, maxGap = 1000, maxGapSmooth = 2500, smooth = FALSE, 
     bpSpan = 1000, verbose = TRUE, parallel = FALSE, ...) {
     
     # calculate smoothing span from minInSpan
     bpSpan2 <- NULL
-    for (ch in unique(chr)) {
-        bpSpan2 <- c(bpSpan2, minInSpan * (max(pos[chr == ch]) - 
-                              min(pos[chr == ch]) + 1)/sum(chr == ch))
+    chrs <- unique(as.character(seqnames(bs)))
+    for (ch in chrs) {
+      pos <- chrSelectBSseq(bs, ch)
+      bpSpan2 <- c(bpSpan2, minInSpan * (max(start(pos)) - 
+                      min(start(pos)) + 1)/sum(chrs == ch))
     }
     bpSpan2 <- mean(bpSpan2, na.rm = TRUE)
+  
+    tab <- NULL
+    for (chromosome in chrs) {
+      meth.mat <- as.matrix(getCoverage(chrSelectBSseq(bs, chromosome), 
+                                        type = "M"))
+      cov.mat <- as.matrix(getCoverage(chrSelectBSseq(bs, chromosome), 
+                                       type = "Cov"))
+      pos <- start(chrSelectBSseq(bs, chromosome))
+      chr <- as.character(seqnames(chrSelectBSseq(bs, chromosome)))
     
-    if (verbose) 
-        message(".....Computing coefficients.")
+      if (verbose) 
+        message("...Chromosome ", chromosome, ": ", appendLF = FALSE)
     
-    cov.means <- rowMeans(cov.mat)
+      cov.means <- rowMeans(cov.mat)
     
-    if (length(unique(design[, coeff])) == 2) {
-        tmp <- getEstimatePooled(meth.mat = meth.mat, 
-            cov.mat = cov.mat, pos = pos, 
-            chr = chr, design, coeff)
-        rawBeta <- tmp$rawBeta
-        sd.raw <- tmp$sd
-    } else {
-        tmp <- estim(meth.mat = meth.mat, cov.mat = cov.mat, 
-            pos = pos, chr = chr, 
-            design = design, coeff = coeff)
-        rawBeta <- tmp$meth.diff
-        sd.raw <- tmp$sd.meth.diff
-    }
+      if (length(unique(design[, coeff])) == 2) {
+          tmp <- getEstimatePooled(meth.mat = meth.mat, 
+              cov.mat = cov.mat, pos = pos, 
+              chr = chr, design, coeff)
+          rawBeta <- tmp$rawBeta
+          sd.raw <- tmp$sd
+      } else {
+          tmp <- estim(meth.mat = meth.mat, cov.mat = cov.mat, 
+              pos = pos, chr = chr, 
+              design = design, coeff = coeff)
+          rawBeta <- tmp$meth.diff
+          sd.raw <- tmp$sd.meth.diff
+      }
     
-    sd.raw[sd.raw < 1e-05] <- 1e-05
+      sd.raw[sd.raw < 1e-05] <- 1e-05
     
-    # truncate coverage at 75th percentile
-    # minimum sd proportional to median coverage
+      # truncate coverage at 75th percentile
+      # minimum sd proportional to median coverage
  
-    weights <- pmin(cov.means, quantile(cov.means, 0.75)) / 
-      pmax(sd.raw, 1/pmax(cov.means, 5))
+      weights <- pmin(cov.means, quantile(cov.means, 0.75)) / 
+        pmax(sd.raw, 1/pmax(cov.means, 5))
     
-    if (smooth) {
-        if (verbose) 
-            message(".....Smoothing coefficients.")
+      if (smooth) {
         
         beta <- vector("list", 2)
         beta[[1]] <- beta[[2]] <- rep(NA, length(pos))
-        for (chromosome in unique(chr)) {
-            beta.tmp <- smoother(y = rawBeta[chr == chromosome], 
-                                 x = pos[chr == chromosome], 
+        
+        beta.tmp <- smoother(y = rawBeta, 
+                                 x = pos, 
                                  chr = chromosome, maxGapSmooth = maxGapSmooth,
-                                 weights = weights[chr == chromosome], 
+                                 weights = weights, 
                                  minNumRegion = minNumRegion, 
                                  minInSpan = minInSpan, 
                 bpSpan = bpSpan, bpSpan2 = bpSpan2, verbose = verbose, 
                 parallel = parallel)
-            beta[[1]][chr == chromosome] <- beta.tmp[[1]]
-            beta[[2]][chr == chromosome] <- beta.tmp[[2]]
-        }
-        
+        beta[[1]] <- beta.tmp[[1]]
+        beta[[2]] <- beta.tmp[[2]]
+
         names(beta) <- names(beta.tmp)
         Index <- which(beta$smoothed)
         beta <- beta$fitted
@@ -195,17 +203,19 @@ bumphunt <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
     
     beta[-Index] <- rawBeta[-Index]
     
-    tab <- regionScanner(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos, 
+    tab <- rbind(tab, 
+        regionScanner(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos, 
         chr = chr, x = beta, y = rawBeta, maxGap = maxGap, cutoff = cutoff, 
         minNumRegion = minNumRegion, design = design, coeff = coeff, 
-        verbose = verbose, sampleSize = sampleSize, parallel = parallel)
-
+        verbose = verbose, sampleSize = sampleSize, parallel = parallel))
+    }
+    
     if (length(tab) == 0) {
         if (verbose) 
             message("No regions found.")
         return(NULL)
     }
-    return(table = tab)
+    return(tab)
 }
 
 
@@ -526,12 +536,8 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
     numCandidates <- sum(lengths(Indexes))
     
     if (numCandidates == 0) {
+      message("No candidates found. ")
       return(NULL)
-    }
-    
-    if (verbose) {
-        message(".....Evaluating ", numCandidates, 
-                " candidate regions.")
     }
   
     Indexes <- c(Indexes[[1]], Indexes[[2]])
@@ -573,8 +579,8 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
     
     t2 <- proc.time()
     if (verbose) {
-        message(".....Took ", round((t2 - t1)[3]/60, 2), 
-                " min to score candidate regions.")
+        message(numCandidates, " regions scored (", round((t2 - t1)[3]/60, 2), 
+                " min). ")
     }
     
     if (order && nrow(res) > 0) 
@@ -664,8 +670,9 @@ smoother <- function(y, x = NULL, weights = NULL, chr = chr,
     
     if (verbose) {
         t2 <- proc.time()
-        message("..........Done Smoothing Chromosome ", chr, ". Took ",
-                round((t2 - t1)[3]/60, 2), " minutes")
+        message("Smoothed (",
+                round((t2 - t1)[3]/60, 2), " min). ",
+                appendLF = FALSE)
     }
     
     return(ret)
