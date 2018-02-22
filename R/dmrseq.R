@@ -212,11 +212,14 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
         adjustCov <- pData(bs)[, adjustCovariate]
         design <- model.matrix(~testCov + adjustCov)
         colnames(design)[coeff] <- colnames(pData(bs))[testCovariate]
-        colnames(design)[,seq((max(coeff) + 1), ncol(design))] <- 
+        colnames(design)[seq((max(coeff) + 1), ncol(design))] <- 
           colnames(pData(bs))[adjustCovariate]
+        coeff.adj <- which(colnames(design) == 
+                             colnames(pData(bs))[adjustCovariate])
     } else {
         design <- model.matrix(~testCov)
         colnames(design)[coeff] <- colnames(pData(bs))[testCovariate]
+        coeff.adj <- NULL
     }
     
     if (length(unique(testCov)) == 2 && 
@@ -283,16 +286,17 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
                    unique(abs(cutoff)), 
         " in magnitude.")
     OBS <- bumphunt(bs=bs, design = design, sampleSize = sampleSize, 
-                    coeff = coeff, minInSpan = minInSpan, 
+                    coeff = coeff, coeff.adj = coeff.adj, minInSpan = minInSpan,
                     minNumRegion = minNumRegion, cutoff = cutoff, 
                     maxGap = maxGap, maxGapSmooth = maxGapSmooth, 
                     smooth = smooth, bpSpan = bpSpan, verbose = verbose, 
                     parallel = parallel)
-    message("* ", nrow(OBS), " candidates detected")
+   
     # check that at least one candidate region was found; if there were none 
     # there is no need to go on to compute permutation tests...
     
-    if (nrow(OBS) > 0) {
+    if (length(OBS) > 0) {
+        message("* ", nrow(OBS), " candidates detected")
         FLIP <- NULL
         # configure the permutation matrix first consider balanced, 
         # two group comparisons
@@ -394,6 +398,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
             
             res.flip.p <- bumphunt(bs=bs, design = designr, 
                                    sampleSize = sampleSize, coeff = coeff, 
+                                   coeff.adj = coeff.adj,
                                    minInSpan = minInSpan, 
                                    minNumRegion = minNumRegion, cutoff = cutoff,
                                    maxGap = maxGap, maxGapSmooth = maxGapSmooth,

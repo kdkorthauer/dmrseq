@@ -124,7 +124,8 @@ getEstimatePooled <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
 }
 
 bumphunt <- function(bs, 
-    design, sampleSize, coeff = 2, minInSpan = 30, minNumRegion = 5, 
+    design, sampleSize, coeff = 2, coeff.adj = 3,
+    minInSpan = 30, minNumRegion = 5, 
     cutoff = NULL, maxGap = 1000, maxGapSmooth = 2500, smooth = FALSE, 
     bpSpan = 1000, verbose = TRUE, parallel = FALSE, ...) {
     
@@ -211,7 +212,9 @@ bumphunt <- function(bs,
         regionScanner(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos, 
         chr = chr, x = beta, y = rawBeta, maxGap = maxGap, cutoff = cutoff, 
         minNumRegion = minNumRegion, design = design, coeff = coeff, 
-        verbose = verbose, sampleSize = sampleSize, parallel = parallel))
+        coeff.adj = coeff.adj,
+        verbose = verbose, sampleSize = sampleSize, parallel = parallel,
+        pDat=pData(bs)))
     }
     
     if (length(tab) == 0) {
@@ -353,8 +356,9 @@ trimEdges <- function(x, candidates = NULL, verbose = FALSE, minNumRegion) {
 regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos, 
     chr = chr, x, y = x, ind = seq(along = x), order = TRUE, minNumRegion = 5, 
     maxGap = 300, cutoff = quantile(abs(x), 0.99), assumeSorted = FALSE, 
-    verbose = verbose, design = design, coeff = coeff, sampleSize = sampleSize, 
-    parallel = parallel) {
+    verbose = verbose, design = design, coeff = coeff, coeff.adj = coeff.adj,
+    sampleSize = sampleSize, 
+    parallel = parallel, pDat=pData(bs)) {
     if (any(is.na(x[ind]))) {
         warning("NAs found and removed. ind changed.")
         ind <- intersect(which(!is.na(x)), ind)
@@ -371,6 +375,7 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
     Indexes <- Indexes[seq_len(2)]
     
     if (sum(lengths(Indexes)) == 0) {
+        message("No candidates found. ")
         return(NULL)
     }
     
@@ -380,6 +385,7 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
         verbose = FALSE, minNumRegion = minNumRegion, sampleSize = sampleSize)
     
     if (sum(lengths(Indexes)) == 0) {
+        message("No candidates found. ")
         return(NULL)
     }
     
@@ -390,6 +396,7 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
                          minNumRegion = minNumRegion)
     
     if (sum(lengths(Indexes)) == 0) {
+        message("No candidates found. ")
         return(NULL)
     }
     
@@ -405,26 +412,31 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
         weights = varPower(form = ~1/MedCov, 
         fixed = 0.5)) {
         sampleSize <- nrow(design)/2
-        dat <- data.frame(g.fac = factor(rep(design[,coeff], each=length(ix))),
+        dat <- data.frame(g.fac = factor(rep(pDat[,colnames(design)[coeff]], 
+                                             each=length(ix))),
                           sample = factor(rep(seq_len(sampleSize * 2), 
                                               each=length(ix))),
                           meth = as.vector(meth.mat[ix, ]),
                           cov = as.vector(cov.mat[ix, ]), 
-                          L = as.vector(rep(pos[ix], nrow(design))))
+                          L = factor(as.vector(rep(pos[ix], nrow(design)))))
+        
+        if(length(coeff.adj) > 0){
+          dat$a.fac <- factor(rep(pDat[,colnames(design)[coeff.adj]], 
+                                  each=length(ix)))
+        }
         
         # condition to remove regions with constant methylation / unmeth values
         if (!((length(unique(dat$meth)) == 1 && dat$meth[1] == 0) || 
               (length(unique(dat$cov - dat$meth)) == 1 && 
                (dat$cov - dat$meth)[1] == 0))) {
             
-            dat$pos <- as.numeric(factor(dat$L))
-            X <- model.matrix(~dat$g.fac)
-            colnames(X)[2] <- "grp"
-            
-            if (nrow(X) <= ncol(X)){
-                message("Not enough degree of freedom to fit the linear ", 
-                            "model. Drop some terms in formula")
-                return(data.frame(beta = NA, stat = NA, constant = FALSE))
+            dat$pos <- as.numeric(dat$L)
+            if (length(coeff.adj)==0){
+              X <- model.matrix(~dat$g.fac + dat$L)
+              mm <- formula(Z ~ g.fac + L)
+            }else{
+              X <- model.matrix(~dat$g.fac + dat$L + dat$a.fac)
+              mm <- formula(Z ~ g.fac + L + a.fac)
             }
             
             Y <- as.matrix(dat$meth)
@@ -437,9 +449,6 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
             if (length(whichZ)>0){
               dat <- dat[-whichZ,]
             }
-            
-            # tol is the convergence criteria (for difference Between two 
-            # iterations of the dispersion parameter estimate
             
             ## small constants to bound p and phi pick this such that min value
             ##  of z[m>0] is greater than all values of z[m==0]
@@ -454,8 +463,11 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
                 Y <- Y[ixn]
                 N <- N[ixn]
                 ## check design not enough df for regression
-                if (nrow(X) < ncol(X) + 1) 
+                if (nrow(X) < ncol(X) + 1) {
+                  message("Not enough degree of freedom to fit the ", 
+                          "model. Drop some terms in formula")
                   return(data.frame(beta = NA, stat = NA, constant = FALSE))
+                }
                 ## design is not of full rank because of missing. Skip
                 if (any(abs(svd(X)$d) < 1e-08)) 
                   return(data.frame(beta = NA, stat = NA, constant = FALSE))
@@ -475,7 +487,7 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
             
             if (length(ix) >= 40) {
                 fit <- tryCatch({
-                  summary(gls(Z ~ g.fac + factor(L), weights = weights, 
+                  summary(gls(mm, weights = weights, 
                               data = dat, correlation = correlation))
                 }, error = function(e) {
                   return(NA)
@@ -499,7 +511,7 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
                 }
                 
                 fit <- tryCatch({
-                  summary(gls(Z ~ g.fac + factor(L), weights = weights,
+                  summary(gls(mm, weights = weights,
                               data = dat, correlation = correlationSmall))
                 }, error = function(e) {
                   return(NA)
@@ -509,14 +521,14 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
                 # first variance weighting, and then corr str)
                 if (sum(is.na(fit)) == length(fit)) {
                   fit <- tryCatch({
-                    summary(gls(Z ~ g.fac + factor(L), data = dat, 
+                    summary(gls(mm, data = dat, 
                                 correlation = correlationSmall))
                   }, error = function(e) {
                     return(NA)
                   })
                   if (sum(is.na(fit)) == length(fit)) {
                     fit <- tryCatch({
-                      summary(gls(Z ~ g.fac + factor(L), data = dat))
+                      summary(gls(mm, data = dat))
                     }, error = function(e) {
                       return(NA)
                     })
