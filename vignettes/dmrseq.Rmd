@@ -245,6 +245,9 @@ bs <- BSseq(chr = chr, pos = pos,
             sampleNames = sampleNames)
 show(bs)
 ```
+```{r cleanup, results="hide", echo=FALSE}
+rm(M, Cov, pos, chr, bismarkBSseq)
+```
 
 The example data contains CpGs from chromosome 21 for  four samples 
 from @Lister2009. To load this data directly (already in the `BSseq` format), 
@@ -426,7 +429,7 @@ You can determine the proportion of regions with hyper-methylation by counting
 how many had a positive direction of effect (positive statistic).
 
 ```{r hyper}
-sum(sigRegions$stat > 0) / nrow(sigRegions)
+sum(sigRegions$stat > 0) / length(sigRegions)
 ```
 
 To interpret the direction of effect, note that for a two-group comparison 

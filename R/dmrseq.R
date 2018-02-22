@@ -279,22 +279,16 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
       parallel <- TRUE
     }
     
-    meth.mat <- as.matrix(getCoverage(bs, type = "M"))
-    cov.mat <- as.matrix(getCoverage(bs, type = "Cov"))
-    pos <- start(bs)
-    chr <- as.character(seqnames(bs))
-    meta <- pData(bs)
-    
     message("Detecting candidate regions with coefficient larger than ",
                    unique(abs(cutoff)), 
         " in magnitude.")
-    OBS <- bumphunt(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos, 
-                    chr = chr, design = design, sampleSize = sampleSize, 
+    OBS <- bumphunt(bs=bs, design = design, sampleSize = sampleSize, 
                     coeff = coeff, minInSpan = minInSpan, 
                     minNumRegion = minNumRegion, cutoff = cutoff, 
                     maxGap = maxGap, maxGapSmooth = maxGapSmooth, 
                     smooth = smooth, bpSpan = bpSpan, verbose = verbose, 
                     parallel = parallel)
+    message("* ", nrow(OBS), " candidates detected")
     # check that at least one candidate region was found; if there were none 
     # there is no need to go on to compute permutation tests...
     
@@ -375,9 +369,9 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
             # interest is tissue type. Not matching would mean the null is 
             # really not null
             if (!is.null(matchCovariate)) {
-                permLabel <- paste0(paste0(meta[designr[, coeff] == 1, mC], 
+                permLabel <- paste0(paste0(pData(bs)[designr[, coeff] == 1, mC],
                                            collapse = "_"), 
-                  "vs", paste0(meta[(1 - designr[, coeff]) == 1, mC], 
+                  "vs", paste0(pData(bs)[(1 - designr[, coeff]) == 1, mC], 
                                collapse = "_"))
                 
                 c1 <- unlist(strsplit(permLabel, "vs"))[1]
@@ -398,8 +392,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
                 permLabel <- j
             }
             
-            res.flip.p <- bumphunt(meth.mat = meth.mat, cov.mat = cov.mat, 
-                                   pos = pos, chr = chr, design = designr, 
+            res.flip.p <- bumphunt(bs=bs, design = designr, 
                                    sampleSize = sampleSize, coeff = coeff, 
                                    minInSpan = minInSpan, 
                                    minNumRegion = minNumRegion, cutoff = cutoff,
@@ -407,14 +400,15 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
                                    smooth = smooth, bpSpan = bpSpan, 
                                    verbose = verbose, parallel = parallel)
             
+            if (verbose) {
+              message("* ", j, " out of ", ncol(perms), 
+                      " permutations completed (",
+                      nrow(res.flip.p), " null candidates)")
+            }
+            
             if (!is.null(res.flip.p)) {
                 res.flip.p$permNum <- permLabel
                 FLIP <- rbind(FLIP, res.flip.p)
-            }
-            
-            if (verbose) {
-                message("* ", j, " out of ", ncol(perms), 
-                     " permutations completed")
             }
         }
         
@@ -424,6 +418,11 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
           stop("No candidate regions found in permutation, so inference ",
                "can't be carried out. ",
                "Try decreasing the cutoff, or running on a larger ",
+               "dataset if you are currently using a subset.")
+        }else if (nrow(FLIP) < 0.05*nrow(OBS)){
+          message("Note: Very few null candidate regions were found.",
+               "For more accurate and sensitive inference, ",
+               "try decreasing the cutoff, or running on a larger ",
                "dataset if you are currently using a subset.")
         }
         
