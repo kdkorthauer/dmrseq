@@ -412,13 +412,12 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
         weights = varPower(form = ~1/MedCov, 
         fixed = 0.5)) {
         sampleSize <- nrow(design)/2
-        dat <- data.frame(g.fac = factor(rep(pDat[,colnames(design)[coeff]], 
-                                             each=length(ix))),
+        dat <- data.frame(g.fac = factor(rep(design[,coeff], each=length(ix))),
                           sample = factor(rep(seq_len(sampleSize * 2), 
                                               each=length(ix))),
                           meth = as.vector(meth.mat[ix, ]),
                           cov = as.vector(cov.mat[ix, ]), 
-                          L = factor(as.vector(rep(pos[ix], nrow(design)))))
+                          L = as.vector(rep(pos[ix], nrow(design))))
         
         if(length(coeff.adj) > 0){
           dat$a.fac <- factor(rep(pDat[,colnames(design)[coeff.adj]], 
@@ -430,13 +429,13 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
               (length(unique(dat$cov - dat$meth)) == 1 && 
                (dat$cov - dat$meth)[1] == 0))) {
             
-            dat$pos <- as.numeric(dat$L)
+            dat$pos <- as.numeric(factor(dat$L))
             if (length(coeff.adj)==0){
               X <- model.matrix(~dat$g.fac + dat$L)
-              mm <- formula(Z ~ g.fac + L)
+              mm <- formula(Z ~ g.fac + factor(L))
             }else{
               X <- model.matrix(~dat$g.fac + dat$L + dat$a.fac)
-              mm <- formula(Z ~ g.fac + L + a.fac)
+              mm <- formula(Z ~ g.fac + factor(L) + a.fac)
             }
             
             Y <- as.matrix(dat$meth)
