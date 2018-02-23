@@ -99,6 +99,7 @@
 #' @importFrom bumphunter clusterMaker getSegments
 #' @importFrom matrixStats colMedians
 #' @importFrom matrixStats rowMads
+#' @importFrom stats formula
 #' 
 #' @importClassesFrom bsseq BSseq 
 #' @importMethodsFrom bsseq pData seqnames sampleNames start width 
