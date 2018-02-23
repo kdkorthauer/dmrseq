@@ -358,7 +358,7 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
     maxGap = 300, cutoff = quantile(abs(x), 0.99), assumeSorted = FALSE, 
     verbose = verbose, design = design, coeff = coeff, coeff.adj = coeff.adj,
     sampleSize = sampleSize, 
-    parallel = parallel, pDat=pData(bs)) {
+    parallel = parallel, pDat) {
     if (any(is.na(x[ind]))) {
         warning("NAs found and removed. ind changed.")
         ind <- intersect(which(!is.na(x)), ind)
