@@ -256,7 +256,8 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
     }
     
     for (lg in seq_len(length(label))) {
-        mtext(label[lg], side = 4, line = lg - 1, col = col[lg], cex = 0.9)
+        mtext(label[lg], side = 4, line = lg - 1, col = col[lg], cex = 0.9,
+              las = 0)
     }
 }
 
@@ -412,7 +413,7 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
     plot(positions[1], 0.5, type = "n", xaxt = "n", yaxt = "n", ylim = c(0, 1),
          xlim = c(start(gr), 
         end(gr)), xlab = "", ylab = yl)
-    axis(side = 2, at = c(0.2, 0.5, 0.8))
+    axis(side = 2, at = c(0, 0.25, 0.5, 0.75, 1), las = 1)
     if (addTicks) 
         rug(positions)
     
