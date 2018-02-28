@@ -226,7 +226,13 @@ plotDMRs <- function(BSseq, regions = NULL, testCovariate = NULL,
     }
     
     if (!is.null(label) || "label" %in% names(pData(BSseq))) {
-        opar <- par(mar = c(0, 4.1, 0, 1.4), oma = c(0, 0, 2.5, 1), xpd = NA)
+        if(!is.null(label)){
+          nlines <- length(unique(label))
+        }else{
+          nlines <- length(unique(pData(BSseq)[["label"]]))
+        }
+        opar <- par(mar = c(0, 4.1, 0, 0.7*nlines), 
+                    oma = c(0, 0, 2.5, 1), xpd = NA)
     } else {
         opar <- par(mar = c(0, 4.1, 0, 0), oma = c(0, 0, 2.5, 1), xpd = NA)
     }

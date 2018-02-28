@@ -487,7 +487,11 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
     qval = NULL, stat = NULL, includeYlab = TRUE, compareTrack = NULL, 
     labelCols = NULL) {
     
-    layout(matrix(seq_len(2), ncol = 1), heights = c(2, 1.5))
+    if(!is.null(annoTrack) || !is.null(compareTrack)){
+      layout(matrix(seq_len(2), ncol = 1), heights = c(2, 1.5))
+    }else{
+      layout(matrix(seq_len(2), ncol = 1), heights = c(2, 0.2))
+    }
     .dmrPlotSmoothData(BSseq = BSseq, region = region, extend = extend, 
         addRegions = addRegions, 
         col = col, lty = lty, lwd = lwd, label = label, 
