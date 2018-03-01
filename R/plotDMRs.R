@@ -65,21 +65,17 @@
 #' are in the BSseq object. If NULL and no \code{lwd} column is found in 
 #' \code{pData}, then estimates are plotted with \code{lwd=1} for all samples.
 #' 
-#' @param label The condition/population labels for the plot legend. These
-#' should have a 1 to 1 correspondence with \code{col} (i.e. all samples of
-#' one color should correspond to the same condition/population label). It
-#' is recommended to leave this value as default (NULL), and s
-#' It is recommended to specify a value of 
-#' \code{testCovariate} to indicate which column of \code{pData(bs)}
-#' to use as the condition labels. Alternatively, you can pass in 
-#' arbitrary labels by 
+#' @param label The condition/population labels for the plot legend. If NULL
+#' (default) this is taken from the \code{testCovariate} column of 
+#' \code{pData}. Alternatively, you can pass in labels by 
 #' adding this information through the \code{pData} slot of the
 #' object \code{BSseq} (a \code{data.frame} that houses metadata). To do 
 #' so, place the labels for each sample in a column titled \code{label}, 
-#' and leave this argument as its default value of NULL. Alternatively,
-#' you may specify a vector of labels (one for each sample), but 
-#' you *must* make sure that this vector is in the same order as the samples
-#' are in the BSseq object. If NULL and no \code{label} column is found in 
+#' and leave this argument as its default value of NULL.
+#' You may instead specify an arbitrary vector of labels (one for each sample),
+#' but be aware that you *must* make sure that this vector is in the same order 
+#' as the samples are in the BSseq object. If NULL, and \code{testCovariate} is
+#' also NULL and no \code{label} column is found in 
 #' \code{pData}, then no legend is created.
 #' 
 #' @param mainWithWidth logical value indicating whether the default title
@@ -99,7 +95,7 @@
 #' (no filtering).
 #' 
 #' @param highlightMain logical value indicating whether the plot region 
-#' should be highlighted? Should the function be verbose?
+#' should be highlighted.
 #' 
 #' @param stat logical value indicating whether the region statistic 
 #' should be displayed in the plot title. The value is extracted from the
@@ -113,9 +109,9 @@
 #' should be printed to the screen.
 #' 
 #' @param testCovariate integer value or vector indicating which of columns of
-#'  \code{pData(bs)} contains the covariate of interest that will be tested 
-#'  for association of methylation levels. This is used to construct the 
-#'  design matrix for the test statistic calculation.
+#'  \code{pData(bs)} contains the covariate of interest. 
+#'  This is used to construct the sample labels and colors (unless this is
+#'  over-ridden by specifying \code{label}).
 #'  
 #' @param includeYlab a logical indicating whether to include the Y axis
 #'  label 'Methylation' (useful to turn off if combining multiple region
@@ -132,6 +128,10 @@
 #' tracks using the `compareTrack' argument. If specified, the (first) value
 #' in that column is printed along with a label that includes the name of the
 #' list item. If NULL (default), just the name of the track is printed.
+#' 
+#' @param horizLegend logical indicating whether the legend should be 
+#' horizontal instead of vertical (default FALSE). This is useful if you need
+#' to plot many labels and want to preserve whitespace.
 #' 
 #' @export
 #' 
@@ -166,7 +166,7 @@ plotDMRs <- function(BSseq, regions = NULL, testCovariate = NULL,
     highlightMain = FALSE, 
     qval = TRUE, stat = TRUE, verbose = TRUE, includeYlab = TRUE, 
     compareTrack = NULL, 
-    labelCols = NULL) {
+    labelCols = NULL, horizLegend = FALSE) {
     # adapted from plotManyRegions from bsseq plot to take 
     # in a vector of qval values
     # (1 per region in regions argument) to be displayed in
@@ -227,14 +227,19 @@ plotDMRs <- function(BSseq, regions = NULL, testCovariate = NULL,
     
     if (!is.null(label) || "label" %in% names(pData(BSseq))) {
         if(!is.null(label)){
-          nlines <- length(unique(label))
+          labs <- label
         }else{
-          nlines <- length(unique(pData(BSseq)[["label"]]))
+          labs <- pData(BSseq)[["label"]]
         }
-        opar <- par(mar = c(0, 4.1, 0, 0.7*nlines), 
-                    oma = c(0, 0, 2.5, 1), xpd = NA)
+        if(horizLegend){
+          wiggle <- max(nchar(labs)) * 0.4
+        }else{
+          wiggle <- length(unique(labs)) * 0.9
+        }
+        opar <- par(mar = c(0, 4.1, 0, wiggle), 
+                    oma = c(0, 0, 2.5, 1))
     } else {
-        opar <- par(mar = c(0, 4.1, 0, 0), oma = c(0, 0, 2.5, 1), xpd = NA)
+        opar <- par(mar = c(0, 4.1, 0, 0), oma = c(0, 0, 2.5, 1))
     }
     on.exit(par(opar))
     
@@ -251,7 +256,8 @@ plotDMRs <- function(BSseq, regions = NULL, testCovariate = NULL,
             annoTrack = annoTrack, addTicks = addTicks, addPoints = addPoints, 
             pointsMinCov = pointsMinCov, highlightMain = highlightMain, 
             qval = qval, stat = stat, includeYlab = includeYlab, 
-            compareTrack = compareTrack, labelCols = labelCols)
+            compareTrack = compareTrack, labelCols = labelCols,
+            horizLegend = horizLegend)
     }
 }
 

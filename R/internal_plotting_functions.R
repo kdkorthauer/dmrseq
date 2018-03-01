@@ -152,7 +152,7 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
     # extract lwd
     if (is.null(lwd)) {
         if ("lwd" %in% names(pData(object))) 
-            lwd <- pData(object)[["lwd"]] else lwd <- rep(1, 
+            lwd <- pData(object)[["lwd"]] else lwd <- rep(1.5, 
                                                           nrow(pData(object)))
     }
     if (length(lwd) != ncol(object)) 
@@ -245,8 +245,8 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
     main
 }
 
-.dmrPlotLegend <- function(plotRange, col, label) {
-    # this function plots a legend in the upper left hand region of to indicate
+.dmrPlotLegend <- function(plotRange, col, label, horizLegend) {
+    # this function plots a legend to the right of the plot to indicate
     # whichcolor corresponds to which samples
     
     numUnique <- length(unique(paste0(col, label, sep = "")))
@@ -255,9 +255,16 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
         label <- unique(label)
     }
     
-    for (lg in seq_len(length(label))) {
-        mtext(label[lg], side = 4, line = lg - 1, col = col[lg], cex = 0.9,
-              las = 0)
+    if (!horizLegend){
+      for (lg in seq_len(length(label))) {
+         mtext(label[lg], side = 4, line = lg - 1, col = .darken(col[lg]), 
+               cex = 0.9, las = 0)
+      }
+    }else{
+      for (lg in seq_len(length(label))) {
+        mtext(label[lg], side = 4, line = 0.5, col = .darken(col[lg]), 
+              cex = 0.9, las = 1, at = 1.02 - 0.08*(lg-1))
+      }
     }
 }
 
@@ -298,7 +305,7 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
 
 
 .dmrPlotPoints <- function(x, y, z, col, pointsMinCov, maxCov, 
-                           regionWidth, fit = NULL) {
+                           regionWidth) {
     # modified from .bsPlotPoints in bsseq added functionality for point size 
     # to vary with coverage
     
@@ -324,64 +331,37 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
     col
 }
 
-.dmrPlotLines <- function(x, y, z, col, pointsMinCov, maxCov, 
-                          regionWidth, fit = NULL) {
-    # modified from .bsPlotPoints in bsseq added functionality for point size to
-    # vary with coverage
-    
-    lwd <- 1.5
-    
-    if (!is.null(fit)) {
-        deg <- 2
-        spn <- 0.4
-        if (sum(z >= pointsMinCov) < 30) {
-            spn <- 0.7
-            
-            if (sum(z >= pointsMinCov) < 20) {
-                deg <- 1
-            }
-        }
-        # if there are many CpGs, use a lower span to allow greater flexibility
-        #  (and less smoothing) in the loess line
-        if (length(x) > 200) {
-            spn <- 0.2
-        }
-        loess_fit <- loess(y[z >= pointsMinCov] ~ x[z >= pointsMinCov], 
-                           span = spn, degree = deg)
-        lines(x[z >= pointsMinCov], predict(loess_fit), 
-              col = .makeTransparent(.darken(col), 
-            175), lwd = lwd)
-    } else {
-        deg <- 2
-        spn <- 0.4
-        if (sum(z >= pointsMinCov) < 30) {
-            spn <- 0.7
-            
-            if (sum(z >= pointsMinCov) < 20) {
-                deg <- 1
-            }
-            if (sum(z >= pointsMinCov) <= 20) {
-                spn <- 1
-            }
-        }
-        # if there are many CpGs, use a lower span to allow greater flexibility
-        # (and less smoothing) in the loess line
-        if (length(x) > 200) {
-            spn <- 0.2
-        }
-        loess_fit <- loess(y[z >= pointsMinCov] ~ x[z >= pointsMinCov], 
-                           span = spn,degree = deg)
-        lines(x[z >= pointsMinCov], predict(loess_fit), 
-              col = .makeTransparent(.darken(col), 175), lwd = lwd)
-        
-        lines(fit$L[z >= pointsMinCov], fit$fitted[z >= pointsMinCov],
-              col = .makeTransparent(.darken(col), 175), lwd = lwd * 2, lty = 2)
-    }
+.dmrPlotLines <- function(x, y, z, col, lwd, pointsMinCov, maxCov, 
+                          regionWidth) {
+  
+  if (length(x) > 100 && !is.null(lwd)) {
+    lwd <- lwd + 1
+  } else if (length(x) > 100) {
+    lwd <- 2
+  }
+  
+  spn <- 0.2
+  
+  # if there are few CpGs, use a higher span   
+  if (sum(z >= pointsMinCov) < 25) {
+    spn <- 0.8  
+  }else if (sum(z >= pointsMinCov) < 50) {
+    spn <- 0.5  
+  }
+
+  loess_fit <- loess(y[z >= pointsMinCov] ~ x[z >= pointsMinCov],
+                    weights = z[z >= pointsMinCov],
+                    span = spn)
+
+  xl <- seq(min(x[z >= pointsMinCov]), max(x[z >= pointsMinCov]), 
+           (max(x[z >= pointsMinCov]) - min(x[z >= pointsMinCov]))/1000)
+  lines(xl, predict(loess_fit,xl), 
+        col = .makeTransparent(.darken(col), 175), lwd = lwd)
 }
 
 .dmrPlotSmoothData <- function(BSseq, region, extend, addRegions, col, lty, lwd,
     label, regionCol, addTicks, addPoints, pointsMinCov, highlightMain, 
-    includeYlab = TRUE) {
+    includeYlab = TRUE, horizLegend) {
     # modified from .plotSmoothData in bsseq to allow non-smoothed regions
     
     gr <- bsseq.bsGetGr(BSseq, region, extend)
@@ -437,26 +417,23 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
     
     # add points first to avoid lines getting hidden by plotting many cpg points
     if (addPoints) {
-        ix <- start(region$index):end(region$index)
-        meth <- as.matrix(bsseq::getCoverage(BSseq2, type = "M"))
-        unmeth <- as.matrix(bsseq::getCoverage(BSseq2, type = "Cov")) - meth
-        
         for(sampIdx in seq_len(ncol(BSseq))){
           .dmrPlotPoints(positions, rawPs[, sampIdx], coverage[, sampIdx], 
                          col = colEtc$col[sampIdx], 
                          pointsMinCov = pointsMinCov, 
                          maxCov = quantile(coverage, 0.95), 
                          regionWidth = end(gr) - 
-                           start(gr), fit = NULL)
+                           start(gr))
         }
         
         for(sampIdx in seq_len(ncol(BSseq))){
           .dmrPlotLines(positions, rawPs[, sampIdx], coverage[, sampIdx], 
                         col = colEtc$col[sampIdx], 
+                        lwd = colEtc$lwd[sampIdx],
                         pointsMinCov = pointsMinCov, 
                         maxCov = quantile(coverage, 0.95), 
                         regionWidth = end(gr) - 
-                          start(gr), fit = NULL)
+                          start(gr))
         }
         
     } else {
@@ -474,7 +451,7 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
     # correspond to them -> pass in both colEtc$label as well as colEtc$col
     if (sum(!is.na(colEtc$label)) == length(colEtc$label)) {
         .dmrPlotLegend(plotRange = c(start(gr), end(gr)), 
-                       colEtc$col, colEtc$label)
+                       colEtc$col, colEtc$label, horizLegend)
     }
     
 }
@@ -486,7 +463,7 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
     label = NULL, mainWithWidth = TRUE, regionCol = .alpha("orchid1", 0.2), 
     addTicks = TRUE, addPoints = FALSE, pointsMinCov = 5, highlightMain = FALSE,
     qval = NULL, stat = NULL, includeYlab = TRUE, compareTrack = NULL, 
-    labelCols = NULL) {
+    labelCols = NULL, horizLegend = FALSE) {
     
     if(!is.null(annoTrack) || !is.null(compareTrack)){
       layout(matrix(seq_len(2), ncol = 1), heights = c(2, 1.5))
@@ -499,7 +476,8 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
         regionCol = regionCol, addTicks = addTicks, 
         addPoints = addPoints, pointsMinCov = pointsMinCov, 
         highlightMain = highlightMain, 
-        includeYlab = includeYlab)
+        includeYlab = includeYlab, 
+        horizLegend = horizLegend)
     gr <- bsseq.bsGetGr(BSseq, region, extend)
     
     if (!is.null(main)) {

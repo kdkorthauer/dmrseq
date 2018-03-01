@@ -28,7 +28,7 @@ abstract: >
 output:
   BiocStyle::html_document:
     highlight: pygments
-    toc: true
+    toc_float: true
     fig_width: 5
 vignette: >
   %\VignetteIndexEntry{Analyzing Bisulfite-seq data with dmrseq}
@@ -348,7 +348,11 @@ regions <- dmrseq(bs=bs[240001:260000,],
 Progress messages are printed to the console if `verbose` is TRUE.
 The text, `condition h1 vs imr90`, tells you that positive methylation 
 differences mean h1 has higher methylation than imr90 (see below for
-more details). The results object is a `GRanges` object with the coordiates 
+more details). 
+
+## Output of dmrseq
+
+The results object is a `GRanges` object with the coordiates 
 of each candidate region, and contains the following metadata columns (which 
 can be extracted with the `$` operator:
 
@@ -368,9 +372,10 @@ show(regions)
 ```
 
 The above steps are carried out on a very small subset of data (20,000 CpGs).
-This package requires that all the data is loaded into system memory. 
-For on human data, this means objects with a maximum of 28.2 million entries, 
-per sample (since there are roughly 28.2 millions CpGs in the human genome). 
+This package loads data into memory one chromosome at a 
+time. For on human data, this means objects with a few  million 
+entries per sample (since there are roughly 28.2 million total CpGs in the human
+genome, and the largest chromosomes will have more than 2 million CpGs). 
 This means that whole-genome `BSseq` objects for several samples can use up
 several GB of RAM. In order to improve speed, the package allows for easy
 parallel processing of chromosomes, but be aware that using more cores will

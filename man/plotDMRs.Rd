@@ -11,7 +11,7 @@ plotDMRs(BSseq, regions = NULL, testCovariate = NULL,
   regionCol = .alpha("#C77CFF", 0.2), addTicks = TRUE, addPoints = TRUE,
   pointsMinCov = 1, highlightMain = FALSE, qval = TRUE, stat = TRUE,
   verbose = TRUE, includeYlab = TRUE, compareTrack = NULL,
-  labelCols = NULL)
+  labelCols = NULL, horizLegend = FALSE)
 }
 \arguments{
 \item{BSseq}{An object of class BSseq.}
@@ -20,9 +20,9 @@ plotDMRs(BSseq, regions = NULL, testCovariate = NULL,
 \code{dmrseq}) function.}
 
 \item{testCovariate}{integer value or vector indicating which of columns of
-\code{pData(bs)} contains the covariate of interest that will be tested 
-for association of methylation levels. This is used to construct the 
-design matrix for the test statistic calculation.}
+\code{pData(bs)} contains the covariate of interest. 
+This is used to construct the sample labels and colors (unless this is
+over-ridden by specifying \code{label}).}
 
 \item{extend}{Describes how much the plotting region should be extended in
 either direction. The total width of the plot is equal to the width of the 
@@ -76,21 +76,17 @@ you *must* make sure that this vector is in the same order as the samples
 are in the BSseq object. If NULL and no \code{lwd} column is found in 
 \code{pData}, then estimates are plotted with \code{lwd=1} for all samples.}
 
-\item{label}{The condition/population labels for the plot legend. These
-should have a 1 to 1 correspondence with \code{col} (i.e. all samples of
-one color should correspond to the same condition/population label). It
-is recommended to leave this value as default (NULL), and s
-It is recommended to specify a value of 
-\code{testCovariate} to indicate which column of \code{pData(bs)}
-to use as the condition labels. Alternatively, you can pass in 
-arbitrary labels by 
+\item{label}{The condition/population labels for the plot legend. If NULL
+(default) this is taken from the \code{testCovariate} column of 
+\code{pData}. Alternatively, you can pass in labels by 
 adding this information through the \code{pData} slot of the
 object \code{BSseq} (a \code{data.frame} that houses metadata). To do 
 so, place the labels for each sample in a column titled \code{label}, 
-and leave this argument as its default value of NULL. Alternatively,
-you may specify a vector of labels (one for each sample), but 
-you *must* make sure that this vector is in the same order as the samples
-are in the BSseq object. If NULL and no \code{label} column is found in 
+and leave this argument as its default value of NULL.
+You may instead specify an arbitrary vector of labels (one for each sample),
+but be aware that you *must* make sure that this vector is in the same order 
+as the samples are in the BSseq object. If NULL, and \code{testCovariate} is
+also NULL and no \code{label} column is found in 
 \code{pData}, then no legend is created.}
 
 \item{mainWithWidth}{logical value indicating whether the default title
@@ -110,7 +106,7 @@ out low coverage loci. Only used if addPoints = TRUE. Default value is 1
 (no filtering).}
 
 \item{highlightMain}{logical value indicating whether the plot region 
-should be highlighted? Should the function be verbose?}
+should be highlighted.}
 
 \item{qval}{logical value indicating whether the region FDR estimate
 (q-value) should be displayed in the plot title. The value is extracted 
@@ -138,6 +134,10 @@ GenomicRanges items in `compareTrack'. Only used if plotting custom
 tracks using the `compareTrack' argument. If specified, the (first) value
 in that column is printed along with a label that includes the name of the
 list item. If NULL (default), just the name of the track is printed.}
+
+\item{horizLegend}{logical indicating whether the legend should be 
+horizontal instead of vertical (default FALSE). This is useful if you need
+to plot many labels and want to preserve whitespace.}
 }
 \value{
 None (generates a plot)
