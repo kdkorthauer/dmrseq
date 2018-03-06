@@ -1,2 +1,8 @@
 Changes to future versions of dmrseq will be highlighted here
 _____________________________________________________________
+
+\section{Version 0.99.6 (2018-03-02)}{
+  \itemize{
+    \item dmrseq is now available on Bioconductor devel (3.7) !
+  }
+}

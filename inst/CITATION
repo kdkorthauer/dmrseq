@@ -1,0 +1,18 @@
+citHeader("To cite dmrseq in publications, please use:")
+
+citEntry(entry = "Article",
+         title        = "Detection and accurate false discovery rate control of differentially methylated regions from whole genome bisulfite sequencing",
+         author       = personList(as.person("Keegan Korthauer"),
+                                   as.person("Sutirtha Chakraborty"),
+                                   as.person("Yuval Benjamini"),
+                                   as.person("Rafael A Irizarry")),
+         journal      = "Biostatistics",
+         year         = "2018",
+         #volume       = "",
+         #number       = "",
+         pages        = "kxy007",
+         doi          = "https://doi.org/10.1093/biostatistics/kxy007",
+         textVersion = 
+         paste("Korthauer, K., Chakraborty, S., Benjamini, Y., and Irizarry, R. A.", 
+               "Detection and accurate false discovery rate control of differentially methylated regions from whole genome bisulfite sequencing.",
+"Biostatistics kxy007, https://doi.org/10.1093/biostatistics/kxy007"))
