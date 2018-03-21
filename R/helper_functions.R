@@ -503,6 +503,24 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
                 }, error = function(e) {
                   return(NA)
                 })
+                
+                # error handling in case of false convergence (don't include 
+                # first variance weighting, and then corr str)
+                if (sum(is.na(fit)) == length(fit)) {
+                  fit <- tryCatch({
+                    summary(gls(mm, data = dat, 
+                                correlation = correlation))
+                  }, error = function(e) {
+                    return(NA)
+                  })
+                  if (sum(is.na(fit)) == length(fit)) {
+                    fit <- tryCatch({
+                      summary(gls(mm, data = dat))
+                    }, error = function(e) {
+                      return(NA)
+                    })
+                  }
+                }
             } else {
                 # check for presence of 1-2 coverage outliers that could end up
                 # driving the difference between the groups
@@ -560,10 +578,10 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
             }
             
             df <- data.frame(stat = stat, constant=FALSE)
-            nms <- gsub("g.fac", "", 
-                        rownames(fit$tTable)[2:(2+length(coeff)-1)])
 
-            if (length(beta) > 1){
+            if (length(beta) > 1){            
+              nms <- gsub("g.fac", "", 
+                          rownames(fit$tTable)[2:(2+length(coeff)-1)])
               for(b in seq_len(length(beta))){
                 df[[paste0("beta_", nms[b])]] <- beta[b]
               }
