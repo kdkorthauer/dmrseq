@@ -9,7 +9,7 @@ o dmrseq no longer requires balanced, two-group comparisons. To run using a
   two group comparison is carried out).
 
 Version 0.99.6 (2018-03-02)
----------------------------
+___________________________
 
 o dmrseq is now available on Bioconductor devel (3.7) !
 
