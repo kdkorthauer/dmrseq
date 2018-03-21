@@ -195,6 +195,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
     
     coeff <- seq(2,(2 + length(testCovariate) - 1))
     testCov <- pData(bs)[, testCovariate]
+    fact <- TRUE
     if (length(unique(testCov)) == 1) {
         message("Warning: only one unique value of the specified ", 
                 "covariate of interest.  Assuming null comparison and ",
@@ -211,6 +212,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
         message("Assuming the test ",
               "covariate ", colnames(pData(bs))[testCovariate],
               " is continuous.")
+        fact <- FALSE
     }else{
         message("Assuming the test ",
               "covariate ", colnames(pData(bs))[testCovariate],
@@ -267,16 +269,18 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
     }
     
     # check for loci with missing data
-    if (length(unique(testCov)) == 2 & !is.numeric(testCov)){
-      which.zero <- which(rowSums(as.matrix(getCoverage(
-                    bs[,which(design[, coeff] == 0)], type = "Cov")) == 0) == 
-                      sum(design[, coeff] == 0))
-      which.zero <- unique(which.zero, which(rowSums(as.matrix(getCoverage(
-                    bs[,which(design[, coeff] == 1)], type = "Cov")) == 0) ==
-                      sum(design[, coeff] == 1)))
-    
-      if (length(which.zero) > 0) {
-        stop(length(which.zero), " loci have zero coverage in all samples ",
+    if (fact){
+      lev <- unique(pData(bs)[[testCovariate]])
+      filter <- NULL
+      for (l in seq_along(lev)){
+        filter <- rbind(filter,
+              1*(rowSums(getCoverage(bs)[,pData(bs)[[testCovariate]] == 
+                                           lev[l]]) == 0))
+      }
+      filter <- which( apply(filter, 2, max) > 0 )
+  
+      if (length(filter) > 0) {
+        stop(length(filter), " loci have zero coverage in all samples ",
              "of at least one condition. Please remove these loci ", 
              "before running dmrseq")
       }
