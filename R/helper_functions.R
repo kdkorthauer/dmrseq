@@ -369,9 +369,9 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
     verbose = verbose, design = design, coeff = coeff, coeff.adj = coeff.adj,
     parallel = parallel, pDat) {
     if (any(is.na(x[ind]))) {
-        warning(sum(is.na(x[ind]))," CpGs not included due to missing ",
-                "values of methylation difference estimates.")
-        ind <- intersect(which(!is.na(x)), ind)
+       message(sum(is.na(x[ind]))," CpG(s) excluded due to zero coverage. ",
+              appendLF = FALSE)
+       ind <- intersect(which(!is.na(x)), ind)
     }
     
     cluster <- bumphunter::clusterMaker(chr, pos, maxGap = maxGap, 
