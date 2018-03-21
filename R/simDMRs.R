@@ -52,10 +52,11 @@
 #' head(BS.chr21.sim$delta)
 #' 
 simDMRs <- function(bs, num.dmrs = 3000, delta.max0 = 0.3) {
-    sampleSize <- nrow(pData(bs))/2
+    sampleSize <- floor(nrow(pData(bs))/2)
     
     # code to simulate DMRs if some number of simulated dmrs was specified
-    message("Simulating DMRs.")
+    message("Simulating DMRs for ", sampleSize, " vs ", ncol(bs) - sampleSize, 
+            " comparison")
     triwt <- function(x, amp = 1, base = 0, width = 1, center = 0, 
                       deg = 3, dir = 1) {
         y <- dir * (((width/2)^deg - abs(x - center)^deg)/
@@ -153,7 +154,7 @@ simDMRs <- function(bs, num.dmrs = 3000, delta.max0 = 0.3) {
         # detected / missed DMRs in simulation results.
         mn.cov <- by(t(meth.mat[dmrs.ind[[u]], ] + unmeth.mat[dmrs.ind[[u]], ]),
             factor(paste0("Condition", c(rep(1, sampleSize), 
-                                         rep(2, sampleSize)))), 
+                                         rep(2, ncol(bs) - sampleSize)))), 
             colMeans)
         mn.cov <- rowMeans(data.frame(mn.cov[[1]], mn.cov[[2]]))
         dmr.mncov[u] <- mean(mn.cov)
@@ -173,7 +174,8 @@ simDMRs <- function(bs, num.dmrs = 3000, delta.max0 = 0.3) {
         cov <- meth.mat[dmrs.ind[[u]], ] + unmeth.mat[dmrs.ind[[u]], ]
         prop <- meth.mat[dmrs.ind[[u]], ]/cov
         grp <- runif(1) < 0.5
-        for (samp in seq_len(sampleSize)) {
+        ss <- ifelse(grp, sampleSize, ncol(bs) - sampleSize)
+        for (samp in seq_len(ss)) {
             # randomly choose which condition is the one with the difference
             if (grp) {
                 # first generate M counts for sample samp of condition 1
@@ -188,14 +190,14 @@ simDMRs <- function(bs, num.dmrs = 3000, delta.max0 = 0.3) {
                 
             } else {
                 # next generate M counts for sample samp of condition 2
-                meth.mat[dmrs.ind[[u]], (sampleSize + samp)] <- rbinom(n = 
-                                                          length(dmrs.ind[[u]]),
+                meth.mat[dmrs.ind[[u]], (sampleSize + samp)] <- 
+                        rbinom(n = length(dmrs.ind[[u]]),
                   size = cov[, (sampleSize + samp)], 
-                  prob = pmax(pmin(prop[, (sampleSize + 
-                    samp)] + Diff.hit, 1), 0))
+                  prob = pmax(pmin(prop[, (sampleSize + samp)] + 
+                                     Diff.hit, 1), 0))
                 
                 # next assign the other Cov - M counts to unmethylated matrix
-                unmeth.mat[dmrs.ind[[u]], (sampleSize+samp)] <- cov[,
+                unmeth.mat[dmrs.ind[[u]], (sampleSize + samp)] <- cov[,
                   (sampleSize + samp)] - meth.mat[dmrs.ind[[u]],
                                                   (sampleSize + samp)]
             }
@@ -205,9 +207,11 @@ simDMRs <- function(bs, num.dmrs = 3000, delta.max0 = 0.3) {
     # get everything in order to run bumphunter functions
     bsNew <- BSseq(pos = pos, chr = chr, M = meth.mat, 
                    Cov = (meth.mat + unmeth.mat), 
-                   sampleNames = paste0("Condition", c(rep(1, sampleSize), 
-                                                       rep(2, sampleSize)), 
-                                        "_Rep", seq(seq_len(sampleSize))))
+                   sampleNames = paste0("Condition", 
+                                        c(rep(1, sampleSize), 
+                                          rep(2, ncol(bs) - sampleSize)), 
+                                        "_Rep", 
+                        c(seq_len(sampleSize), seq_len(ncol(bs) - sampleSize))))
     
     sim.dat.red <- list(gr.dmrs = gr.dmrs, dmr.mncov = dmr.mncov, dmr.L = dmr.L,
         bs = bsNew, delta = deltas)

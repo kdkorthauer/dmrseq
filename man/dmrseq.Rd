@@ -19,7 +19,12 @@ phenotype matrix that contains sample level covariates}
  Can alternatively specify an integer value or vector indicating
  which of columns of
  \code{pData(bs)} to use. This is used to construct the 
- design matrix for the test statistic calculation.}
+ design matrix for the test statistic calculation. To run using a 
+ continuous or categorial covariate with more than two groups, simply pass in
+ the name of a column in `pData` that contains this covariate. A continuous
+ covariate is assmued if the data type in the `testCovariate` slot is 
+ continuous, with the exception of if there are only two unique values 
+ (then a two group comparison is carried out).}
 
 \item{adjustCovariate}{an (optional) character value or vector 
 indicating which variables (column names) in \code{pData(bs)} 
@@ -102,11 +107,14 @@ the region, or 'avg' - the average smoothed loci statistic.}
 \value{
 a \code{GRanges} object that contains the results of the inference. 
    The object contains one row for each candidate region. The standard 
-   \code{GRanges} chr, start, and end are included, along with 7 metadata
+   \code{GRanges} chr, start, and end are included, along with at least
+   7 metadata
    columns, in the following order: 
    1. L = the number of CpGs contained in the region,
    2. area = the sum of the smoothed beta values
-   3. beta = the coefficient value for the condition difference,
+   3. beta = the coefficient value for the condition difference (there 
+      will be more than one column here if a multi-group comparison
+      was performed),
    4. stat = the test statistic for the condition difference,
    5. pval = the permutation p-value for the significance of the test
    statistic, and 

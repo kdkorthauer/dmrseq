@@ -106,12 +106,18 @@ Each row in this matrix is a methylation loci and each column is a sample.
 The following code chunk asumes that `chr` and `pos` are vectors of 
 chromosome names and positions, respectively, for each CpG in the dataset. It 
 also assumes that the matrices of methylation and coverage values (described
-above) are named `M` and `Cov`, respectively. `sampleNames` and `trt` are 
+above) are named `M` and `Cov`, respectively. 
+
+The `sampleNames` and `trt` objects are 
 vectors with sample labels and condition labels for each sample. A condition
-label could be something like treatment or control, or a tissue type, etc. 
+label could be something like 
+treatment or control, a tissue type, or a continous measurement.
 This is the covariate for which you wish to test for differences in 
 methylation. Once the `BSseq` object is constructed and the sample covariate
 information is added, DMRs are obtained by running the `dmrseq` function.
+A continuous covariate is assmued if the data type of the `testCovariate`  
+is continuous, with the exception of if there are only two unique values 
+(then a two group comparison is carried out).
 
 ```{r quickStart, eval=FALSE}
 bs <- BSseq(chr = chr, pos = pos,
@@ -326,6 +332,25 @@ Also note that instead of creating a separate object, the filtering step
 can be combined with the call to `dmrseq` by replacing the `bs` input with a
 filtered version `bs[loci.idx, sample.idx]`.
 
+## Adjusting for covariates
+
+There are two ways to adjust for covariates in the dmrseq model. The first way
+is to specify the `adjustCovariate` parameter of the `dmrseq` function as 
+a column of the `pData()` slot that contains the covariate you
+would like to adjust for. This will include that covariate directly in the
+model. This is ideal if the adjustment covariate is continuous or has more
+than two groups.
+
+The second way is to specify the `matchCovariate` parameter of the `dmrseq` 
+function as a column of the `pData()` slot that contains the covariate you
+would like to match on. This will restrict the permutations considered to only
+those where the `matchCovariate` is balanced. For example, the `matchCovariate` 
+could represent the sex of each sample. In that case, a permutation that 
+includes all males in one group and all females in another would not be 
+considered (since there is a plausible biological difference that may induce
+the null distribution to resemble non-null). This matching adjustment is ideal
+for two-group comparisons.
+
 # Differentially Methylated Regions
 
 The standard differential expression analysis steps are wrapped
@@ -354,7 +379,9 @@ can be extracted with the `$` operator:
 
 1. L = the number of CpGs contained in the region,
 2. area = the sum of the smoothed beta values
-3. beta = the coefficient value for the condition difference,
+3. beta = the coefficient value for the condition difference (Note: if the 
+   test covariate is categorical with more than 2 groups, there will be
+   more than one beta column),
 4. stat = the test statistic for the condition difference,
 5. pval = the permutation p-value for the significance of the test
 statistic, and 
