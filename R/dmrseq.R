@@ -13,7 +13,12 @@
 #'  Can alternatively specify an integer value or vector indicating
 #'  which of columns of
 #'  \code{pData(bs)} to use. This is used to construct the 
-#'  design matrix for the test statistic calculation.
+#'  design matrix for the test statistic calculation. To run using a 
+#'  continuous or categorial covariate with more than two groups, simply pass in
+#'  the name of a column in `pData` that contains this covariate. A continuous
+#'  covariate is assmued if the data type in the `testCovariate` slot is 
+#'  continuous, with the exception of if there are only two unique values 
+#'  (then a two group comparison is carried out).
 #' @param adjustCovariate an (optional) character value or vector 
 #' indicating which variables (column names) in \code{pData(bs)} 
 #' will be adjusted for when 
@@ -81,11 +86,14 @@
 #'   the region, or 'avg' - the average smoothed loci statistic.
 #' @return a \code{GRanges} object that contains the results of the inference. 
 #'    The object contains one row for each candidate region. The standard 
-#'    \code{GRanges} chr, start, and end are included, along with 7 metadata
+#'    \code{GRanges} chr, start, and end are included, along with at least
+#'    7 metadata
 #'    columns, in the following order: 
 #'    1. L = the number of CpGs contained in the region,
 #'    2. area = the sum of the smoothed beta values
-#'    3. beta = the coefficient value for the condition difference,
+#'    3. beta = the coefficient value for the condition difference (there 
+#'       will be more than one column here if a multi-group comparison
+#'       was performed),
 #'    4. stat = the test statistic for the condition difference,
 #'    5. pval = the permutation p-value for the significance of the test
 #'    statistic, and 
@@ -99,7 +107,7 @@
 #' @importFrom bumphunter clusterMaker getSegments
 #' @importFrom matrixStats colMedians
 #' @importFrom matrixStats rowMads
-#' @importFrom stats formula
+#' @importFrom stats formula anova
 #' 
 #' @importClassesFrom bsseq BSseq 
 #' @importMethodsFrom bsseq pData seqnames sampleNames start width 
@@ -190,25 +198,30 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
     if (length(unique(testCov)) == 1) {
         message("Warning: only one unique value of the specified ", 
                 "covariate of interest.  Assuming null comparison and ",
-               "splitting sample group into two equal groups")
+                "splitting sample group into two equal groups")
         testCov <- rep(1, length(testCov))
         testCov[seq_len(round(length(testCov)/2))] <- 0
+    }else if (length(unique(testCov)) > 2 && !is.numeric(testCov)) {
+        message("Performing a global test of H0: no difference among ",
+                length(unique(testCov)), " groups (assuming the test ",
+                "covariate ", colnames(pData(bs))[testCovariate],
+                " is a factor).")
+        coeff <- c(coeff, coeff + length(unique(testCov)) - 2)
+    }else if (length(unique(testCov)) > 2 && is.numeric(testCov)) {
+        message("Assuming the test ",
+              "covariate ", colnames(pData(bs))[testCovariate],
+              " is continuous.")
+    }else{
+        message("Assuming the test ",
+              "covariate ", colnames(pData(bs))[testCovariate],
+              " is a factor.")
+        if(min(table(testCov)) < 2)
+          stop("At least one group has only one sample! ",
+               "Replicates are required to run dmrseq.")
+        testCov <- as.factor(testCov)
     }
     
-    if (length(unique(testCov)) > 2) {
-        message("Warning! testCovariate has more than two groups. ", 
-                "Functionality is *experimental*!")
-    }
-    
-    # check sampleSize is even in both conditions
-    sampleSize <- ncol(bs)/2
-    if (length(unique(table(testCov))) > 1 |
-        !(sum(table(testCov) == rep(sampleSize, 
-        length(unique(testCov)))) == length(unique(testCov)))) {
-        stop("Error: testCov is not balanced. Need to specify an equal",
-             "number of samples at each level")
-    }
-    
+    sampleSize <- ncol(bs)/length(unique(testCov))
     if (!is.null(adjustCovariate)) {
         adjustCov <- pData(bs)[, adjustCovariate]
         design <- model.matrix(~testCov + adjustCov)
@@ -223,15 +236,20 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
         coeff.adj <- NULL
     }
     
-    if (length(unique(testCov)) == 2 && 
-        (is.character(pData(bs)[, testCovariate]) | 
-        is.factor(pData(bs)[, testCovariate]))) {
-        message("Condition ",
+    if (length(unique(testCov)) == 2) {
+        message("Condition: ",
             unique(pData(bs)[, testCovariate][which(design[, coeff] == 1)]), 
             " vs ", 
             unique(pData(bs)[, testCovariate][which(design[, coeff] == 0)]))
     }
+    if (!is.null(adjustCovariate)) {
+      message("Adjusting for covariate: ", 
+              colnames(pData(bs))[adjustCovariate])
+    }
     if (!is.null(matchCovariate)) {
+        if (length(unique(testCov)) > 2)
+          stop("Covariate matching can only be carried out for 2-group",
+               " comparisons")
         if (is.character(matchCovariate)) {
             if (sum(grepl(matchCovariate, colnames(pData(bs)))) == 0) {
                 stop("Error: no column in pData() found that matches ",
@@ -244,10 +262,12 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
         } else {
             stopifnot(matchCovariate <= ncol(pData(bs)))
         }
+      message("Matching permutations on covariate: ", 
+              colnames(pData(bs))[mC])
     }
     
     # check for loci with missing data
-    if (length(unique(testCov)) == 2){
+    if (length(unique(testCov)) == 2 & !is.numeric(testCov)){
       which.zero <- which(rowSums(as.matrix(getCoverage(
                     bs[,which(design[, coeff] == 0)], type = "Cov")) == 0) == 
                       sum(design[, coeff] == 0))
@@ -286,7 +306,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
     message("Detecting candidate regions with coefficient larger than ",
                    unique(abs(cutoff)), 
         " in magnitude.")
-    OBS <- bumphunt(bs=bs, design = design, sampleSize = sampleSize, 
+    OBS <- bumphunt(bs=bs, design = design, 
                     coeff = coeff, coeff.adj = coeff.adj, minInSpan = minInSpan,
                     minNumRegion = minNumRegion, cutoff = cutoff, 
                     maxGap = maxGap, maxGapSmooth = maxGapSmooth, 
@@ -299,32 +319,54 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
     if (length(OBS) > 0) {
         message("* ", nrow(OBS), " candidates detected")
         FLIP <- NULL
-        # configure the permutation matrix first consider balanced, 
-        # two group comparisons
-        if (nrow(design)%%2 == 0 && length(unique(design[, coeff])) == 2) {
+        # configure the permutation matrix for two group comparisons
+        if (length(unique(design[, coeff[1]])) == 2 && 
+            length(coeff) == 1) {
             if (verbose) {
                 message("Performing balanced permutations of ",
                         "condition across samples ", 
                   "to generate a null distribution of region test statistics")
             }
-            perms <- combn(seq(1, nrow(design)), sampleSize)
-            perms <- perms[, seq(2,(ncol(perms)/2))]
+            perms <- combn(seq(1, nrow(design)), floor(sampleSize))
             
-            if (maxPerms < ncol(perms)) {
-                # subset on 'balanced perms'
-                if (sampleSize > 3 && sampleSize < 6) {
-                  sg <- apply(perms, 2, function(x) sum(x > sampleSize))
-                  perms <- perms[, sg < (sampleSize - 1) & sg >= 2]
-                  maxPerms <- min(maxPerms, ncol(perms))
-                } else if (sampleSize >= 6) {
-                  sg <- apply(perms, 2, function(x) sum(x > sampleSize))
-                  perms <- perms[, sg >= floor(sampleSize/2) & 
-                                   sg <= ceiling(sampleSize/2)]
+            # restrict to unique permutations that don't include any 
+            # groups consisting of all identical conditions
+            rmv <- NULL
+            for (p in seq_len(ncol(perms))){
+              if (length(unique(design[perms[,p],coeff])) == 1){
+                rmv <- c(rmv, p)
+              }
+            }
+            if (length(rmv) > 0 )
+              perms <- perms[,-rmv]
+            
+            # Remove redundant permutations (if balanced)
+            if (length(unique(table(design[,coeff]))) == 1){
+              pdx <- seq_len(ncol(perms))
+              idx <- seq_along(design[,coeff])
+              z <- lapply(pdx, function(p) apply(perms, 2, function(x) 
+                all(x == idx[-which(idx %in% perms[,p])] )))
+              z <- lapply(z, which)
+            
+              pairs <- NULL
+              for (r in seq_along(z)){
+                if (length(z[[r]])>0) {
+                  if (z[[r]] %in% seq_along(z)) {
+                    pairs <- rbind(pairs, sort(c(r, z[[r]])))
+                  }
                 }
+              }
+              pairs <- unique(pairs)
+              perms <- perms[,c(pairs[,1], which(lengths(z)==0))]
+            }
+        
+            # Random subsample of permutations
+            if (maxPerms < ncol(perms)) {
                 perms <- perms[, sort(sample(seq_len(ncol(perms)), maxPerms, 
                                              replace = FALSE))]
             }
-        } else if (length(unique(design[, coeff])) > 2) {
+            
+        } else {
             # Next consider a multilevel, or continuous covariate where the 
             # covariate will be permuted in an unrestricted manner
             if (verbose) {
@@ -332,27 +374,32 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
                   " covariate of interest across samples ", 
                   "to generate a null distribution of region test statistics")
             }
-            perms <- as.matrix(sample(seq(seq_len(nrow(design))), nrow(design)))
-            
-            for (p in seq_len(maxPerms - 1)) {
+            perms <- as.matrix(seq_len(nrow(design)))
+
+            for (p in seq_len(maxPerms)) {
                 tries <- 0
-                candidate <- sample(seq(seq_len(nrow(design))), nrow(design))
-                # check that the permutation is not a duplicate
-                while (sum(apply(perms, 2, function(x) all.equal(x, 
-                                                                 candidate)) == 
-                  TRUE) > 0 && tries <= 20) {
+                candidate <- sample(seq_len(nrow(design)), nrow(design))
+                # check that the permutation is not a duplicate, and not 
+                # equal to the original
+                while ((sum(apply(perms, 2, function(x) 
+                                all.equal(x, candidate)) == TRUE) > 0 || 
+                       sum(apply(perms, 2, function(x) 
+                         all.equal(x, rev(candidate))) == TRUE) > 0) &&
+                       tries <= 20) {
                   candidate <- sample(seq(seq_len(nrow(design))), nrow(design))
                   tries <- tries + 1
                 }
                 # save the permutation to the permutation matrix
-                perms <- cbind(perms, candidate)
+                if (tries <= 20){
+                  perms <- cbind(perms, candidate)
+                }
             }
-        } else {
-            stop("Error: Currently only balanced designs ", 
-                        "supported for 2-group comparisons")
+            perms <- perms[,-1] # remove original
         }
         
-        # Now rerun on flipped designs and concatenate results
+        pData.orig <- pData(bs)
+        levs <- unique(pData.orig[[testCovariate]])
+        # Now rerun on permuted designs and concatenate results
         for (j in seq_len(ncol(perms))) {
             if (verbose) {
                 message("\nBeginning permutation ", j)
@@ -360,11 +407,38 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
             reorder <- perms[, j]
             designr <- design
             
-            if (length(unique(design[, coeff])) == 2) {
-                designr[, 2] <- 0
-                designr[reorder, 2] <- 1
+            if (length(unique(design[, coeff[1]])) == 2 && 
+                length(coeff) == 1) {
+                designr[, coeff] <- 0
+                designr[reorder, coeff] <- 1
+                pData(bs)[[testCovariate]] <- levs[1]
+                pData(bs)[[testCovariate]][reorder] <- levs[2]
+                
+                if (!all(sort(pData.orig[[testCovariate]]) ==
+                              sort(pData(bs)[[testCovariate]]))){
+                  designr[, coeff] <- 1
+                  designr[reorder, coeff] <- 0
+                  pData(bs)[[testCovariate]] <- levs[2]
+                  pData(bs)[[testCovariate]][reorder] <- levs[1]
+                }
+                
+                xr <- NULL
+                for (rd in seq_len(nrow(pData.orig))) {
+                  match <- which(pData.orig[[testCovariate]] %in%
+                              pData(bs)[rd,][[testCovariate]])
+                  taken <- which(match %in% xr)
+                  if (length(taken) > 0)
+                    match <- match[-taken]
+                  if (length(match) > 0)
+                    xr <- c(xr, match[1])
+                }
+                if(length(coeff.adj) > 0){
+                  pData(bs)[[adjustCovariate]] <- 
+                    pData.orig[[adjustCovariate]][xr]
+                }
             } else {
                 designr[, coeff] <- designr[reorder, coeff]
+                pData(bs) <- pData.orig[reorder, ]
             }
             
             # if matchCovariate is not null, restrict permutations such that 
@@ -374,10 +448,10 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
             # interest is tissue type. Not matching would mean the null is 
             # really not null
             if (!is.null(matchCovariate)) {
-                permLabel <- paste0(paste0(pData(bs)[designr[, coeff] == 1, mC],
-                                           collapse = "_"), 
-                  "vs", paste0(pData(bs)[(1 - designr[, coeff]) == 1, mC], 
-                               collapse = "_"))
+                permLabel <- paste0(paste0(pData(bs)[designr[, coeff[1]] == 1, 
+                                                     mC], collapse = "_"), 
+                  "vs", paste0(pData(bs)[(1 - designr[, coeff[1]]) == 1, 
+                                           mC], collapse = "_"))
                 
                 c1 <- unlist(strsplit(permLabel, "vs"))[1]
                 c2 <- unlist(strsplit(permLabel, "vs"))[2]
@@ -385,11 +459,13 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
                 c1 <- unlist(strsplit(c1, "_"))
                 c2 <- unlist(strsplit(c2, "_"))
                 
-                keepPerm <- 1 * (sum(c1 %in% c2) == length(c1))
+                keepPerm <- 1 * (sum(c1 %in% c2) > 0 &&
+                                 sum(c2 %in% c1) > 0)
                 
                 if (keepPerm == 0) {
                   if (verbose) {
-                    message(paste0("Skipping permutation ", permLabel))
+                    message(paste0("Skipping permutation ", 
+                                   gsub("vs", " vs ", permLabel)))
                   }
                   next
                 }
@@ -398,7 +474,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
             }
             
             res.flip.p <- bumphunt(bs=bs, design = designr, 
-                                   sampleSize = sampleSize, coeff = coeff, 
+                                   coeff = coeff, 
                                    coeff.adj = coeff.adj,
                                    minInSpan = minInSpan, 
                                    minNumRegion = minNumRegion, cutoff = cutoff,
@@ -417,6 +493,9 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
                 FLIP <- rbind(FLIP, res.flip.p)
             }
         }
+        
+        # restore original pData
+        pData(bs) <- pData.orig
         
         # if no candidates were found in permutation
         # provide informative error message

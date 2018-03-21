@@ -1,8 +1,15 @@
-Changes to future versions of dmrseq will be highlighted here
-_____________________________________________________________
+Changes in Version 0.99.8 (2018-03-21)
+______________________________________
 
-\section{Version 0.99.6 (2018-03-02)}{
-  \itemize{
-    \item dmrseq is now available on Bioconductor devel (3.7) !
-  }
-}
+o dmrseq no longer requires balanced, two-group comparisons. To run using a 
+  continuous or categorial covariate with more than two groups, simply pass in
+  the name of a column in `pData` that contains this covariate. A continuous
+  covariate is assmued if the data type in the `testCovariate` slot is 
+  continuous, with the exception of if there are only two unique values (then a
+  two group comparison is carried out).
+
+Version 0.99.6 (2018-03-02)
+---------------------------
+
+o dmrseq is now available on Bioconductor devel (3.7) !
+

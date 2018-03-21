@@ -124,7 +124,7 @@ getEstimatePooled <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
 }
 
 bumphunt <- function(bs, 
-    design, sampleSize, coeff = 2, coeff.adj = 3,
+    design, coeff = 2, coeff.adj = 3,
     minInSpan = 30, minNumRegion = 5, 
     cutoff = NULL, maxGap = 1000, maxGapSmooth = 2500, smooth = FALSE, 
     bpSpan = 1000, verbose = TRUE, parallel = FALSE, ...) {
@@ -157,7 +157,10 @@ bumphunt <- function(bs,
     
       cov.means <- rowMeans(cov.mat)
     
-      if (length(unique(design[, coeff])) == 2) {
+      if (length(unique(design[, coeff])) == 2 &&
+          length(coeff) == 1 &&
+          all.equal(sort(unique(as.vector(design[,coeff])))[seq_len(2)],
+                    c(0,1))) {
           tmp <- getEstimatePooled(meth.mat = meth.mat, 
               cov.mat = cov.mat, pos = pos, 
               chr = chr, design, coeff)
@@ -204,7 +207,14 @@ bumphunt <- function(bs,
         Index <- seq(along = beta)
     }
     
-    rawBeta <- rawBeta/(sd.raw * sqrt(2/sampleSize))
+    if (length(unique(as.vector(design[, coeff]))) == 2 &&
+        length(coeff) == 1 &&
+        all.equal(sort(unique(as.vector(design[,coeff])))[seq_len(2)],c(0,1))) {
+      ngroups <- length(unique(design[,coeff]))
+      rawBeta <- rawBeta/(sd.raw * ngroups / sqrt(nrow(design)))
+    }else{
+      rawBeta <- rawBeta/sd.raw
+    }
     
     beta[-Index] <- rawBeta[-Index]
     
@@ -213,7 +223,7 @@ bumphunt <- function(bs,
         chr = chr, x = beta, y = rawBeta, maxGap = maxGap, cutoff = cutoff, 
         minNumRegion = minNumRegion, design = design, coeff = coeff, 
         coeff.adj = coeff.adj,
-        verbose = verbose, sampleSize = sampleSize, parallel = parallel,
+        verbose = verbose, parallel = parallel,
         pDat=pData(bs)))
     }
     
@@ -227,8 +237,8 @@ bumphunt <- function(bs,
 
 
 refineEdges <- function(y, candidates = NULL, 
-    cutoff = qt(0.975, 2 * sampleSize - 2), verbose = FALSE, 
-    minNumRegion, sampleSize) {
+    cutoff = qt(0.975, nrow(design) - 2), verbose = FALSE, 
+    minNumRegion, design) {
     
   stopifnot(length(cutoff) <= 2)
   stopifnot(is.list(candidates) && length(candidates) == 2)
@@ -357,7 +367,6 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
     chr = chr, x, y = x, ind = seq(along = x), order = TRUE, minNumRegion = 5, 
     maxGap = 300, cutoff = quantile(abs(x), 0.99), assumeSorted = FALSE, 
     verbose = verbose, design = design, coeff = coeff, coeff.adj = coeff.adj,
-    sampleSize = sampleSize, 
     parallel = parallel, pDat) {
     if (any(is.na(x[ind]))) {
         warning("NAs found and removed. ind changed.")
@@ -382,7 +391,7 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
     # refine edges -> start = first (stop = last) position with a raw difference
     # that meets the threshold
     Indexes <- refineEdges(y = y[ind], candidates = Indexes, cutoff = cutoff, 
-        verbose = FALSE, minNumRegion = minNumRegion, sampleSize = sampleSize)
+        verbose = FALSE, minNumRegion = minNumRegion, design = design)
     
     if (sum(lengths(Indexes)) == 0) {
         message("No candidates found. ")
@@ -405,23 +414,26 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
         lns <- lengths(Indexes[[i]])
         Indexes[[i]] <- Indexes[[i]][lns >= minNumRegion]
     }
-    
+  
     asin.gls.cov <- function(ix, design, coeff, 
         correlation = corAR1(form = ~1 |sample), 
         correlationSmall = corCAR1(form = ~L | sample), 
-        weights = varPower(form = ~1/MedCov, 
-        fixed = 0.5)) {
-        sampleSize <- nrow(design)/2
-        dat <- data.frame(g.fac = factor(rep(design[,coeff], each=length(ix))),
-                          sample = factor(rep(seq_len(sampleSize * 2), 
+        weights = varPower(form = ~1/MedCov, fixed = 0.5)) {
+        dat <- data.frame(g.fac = rep(pDat[,colnames(design)[coeff[1]]], 
+                                      each = length(ix)),
+                          sample = factor(rep(seq_len(nrow(design)), 
                                               each=length(ix))),
                           meth = as.vector(meth.mat[ix, ]),
                           cov = as.vector(cov.mat[ix, ]), 
                           L = as.vector(rep(pos[ix], nrow(design))))
         
         if(length(coeff.adj) > 0){
-          dat$a.fac <- factor(rep(pDat[,colnames(design)[coeff.adj]], 
-                                  each=length(ix)))
+          dat$a.fac <- rep(pDat[,colnames(design)[coeff.adj]], 
+                                  each=length(ix))
+        }
+        
+        if(length(unique(dat$g.fac)) == 2){
+          dat$g.fac <- as.factor(dat$g.fac)
         }
         
         # condition to remove regions with constant methylation / unmeth values
@@ -431,10 +443,10 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
             
             dat$pos <- as.numeric(factor(dat$L))
             if (length(coeff.adj)==0){
-              X <- model.matrix(~dat$g.fac + dat$L)
+              X <- model.matrix( ~ dat$g.fac + dat$L)
               mm <- formula(Z ~ g.fac + factor(L))
             }else{
-              X <- model.matrix(~dat$g.fac + dat$L + dat$a.fac)
+              X <- model.matrix( ~ dat$g.fac + dat$L + dat$a.fac)
               mm <- formula(Z ~ g.fac + factor(L) + a.fac)
             }
             
@@ -442,7 +454,7 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
             N <- as.matrix(dat$cov)
             
             dat$MedCov <- rep(as.numeric(by(dat$cov, dat$pos, median)), 
-                              sampleSize * 2)
+                              nrow(design))
             # remove rows with zero coverage
             whichZ <- which(dat$cov==0)
             if (length(whichZ)>0){
@@ -536,13 +548,32 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
             }
             
             if (!(sum(is.na(fit)) == length(fit))) {
+              if (length(coeff)==1){
                 stat <- fit$tTable[2, 3]
                 beta <- fit$tTable[2, 1]
+              }else{
+                stat <- sqrt(anova(fit)$`F-value`[2])
+                beta <- fit$tTable[2:(2+length(coeff)-1), 1]
+              }
             } else {
                 stat <- beta <- NA
             }
             
-            return(data.frame(beta = beta, stat = stat, constant = FALSE))
+            df <- data.frame(stat = stat, constant=FALSE)
+            nms <- gsub("g.fac", "", 
+                        rownames(fit$tTable)[2:(2+length(coeff)-1)])
+
+            if (length(beta) > 1){
+              for(b in seq_len(length(beta))){
+                df[[paste0("beta_", nms[b])]] <- beta[b]
+              }
+            }else{
+              df$beta <- beta
+            }
+            
+            df$stat = stat
+            
+            return(df)
         } else {
             return(data.frame(beta = NA, stat = NA, constant = TRUE))
         }
@@ -586,7 +617,7 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
     colnames(res)[colnames(res)=="START"] <- "start"
     colnames(res)[colnames(res)=="END"] <- "end"
     
-    res$beta <- ret$beta
+    res <- cbind(res, ret[,grepl("beta", colnames(ret)), drop = FALSE])
     res$stat <- ret$stat
     
     # remove regions that had constant meth values
@@ -697,43 +728,33 @@ smoother <- function(y, x = NULL, weights = NULL, chr = chr,
 
 ## Function to compute the coefficient estimates for regression of the 
 ## methylation levels on the group indicator variable, at each CpG site 
-## *Experimental* - only used if not a standard two-group comparison
+## - only used if not a standard two-group comparison
 getEstimate <- function(mat, design, coeff) {
-    v <- design[, coeff]
-    A <- design[, -coeff, drop = FALSE]
-    qa <- qr(A)
-    S <- diag(nrow(A)) - tcrossprod(qr.Q(qa))
-    vv <- matrix(v, ncol = 1)
+    vv <- design[, coeff, drop = FALSE]
+    QR <- qr(design)
+    Q <- qr.Q(QR)
+    R <- qr.R(QR)
+    df.residual <- ncol(mat) - QR$rank
+    bhat <- t(tcrossprod(backsolve(R, t(Q)), mat))
     
-    sv <- S %*% vv
-    vsv <- diag(crossprod(vv, sv))
-    b <- (mat %*% crossprod(S, vv)/vsv)
-    a <- mat %*% as.matrix(rep(1/nrow(design), nrow(design))) - b * mean(v)
-    
-    x.cov <- design[, 2]
-    deno <- sum((x.cov - mean(x.cov))^2)
-    vcov.mat <- matrix(c(mean(x.cov^2)/deno, rep(-mean(x.cov)/deno, 2), 1/deno),
-        2, 2)
-    A1 <- exp(a + b)/(1 + exp(a + b))^2 - exp(a)/(1 + exp(a))^2
-    A2 <- exp(a + b)/(1 + exp(a + b))^2
-    var.coeff <- A1^2 * vcov.mat[1, 1] + 2 * A1 * A2 * vcov.mat[1, 2] + A2^2 * 
-      vcov.mat[2, 2]
-    meth.diff <- exp(a + b)/(1 + exp(a + b)) - exp(a)/(1 + exp(a))
-    
-    if (!is.matrix(b)) 
-        b <- matrix(b, ncol = 1)
+    if (!is.matrix(bhat)) 
+      b <- matrix(b, ncol = 1)
     if (!is.matrix(mat)) 
-        mat <- matrix(mat, nrow = 1)
+      mat <- matrix(mat, nrow = 1)
     
-    sy <- mat %*% S
-    df.residual <- ncol(mat) - qa$rank - 1
-    sigma <- matrix(sqrt(rowSums((sy - tcrossprod(b, sv))^2)/df.residual), 
-                    ncol = 1)
-    sd.meth.diff <- sqrt(var.coeff) * sigma
-    out <- list(meth.diff = meth.diff, sd.meth.diff = sd.meth.diff, 
-                stdev.unscaled = sqrt(1/vsv), 
-        df.residual = df.residual)
-    out$stdev <- as.numeric(out$stdev)
+    meth.diff <- rowSums(exp(bhat))/(1 + rowSums(exp(bhat))) - 
+                 exp(bhat[,1])/(1 + exp(bhat[,1]))
+    
+    X <- rep(design, each = nrow(mat))
+    X1 <- design
+
+    res <- mat - t(tcrossprod(design, bhat))
+    se2 <- rowSums(res ^ 2) / df.residual
+    vb <- chol2inv(R)[coeff[1],coeff[1]] * se2
+    
+    out <- list(meth.diff = meth.diff, 
+                sd.meth.diff = sqrt(vb), 
+                df.residual = df.residual)
     
     return(out)
 }
