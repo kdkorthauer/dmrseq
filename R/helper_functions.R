@@ -369,7 +369,8 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
     verbose = verbose, design = design, coeff = coeff, coeff.adj = coeff.adj,
     parallel = parallel, pDat) {
     if (any(is.na(x[ind]))) {
-        warning("NAs found and removed. ind changed.")
+        warning(sum(is.na(x[ind]))," CpGs not included due to missing ",
+                "values of methylation difference estimates.")
         ind <- intersect(which(!is.na(x)), ind)
     }
     
