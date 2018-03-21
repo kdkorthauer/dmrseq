@@ -221,7 +221,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
         testCov <- as.factor(testCov)
     }
     
-    sampleSize <- ncol(bs)/length(unique(testCov))
+    sampleSize <- table(testCov)
     if (!is.null(adjustCovariate)) {
         adjustCov <- pData(bs)[, adjustCovariate]
         design <- model.matrix(~testCov + adjustCov)
@@ -327,7 +327,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
                         "condition across samples ", 
                   "to generate a null distribution of region test statistics")
             }
-            perms <- combn(seq(1, nrow(design)), floor(sampleSize))
+            perms <- combn(seq(1, nrow(design)), min(sampleSize))
             
             # restrict to unique permutations that don't include any 
             # groups consisting of all identical conditions
