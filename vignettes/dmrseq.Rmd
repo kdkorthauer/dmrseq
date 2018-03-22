@@ -115,8 +115,8 @@ treatment or control, a tissue type, or a continous measurement.
 This is the covariate for which you wish to test for differences in 
 methylation. Once the `BSseq` object is constructed and the sample covariate
 information is added, DMRs are obtained by running the `dmrseq` function.
-A continuous covariate is assmued if the data type of the `testCovariate`  
-is continuous, with the exception of if there are only two unique values 
+A continuous covariate is assmued if the data type of the `testCovariate` is 
+continuous, with the exception of if there are only two unique values 
 (then a two group comparison is carried out).
 
 ```{r quickStart, eval=FALSE}

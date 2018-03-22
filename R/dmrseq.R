@@ -363,13 +363,26 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
               pairs <- unique(pairs)
               perms <- perms[,c(pairs[,1], which(lengths(z)==0))]
             }
-        
-            # Random subsample of permutations
-            if (maxPerms < ncol(perms)) {
-                perms <- perms[, sort(sample(seq_len(ncol(perms)), maxPerms, 
-                                             replace = FALSE))]
-            }
             
+            # subsample permutations based on similarity to original partition
+            # gives preference to those with the least similarity
+            if (maxPerms < ncol(perms)) {
+               similarity <- apply(perms, 2, function(x) {
+                 max(table(design[x,coeff]))
+               })
+               perms.all <- perms
+               perms <- NULL
+               levs <- sort(unique(similarity))
+               l <- 1
+               num <- 0
+               while(!(num == maxPerms) && l <= length(levs)) {
+                 keep <- sample(which(similarity == levs[l]), 
+                                min(maxPerms-num, sum(similarity == levs[l])) )
+                 perms <- cbind(perms, perms.all[,keep])
+                 l <- l + 1
+                 num <- ncol(perms) 
+               }
+            }
         } else {
             # Next consider a multilevel, or continuous covariate where the 
             # covariate will be permuted in an unrestricted manner
