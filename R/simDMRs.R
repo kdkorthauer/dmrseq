@@ -52,6 +52,14 @@
 #' head(BS.chr21.sim$delta)
 #' 
 simDMRs <- function(bs, num.dmrs = 3000, delta.max0 = 0.3) {
+    # check that all loci have coverage in every sample
+    zero.cov <- which(rowSums(getCoverage(bs, type="Cov") == 0) > 0)
+    if (length(zero.cov) > 0){
+      stop("Zero coverage found for at least one sample in ", length(zero.cov),
+           " loci. Please filter for loci with coverage at least one in ",
+           "all samples before passing to 'simDMRs'")
+    }
+  
     sampleSize <- floor(nrow(pData(bs))/2)
     
     # code to simulate DMRs if some number of simulated dmrs was specified
