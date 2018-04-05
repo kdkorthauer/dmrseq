@@ -435,6 +435,55 @@ procedure.
 
 For more details, refer to the **dmrseq** paper [@Korthauer183210].
 
+## Detecting large-scale methylation blocks
+
+The default smoothing parameters (`bpSpan`, `minInSpan`, and `maxGapSmooth`) 
+are designed to focus on local DMRs, generally in the range of hundreds to 
+thousands of bases. In some applications, such as cancer, it is of interest
+to effectively 'zoom out' in order to detect larger (lower-resolution) 
+methylation blocks on the order of hundreds of thousands to millions of bases.
+To do so, you can 
+set the `block` argument to true, which will only include candidate regions with
+at least `blockSize` basepairs (default = 5000). This setting will also merge
+candidate regions that (1) are in the same direction and (2) are less than 1kb
+apart with no covered CpGs separating them. The region-level model used is also
+slightly modified - instead of a loci-specific intercept for each CpG in the 
+region, the intercept term is modeled as a natural spline with one interior 
+knot per each 10kb of length (up to 10 interior knots).
+
+In addition, detecting large-scale blocks requires that 
+the smoothing window be increased to minimize the impact of noisy local
+methylation measurements. To do so, increase the values of the 
+smoothing parameters should be increased. For example, to use a smoothing window
+that captures at least 500 CpGs or 50,000 basepairs that are spaced apart by no 
+more than 1e6 bases, use `minInSpan=500`, `bpSpan=5e4`, and `maxGapSmooth=1e6`. 
+In addition, to avoid a block being broken up simply due to a gap with no covered 
+CpGs, you can increase the `maxGap` parameter.
+
+```{r blocks, message=TRUE, warning=TRUE}
+testCovariate <- "CellType"
+blocks <- dmrseq(bs=bs[120001:125000,],
+                  cutoff = 0.05,
+                  testCovariate=testCovariate,
+                  block = TRUE,
+                  minInSpan = 500,
+                  bpSpan = 5e4,
+                  maxGapSmooth = 1e6,
+                  maxGap = 1e4)
+head(blocks)
+```
+
+The top hit is `r signif(width(blocks)[1]/1e3, 3)` thousand basepairs wide. 
+In general, it also might be advised to decrease the cutoff when detecting blocks, 
+since a smaller methylation
+difference might be biologically significant if it is maintained 
+over a large genomic region. Note that block-finding can be more computationally
+intensive since we are fitting region-level models to large numbers of CpGs at a
+time. In the toy example above we are only searching over 5,000 CpGs (which
+span `r signif((max(end(bs[120001:125000,])) - min(start(bs[120001:125000,])))/1e3,3)` 
+thousand basepairs), so we do not find enough null
+candidate regions to carry out inference and obtain significance levels.
+
 # Exploring and exporting results
 
 ## Explore how many regions were significant
@@ -484,6 +533,13 @@ function as the `annoTrack` parameter.
 annoTrack <- getAnnot("hg18")
 
 plotDMRs(bs, regions=regions[1,], testCovariate="CellType",
+    annoTrack=annoTrack)
+```
+
+Here we also plot the top methylation block from the block analysis:
+
+```{r plotblock, out.width='\\textwidth', fig.height = 2.5, warning='hide'}
+plotDMRs(bs, regions=blocks[1,], testCovariate="CellType",
     annoTrack=annoTrack)
 ```
 

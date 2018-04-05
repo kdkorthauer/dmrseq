@@ -127,17 +127,20 @@ bumphunt <- function(bs,
     design, coeff = 2, coeff.adj = 3,
     minInSpan = 30, minNumRegion = 5, 
     cutoff = NULL, maxGap = 1000, maxGapSmooth = 2500, smooth = FALSE, 
-    bpSpan = 1000, verbose = TRUE, parallel = FALSE, ...) {
+    bpSpan = 1000, verbose = TRUE, parallel = FALSE, block = FALSE,
+    blockSize = 5000, ...) {
     
     # calculate smoothing span from minInSpan
     bpSpan2 <- NULL
     chrs <- unique(as.character(seqnames(bs)))
-    for (ch in chrs) {
-      pos <- chrSelectBSseq(bs, ch)
-      bpSpan2 <- c(bpSpan2, minInSpan * (max(start(pos)) - 
+    if (!block){ # don't balance minInSpan and bpSpan for blocks
+      for (ch in chrs) {
+        pos <- chrSelectBSseq(bs, ch)
+        bpSpan2 <- c(bpSpan2, minInSpan * (max(start(pos)) - 
                       min(start(pos)) + 1)/sum(seqnames(pos) == ch))
+      }
+      bpSpan2 <- mean(bpSpan2, na.rm = TRUE)
     }
-    bpSpan2 <- mean(bpSpan2, na.rm = TRUE)
     
     # get 75th percentile of mean coverage genomewide before subsetting
     # by chromosome
@@ -224,7 +227,7 @@ bumphunt <- function(bs,
         minNumRegion = minNumRegion, design = design, coeff = coeff, 
         coeff.adj = coeff.adj,
         verbose = verbose, parallel = parallel,
-        pDat=pData(bs)))
+        pDat=pData(bs), block = block, blockSize = blockSize))
     }
     
     if (length(tab) == 0) {
@@ -367,7 +370,7 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
     chr = chr, x, y = x, ind = seq(along = x), order = TRUE, minNumRegion = 5, 
     maxGap = 300, cutoff = quantile(abs(x), 0.99), assumeSorted = FALSE, 
     verbose = verbose, design = design, coeff = coeff, coeff.adj = coeff.adj,
-    parallel = parallel, pDat) {
+    parallel = parallel, pDat, block, blockSize) {
     if (any(is.na(x[ind]))) {
        message(sum(is.na(x[ind]))," CpG(s) excluded due to zero coverage. ",
               appendLF = FALSE)
@@ -415,6 +418,68 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
         lns <- lengths(Indexes[[i]])
         Indexes[[i]] <- Indexes[[i]][lns >= minNumRegion]
     }
+    
+    if (sum(lengths(Indexes)) == 0) {
+      message("No candidates found. ")
+      return(NULL)
+    }
+    
+    if(block){
+      # merge small candidate regions that are the same direction &
+      # are less than 1kb apart
+      df <- S4Vectors::DataFrame(ind, chr = chr[ind], pos = pos[ind])
+      for(j in seq_along(Indexes)){
+        if (length(Indexes[[j]]) > 0){
+          reg <- as.data.frame(S4Vectors::aggregate(df, 
+                                        S4Vectors::List(Indexes[[j]]), 
+                                        chr = unlist(IRanges::heads(chr, 1L)), 
+                                        Start = min(pos),
+                                        End = max(pos)))
+          reg <- GRanges(seqnames=reg$chr, 
+                         IRanges(start=reg$Start, end=reg$End))
+        
+          # find 1kb flanking regions with no covered CpGs
+          flk <- c(IRanges::flank(reg, width=1000, start=TRUE),
+                   IRanges::flank(reg, width=1000, start=FALSE))
+          overlap <- unique(IRanges::findOverlaps(flk, GRanges(seqnames=chr, 
+                                   IRanges::IRanges(start=pos, end=pos)))@from)
+          if (length(overlap) > 0)
+            flk <- flk[-overlap]
+        
+          # add back to regions and remake indices
+          reg <- as.matrix(as.data.frame(IRanges::reduce(c(flk, reg)))[,2:3])
+          idx <- apply(reg, 1, function(x) which(pos %in% x[1]:x[2]))
+          if (class(idx) == "list"){
+            Indexes[[j]] <- idx
+          }else{
+            Indexes[[j]] <- list(as.vector(idx))
+          }
+        }
+      }
+      # subset on those with at least blockSize bps
+      Indexes <- c(Indexes[[1]], Indexes[[2]])
+      nbp <- as.data.frame(S4Vectors::aggregate(df, S4Vectors::List(Indexes), 
+                                 nbp = max(pos) - min(pos) + 1 ))$nbp
+      Indexes <- Indexes[nbp >= blockSize]     
+    }else{	
+      Indexes <- c(Indexes[[1]], Indexes[[2]])
+      maxLength <- max(lengths(Indexes))
+      if (maxLength > 1000) {
+        message("Note: Large candidate regions with more than 1000 ",
+                "CpGs detected.", 
+                " If you'd like to detect ",
+                "large-scale blocks, set block=TRUE.",
+                " If you'd like to detect local DMRs, it is recommended to ",
+                "decrease the values of bpSpan, minInSpan, and/or ",
+                "maxGapSmooth increase computational efficiency.")
+      }
+    }
+    
+    numCandidates <- length(Indexes)
+    if (numCandidates == 0) {
+      message("No candidates found. ")
+      return(NULL)
+    }
   
     asin.gls.cov <- function(ix, design, coeff, 
         correlation = corAR1(form = ~1 |sample), 
@@ -443,12 +508,27 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
                (dat$cov - dat$meth)[1] == 0))) {
             
             dat$pos <- as.numeric(factor(dat$L))
-            if (length(coeff.adj)==0){
-              X <- model.matrix( ~ dat$g.fac + dat$L)
-              mm <- formula(Z ~ g.fac + factor(L))
+            if (block){
+              # one interior knot per 10K basepairs, with max of 10
+              k <- min(ceiling((max(pos[ix]) - min(pos[ix])) / 10000) + 1,
+                      10)			      
+              if (length(coeff.adj)==0){
+                X <- model.matrix( ~ dat$g.fac + ns(dat$L, df=k))
+                mm <- as.formula(paste0("Z ~ g.fac + ns(L, df=", k, ")"))
+              }else{
+                X <- model.matrix( ~ dat$g.fac + ns(dat$L, df=k) + dat$a.fac)
+                mm <- formula(Z ~ g.fac + ns(L, df=eval(k)) + a.fac)
+                mm <- as.formula(paste0("Z ~ g.fac + ns(L, df=", 
+                                        k, ") + a.fac"))
+              }
             }else{
-              X <- model.matrix( ~ dat$g.fac + dat$L + dat$a.fac)
-              mm <- formula(Z ~ g.fac + factor(L) + a.fac)
+              if (length(coeff.adj)==0){
+                X <- model.matrix( ~ dat$g.fac + dat$L)
+                mm <- formula(Z ~ g.fac + factor(L))
+              }else{
+                X <- model.matrix( ~ dat$g.fac + dat$L + dat$a.fac)
+                mm <- formula(Z ~ g.fac + factor(L) + a.fac)
+              }
             }
             
             Y <- as.matrix(dat$meth)
@@ -598,23 +678,6 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
         }
     }
     
-    numCandidates <- sum(lengths(Indexes))
-    
-    if (numCandidates == 0) {
-      message("No candidates found. ")
-      return(NULL)
-    }
-  
-    Indexes <- c(Indexes[[1]], Indexes[[2]])
-    
-    maxLength <- max(lengths(Indexes))
-    if (maxLength > 1000) {
-        message("Note: candidate regions with more than 1000 ",
-                  "CpGs detected.", 
-            " It is recommended to decrease the value of maxGap to ",
-            "increase computational efficiency.")
-    }
-    
     t1 <- proc.time()
     
     if (parallel) {
@@ -689,9 +752,14 @@ smoother <- function(y, x = NULL, weights = NULL, chr = chr,
             if (clusterL[i] >= minNumRegion && 
                 sum(rowSums(is.na(yi[Index, , drop = FALSE])) == 
                 0) >= minNumRegion) {
-                nn <- min(bpSpan2/(max(xi[Index]) - min(xi[Index]) + 1), 
-                          minInSpan/length(Index), 0.75)
                 
+                # for local DMRs, balance minInSpan and bpSpan
+                if (!is.null(bpSpan2)){ 
+                  nn <- min(bpSpan2/(max(xi[Index]) - min(xi[Index]) + 1), 
+                          minInSpan/length(Index), 0.75)
+                }else{ 
+                  nn <- minInSpan/length(Index)
+                }
                 for (j in seq_len(ncol(yi))) {
                   sdata <- data.frame(posi = xi[Index], yi = yi[Index, j], 
                                       weightsi = weightsi[Index, j])

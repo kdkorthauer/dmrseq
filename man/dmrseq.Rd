@@ -7,7 +7,8 @@
 dmrseq(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
   minNumRegion = 5, smooth = TRUE, bpSpan = 1000, minInSpan = 30,
   maxGapSmooth = 2500, maxGap = 1000, verbose = TRUE, maxPerms = 10,
-  matchCovariate = NULL, BPPARAM = bpparam(), stat = "stat")
+  matchCovariate = NULL, BPPARAM = bpparam(), stat = "stat",
+  block = FALSE, blockSize = 5000)
 }
 \arguments{
 \item{bs}{bsseq object containing the methylation values as well as the 
@@ -103,6 +104,21 @@ experimental purposes. Possible values are: 'L' - the number of loci
 in the region, 'area' - the sum of the smoothed loci statistics,
 'beta' - the effect size of the region, 'stat' - the test statistic for
 the region, or 'avg' - the average smoothed loci statistic.}
+
+\item{block}{logical indicating whether to search for large-scale (low
+resolution) blocks of differential methylation (default is FALSE, which
+means that local DMRs are desired). If TRUE, the parameters for 
+\code{bpSpan}, \code{minInSpan}, and \code{maxGapSmooth} should be adjusted
+(increased) accordingly. This setting will also merge
+candidate regions that (1) are in the same direction and (2) are less than 
+1kb apart with no covered CpGs separating them. The region-level model used 
+is also slightly modified - instead of a loci-specific intercept for each 
+CpG in theregion, the intercept term is modeled as a natural spline with 
+one interior knot per each 10kb of length (up to 10 interior knots).}
+
+\item{blockSize}{numeric value indicating the minimum number of basepairs 
+to be considered a block (only used if \code{block}=TRUE). Default is 
+5000 basepairs.}
 }
 \value{
 a \code{GRanges} object that contains the results of the inference. 
