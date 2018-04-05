@@ -56,8 +56,10 @@ meanDiff <- function(bs, dmrs, testCovariate) {
     
     indexRanges <- IRanges(start(dmrs$index), end(dmrs$index))
     prop.mat.dmr <- extractROWS(prop.mat, indexRanges)
-    prop.mat1.means <- rowMeans(prop.mat.dmr[,design[, coeff] == levs[1]])
-    prop.mat2.means <- rowMeans(prop.mat.dmr[,design[, coeff] == levs[2]])
+    prop.mat1.means <- rowMeans(prop.mat.dmr[,design[, coeff] == levs[1]],
+                                na.rm=TRUE)
+    prop.mat2.means <- rowMeans(prop.mat.dmr[,design[, coeff] == levs[2]],
+                                na.rm=TRUE)
     meanDiff <- IRanges::mean(IRanges::relist(prop.mat2.means - prop.mat1.means,
                                           indexRanges), na.rm=TRUE)
     
