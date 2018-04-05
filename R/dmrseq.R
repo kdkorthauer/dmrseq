@@ -84,6 +84,19 @@
 #'   in the region, 'area' - the sum of the smoothed loci statistics,
 #'   'beta' - the effect size of the region, 'stat' - the test statistic for
 #'   the region, or 'avg' - the average smoothed loci statistic.
+#' @param block logical indicating whether to search for large-scale (low
+#'  resolution) blocks of differential methylation (default is FALSE, which
+#'  means that local DMRs are desired). If TRUE, the parameters for 
+#'  \code{bpSpan}, \code{minInSpan}, and \code{maxGapSmooth} should be adjusted
+#'  (increased) accordingly. This setting will also merge
+#'  candidate regions that (1) are in the same direction and (2) are less than 
+#'  1kb apart with no covered CpGs separating them. The region-level model used 
+#'  is also slightly modified - instead of a loci-specific intercept for each 
+#'  CpG in theregion, the intercept term is modeled as a natural spline with 
+#'  one interior knot per each 10kb of length (up to 10 interior knots).
+#' @param blockSize numeric value indicating the minimum number of basepairs 
+#'  to be considered a block (only used if \code{block}=TRUE). Default is 
+#'  5000 basepairs.
 #' @return a \code{GRanges} object that contains the results of the inference. 
 #'    The object contains one row for each candidate region. The standard 
 #'    \code{GRanges} chr, start, and end are included, along with at least
@@ -107,7 +120,7 @@
 #' @importFrom bumphunter clusterMaker getSegments
 #' @importFrom matrixStats colMedians
 #' @importFrom matrixStats rowMads
-#' @importFrom stats formula anova
+#' @importFrom stats formula anova as.formula
 #' 
 #' @importClassesFrom bsseq BSseq 
 #' @importMethodsFrom bsseq pData seqnames sampleNames start width 
@@ -120,6 +133,7 @@
 #' predict preplot qt quantile rbeta rbinom runif
 #' @importFrom utils combn
 #' @importFrom BiocParallel bplapply register MulticoreParam bpparam
+#' @importFrom splines ns
 #'
 #' @import bsseq 
 #' @import GenomicRanges
@@ -148,7 +162,8 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
                    minInSpan = 30, maxGapSmooth = 2500, maxGap = 1000, 
                    verbose = TRUE,  
                    maxPerms = 10, matchCovariate = NULL, 
-                   BPPARAM = bpparam(), stat = "stat") {
+                   BPPARAM = bpparam(), stat = "stat", 
+                   block = FALSE, blockSize = 5000) {
     
     stopifnot(class(bs) == "BSseq")
     
@@ -166,6 +181,19 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
             "' as the test statistic which is not ", 
             "in the results. Please specify a valid name from one of ",
             "L, area, beta, stat, or avg")
+    }
+    
+    # informative message about blocks if block=TRUE; check for increased
+    # smoothing window
+    if (block){
+      message("Searching for large scale blocks with at least ",
+              blockSize, " basepairs.")
+      
+      if(minInSpan < 100 && bpSpan < 2000 && maxGapSmooth < 1e5){
+        warning("When block=TRUE, it is recommended to increase the values ",
+                "of minInSpan, bpSpan, and maxGapSmooth in order to widen ",
+                "the smoothing window")
+      }
     }
     
     # convert covariates to column numbers if characters
@@ -315,7 +343,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
                     minNumRegion = minNumRegion, cutoff = cutoff, 
                     maxGap = maxGap, maxGapSmooth = maxGapSmooth, 
                     smooth = smooth, bpSpan = bpSpan, verbose = verbose, 
-                    parallel = parallel)
+                    parallel = parallel, block = block, blockSize = blockSize)
    
     # check that at least one candidate region was found; if there were none 
     # there is no need to go on to compute permutation tests...
@@ -497,7 +525,8 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
                                    minNumRegion = minNumRegion, cutoff = cutoff,
                                    maxGap = maxGap, maxGapSmooth = maxGapSmooth,
                                    smooth = smooth, bpSpan = bpSpan, 
-                                   verbose = verbose, parallel = parallel)
+                                   verbose = verbose, parallel = parallel,
+                                   block = block, blockSize = blockSize)
             
             if (verbose) {
               message("* ", j, " out of ", ncol(perms), 
@@ -517,10 +546,12 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
         # if no candidates were found in permutation
         # provide informative error message
         if (is.null(FLIP)){
-          stop("No candidate regions found in permutation, so inference ",
+          warning("No candidate regions found in permutation, so inference ",
                "can't be carried out. ",
                "Try decreasing the cutoff, or running on a larger ",
                "dataset if you are currently using a subset.")
+          OBS$pval <- NA
+          OBS$qval <- NA
         }else if (nrow(FLIP) < 0.05*nrow(OBS)){
           message("Note: Very few null candidate regions were found.",
                "For more accurate and sensitive inference, ",
@@ -528,60 +559,62 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
                "dataset if you are currently using a subset.")
         }
         
-        # if there are more than 1 million candidate null regions, 
-        # take a random sample
-        # of 1 million of them
-        if (nrow(FLIP) > 1e+06) {
+        if (!is.null(FLIP)){
+          # if there are more than 1 million candidate null regions, 
+          # take a random sample
+          # of 1 million of them
+          if (nrow(FLIP) > 1e+06) {
             rs <- sample(seq_len(nrow(FLIP)), 1e+06, replace = FALSE)
             FLIP <- FLIP[rs, ]
-        }
-        
-        # which column of results to use as test statistic ?  
-        # check statistic name
-        if (!(stat %in% c(colnames(OBS), "avg"))) {
+          }
+          
+          # which column of results to use as test statistic ?  
+          # check statistic name
+          if (!(stat %in% c(colnames(OBS), "avg"))) {
             stop("Specified '", stat, 
-                        "' as the test statistic which is not ", 
-                "in the results. Please specify a valid name from one of ",
-                "L, area, beta, or stat")
-        } else if (stat == "avg") {
+                 "' as the test statistic which is not ", 
+                 "in the results. Please specify a valid name from one of ",
+                 "L, area, beta, or stat")
+          } else if (stat == "avg") {
             OBS$avg <- OBS$area/OBS$L
             FLIP$avg <- FLIP$area/FLIP$L
+          }
+          
+          whichStatO <- which(colnames(OBS) == stat)
+          whichStatF <- which(colnames(FLIP) == stat)
+          
+          # Faster way to compute the p-values that doesn't use multiple cores 
+          # Step 1: sort the permuted statistics vector
+          perm.ordered <- c(sort(abs(FLIP[, whichStatF]), 
+                                 method = "quick"), Inf)
+          
+          # Step 2: find the first instance in the sorted vector where the 
+          # permuted value is greater than the observed and use this to 
+          # determine the number of permuted values that are greater than or  
+          # equal to theobserved
+          pval <- rep(NA, nrow(OBS))
+          pval[!is.na(OBS[, whichStatO])] <- (1 + 
+                        vapply(abs(OBS[!is.na(OBS[, whichStatO]), whichStatO]),
+            function(x) length(perm.ordered) - min(which(x <= perm.ordered)),
+                        numeric(1))) / (1 + sum(!is.na(FLIP[, whichStatF])))
+          
+          # missing test statistics cause Inf for the p-value calculation 
+          # instead propagate the missing values
+          pval[abs(pval) == Inf] <- NA
+          
+          pval <- data.frame(x = pval, y = p.adjust(pval, method = "BH"))
+          
+          OBS$pval <- pval$x
+          OBS$qval <- pval$y
         }
-        
-        whichStatO <- which(colnames(OBS) == stat)
-        whichStatF <- which(colnames(FLIP) == stat)
-        
-        # Faster way to compute the p-values that doesn't use multiple cores 
-        # Step 1: sort the permuted statistics vector
-        perm.ordered <- c(sort(abs(FLIP[, whichStatF]), method = "quick"), Inf)
-        
-        # Step 2: find the first instance in the sorted vector where the 
-        # permuted value is greater than the observed and use this to determine
-        # the number of permuted values that are greater than or equal to the 
-        # observed
-        pval <- rep(NA, nrow(OBS))
-        pval[!is.na(OBS[, whichStatO])] <- (1 + 
-                    vapply(abs(OBS[!is.na(OBS[, whichStatO]), whichStatO]),
-          function(x) length(perm.ordered) - min(which(x <= perm.ordered)),
-          numeric(1))) /
-          (1 + sum(!is.na(FLIP[, whichStatF])))
-        
-        # missing test statistics cause Inf for the p-value calculation instead,
-        # propagate the missing values
-        pval[abs(pval) == Inf] <- NA
-        
-        pval <- data.frame(x = pval, y = p.adjust(pval, method = "BH"))
-        
-        OBS$pval <- pval$x
-        OBS$qval <- pval$y
-        
-        # convert output into GRanges, with indexStart/indexEnd as IRanges
-        indexIR <- IRanges(OBS$indexStart, OBS$indexEnd)
-        OBS.gr <- makeGRangesFromDataFrame(OBS[,-c(4:5)], 
-                                           keep.extra.columns = TRUE)
-        OBS.gr$index <- indexIR
-        return(OBS.gr)
     } else {
         message("No candidate regions pass the cutoff of ", unique(abs(cutoff)))
     }
+    
+    # convert output into GRanges, with indexStart/indexEnd as IRanges
+    indexIR <- IRanges(OBS$indexStart, OBS$indexEnd)
+    OBS.gr <- makeGRangesFromDataFrame(OBS[,-c(4:5)], 
+                                       keep.extra.columns = TRUE)
+    OBS.gr$index <- indexIR
+    return(OBS.gr)
 }
