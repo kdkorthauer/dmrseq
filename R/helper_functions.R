@@ -432,7 +432,7 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
         if (length(Indexes[[j]]) > 0){
           reg <- as.data.frame(S4Vectors::aggregate(df, 
                                         S4Vectors::List(Indexes[[j]]), 
-                                        chr = unlist(IRanges::heads(chr, 1L)), 
+                                        chr = unlist(S4Vectors::phead(chr, 1L)), 
                                         Start = min(pos),
                                         End = max(pos)))
           reg <- GRanges(seqnames=reg$chr, 
