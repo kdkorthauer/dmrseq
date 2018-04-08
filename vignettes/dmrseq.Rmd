@@ -473,7 +473,7 @@ blocks <- dmrseq(bs=bs[120001:125000,],
                   minInSpan = 500,
                   bpSpan = 5e4,
                   maxGapSmooth = 1e6,
-                  maxGap = 1e4)
+                  maxGap = 5e3)
 head(blocks)
 ```
 
