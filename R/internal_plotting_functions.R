@@ -353,8 +353,10 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
                     weights = z[z >= pointsMinCov],
                     span = spn)
 
-  xl <- seq(min(x[z >= pointsMinCov]), max(x[z >= pointsMinCov]), 
-           (max(x[z >= pointsMinCov]) - min(x[z >= pointsMinCov]))/1000)
+  xl <- seq(min(x[z >= pointsMinCov], na.rm=TRUE), 
+            max(x[z >= pointsMinCov], na.rm=TRUE), 
+           (max(x[z >= pointsMinCov], na.rm=TRUE) - 
+              min(x[z >= pointsMinCov], na.rm=TRUE))/1000)
   lines(xl, predict(loess_fit,xl), 
         col = .makeTransparent(.darken(col), 175), lwd = lwd)
 }
