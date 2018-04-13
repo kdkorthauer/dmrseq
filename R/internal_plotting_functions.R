@@ -339,24 +339,15 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
   } else if (length(x) > 100) {
     lwd <- 2
   }
-  
-  spn <- 0.2
-  
-  # if there are few CpGs, use a higher span   
-  if (sum(z >= pointsMinCov) < 25) {
-    spn <- 0.8  
-  }else if (sum(z >= pointsMinCov) < 50) {
-    spn <- 0.5  
-  }
 
   loess_fit <- loess(y[z >= pointsMinCov] ~ x[z >= pointsMinCov],
-                    weights = z[z >= pointsMinCov],
-                    span = spn)
-
+                    weights = z[z >= pointsMinCov])
+  
   xl <- seq(min(x[z >= pointsMinCov], na.rm=TRUE), 
             max(x[z >= pointsMinCov], na.rm=TRUE), 
            (max(x[z >= pointsMinCov], na.rm=TRUE) - 
-              min(x[z >= pointsMinCov], na.rm=TRUE))/1000)
+              min(x[z >= pointsMinCov], na.rm=TRUE))/500)
+  
   lines(xl, predict(loess_fit,xl), 
         col = .makeTransparent(.darken(col), 175), lwd = lwd)
 }
