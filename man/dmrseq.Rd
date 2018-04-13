@@ -122,7 +122,8 @@ to be considered a block (only used if \code{block}=TRUE). Default is
 }
 \value{
 a \code{GRanges} object that contains the results of the inference. 
-   The object contains one row for each candidate region. The standard 
+   The object contains one row for each candidate region, sorted by q-value
+   and then chromosome. The standard 
    \code{GRanges} chr, start, and end are included, along with at least
    7 metadata
    columns, in the following order: 

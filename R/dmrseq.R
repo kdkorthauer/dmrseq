@@ -98,7 +98,8 @@
 #'  to be considered a block (only used if \code{block}=TRUE). Default is 
 #'  5000 basepairs.
 #' @return a \code{GRanges} object that contains the results of the inference. 
-#'    The object contains one row for each candidate region. The standard 
+#'    The object contains one row for each candidate region, sorted by q-value
+#'    and then chromosome. The standard 
 #'    \code{GRanges} chr, start, and end are included, along with at least
 #'    7 metadata
 #'    columns, in the following order: 
@@ -616,5 +617,10 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
     OBS.gr <- makeGRangesFromDataFrame(OBS[,-c(4:5)], 
                                        keep.extra.columns = TRUE)
     OBS.gr$index <- indexIR
+    
+    
+    # sort on qval overall (currently sorted within chromsome)
+    OBS.gr <- OBS.gr[order(OBS.gr$qval, seqnames(OBS.gr)),]
+    
     return(OBS.gr)
 }
