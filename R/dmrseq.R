@@ -613,6 +613,17 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
     }
     
     # convert output into GRanges, with indexStart/indexEnd as IRanges
+    # convert index from within chromosome to overall
+    chrlengths <- cumsum(table(seqnames(bs)))
+    chrs <- unique(as.character(seqnames(bs)))
+    for (j in seq_len(length(chrs)-1)) {
+      ch <- chrs[j+1]
+      OBS$indexStart[OBS$chr == ch] <- OBS$indexStart[OBS$chr == ch] +
+        chrlengths[names(chrlengths) == chrs[j]] 
+      OBS$indexEnd[OBS$chr == ch] <- OBS$indexEnd[OBS$chr == ch] +
+        chrlengths[names(chrlengths) == chrs[j]] 
+    }
+    
     indexIR <- IRanges(OBS$indexStart, OBS$indexEnd)
     OBS.gr <- makeGRangesFromDataFrame(OBS[,-c(4:5)], 
                                        keep.extra.columns = TRUE)
