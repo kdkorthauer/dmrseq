@@ -71,7 +71,7 @@ should be printed to stdout. Defaults value is TRUE.}
 
 \item{maxPerms}{a positive integer that represents the maximum number 
 of permutations that will be used to generate the global null 
-distribution of test statistics.  Default value is 20.}
+distribution of test statistics.  Default value is 10.}
 
 \item{matchCovariate}{an (optional) character value or vector 
 indicating which variables (column names) of \code{pData(bs)} 
