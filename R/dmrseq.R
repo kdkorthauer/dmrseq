@@ -68,7 +68,7 @@
 #'    a cluster appropriate for the operating system. 
 #' @param maxPerms a positive integer that represents the maximum number 
 #'    of permutations that will be used to generate the global null 
-#'    distribution of test statistics.  Default value is 20.
+#'    distribution of test statistics.  Default value is 10.
 #' @param maxGap integer value representing maximum number of basepairs in 
 #' between neighboring CpGs to be included in the same DMR. 
 #' @param maxGapSmooth integer value representing maximum number of basepairs  
