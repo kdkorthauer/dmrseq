@@ -13,6 +13,8 @@
 #' 
 #' @return numeric vector of raw mean methylation differences.
 #' 
+#' @importFrom DelayedMatrixStats rowMeans2
+#' 
 #' @export
 #' 
 #' @examples
@@ -50,16 +52,19 @@ meanDiff <- function(bs, dmrs, testCovariate) {
             "Returning beta estimates instead")
     return(dmrs$beta)
   } else {
-    prop.mat <- as.matrix(getCoverage(bs, type = "M") / 
-                          getCoverage(bs, type = "Cov"))
+    prop.mat <- getCoverage(bs, type = "M") / 
+                getCoverage(bs, type = "Cov")
     levs <- unique(design[, coeff])
     
     indexRanges <- IRanges(start(dmrs$index), end(dmrs$index))
     prop.mat.dmr <- extractROWS(prop.mat, indexRanges)
-    prop.mat1.means <- rowMeans(prop.mat.dmr[,design[, coeff] == levs[1]],
-                                na.rm=TRUE)
-    prop.mat2.means <- rowMeans(prop.mat.dmr[,design[, coeff] == levs[2]],
-                                na.rm=TRUE)
+    prop.mat1.means <- DelayedMatrixStats::rowMeans2(prop.mat.dmr[,
+                                 unname(design[, coeff] == levs[1])],
+                                 na.rm=TRUE)
+    prop.mat2.means <- DelayedMatrixStats::rowMeans2(prop.mat.dmr[,
+                                 unname(design[, coeff] == levs[2])],
+                                 na.rm=TRUE)
+    
     meanDiff <- IRanges::mean(IRanges::relist(prop.mat2.means - prop.mat1.means,
                                           indexRanges), na.rm=TRUE)
     

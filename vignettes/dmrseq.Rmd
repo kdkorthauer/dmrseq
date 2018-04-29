@@ -461,8 +461,8 @@ methylation measurements. To do so, increase the values of the
 smoothing parameters should be increased. For example, to use a smoothing window
 that captures at least 500 CpGs or 50,000 basepairs that are spaced apart by no 
 more than 1e6 bases, use `minInSpan=500`, `bpSpan=5e4`, and `maxGapSmooth=1e6`. 
-In addition, to avoid a block being broken up simply due to a gap with no covered 
-CpGs, you can increase the `maxGap` parameter.
+In addition, to avoid a block being broken up simply due to a gap with no 
+covered CpGs, you can increase the `maxGap` parameter.
 
 ```{r blocks, message=TRUE, warning=TRUE}
 testCovariate <- "CellType"
@@ -478,13 +478,15 @@ head(blocks)
 ```
 
 The top hit is `r signif(width(blocks)[1]/1e3, 3)` thousand basepairs wide. 
-In general, it also might be advised to decrease the cutoff when detecting blocks, 
-since a smaller methylation
+In general, it also might be advised to decrease the cutoff when detecting 
+blocks, since a smaller methylation
 difference might be biologically significant if it is maintained 
 over a large genomic region. Note that block-finding can be more computationally
 intensive since we are fitting region-level models to large numbers of CpGs at a
 time. In the toy example above we are only searching over 5,000 CpGs (which
-span `r signif((max(end(bs[120001:125000,])) - min(start(bs[120001:125000,])))/1e3,3)` 
+span 
+`r signif((max(end(bs[120001:125000,])) - 
+min(start(bs[120001:125000,])))/1e3,3)` 
 thousand basepairs), so we do not find enough null
 candidate regions to carry out inference and obtain significance levels.
 
