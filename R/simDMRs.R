@@ -53,7 +53,8 @@
 #' 
 simDMRs <- function(bs, num.dmrs = 3000, delta.max0 = 0.3) {
     # check that all loci have coverage in every sample
-    zero.cov <- which(rowSums(getCoverage(bs, type="Cov") == 0) > 0)
+    zero.cov <- which(rowSums(as.matrix(getCoverage(bs, 
+                                             type="Cov")) == 0) > 0)
     if (length(zero.cov) > 0){
       stop("Zero coverage found for at least one sample in ", length(zero.cov),
            " loci. Please filter for loci with coverage at least one in ",
@@ -164,7 +165,7 @@ simDMRs <- function(bs, num.dmrs = 3000, delta.max0 = 0.3) {
             factor(paste0("Condition", c(rep(1, sampleSize), 
                                          rep(2, ncol(bs) - sampleSize)))), 
             colMeans)
-        mn.cov <- rowMeans(data.frame(mn.cov[[1]], mn.cov[[2]]))
+        mn.cov <- rowMeans(cbind(mn.cov[[1]], mn.cov[[2]]))
         dmr.mncov[u] <- mean(mn.cov)
         
         

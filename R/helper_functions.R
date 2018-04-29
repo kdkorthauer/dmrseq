@@ -96,24 +96,36 @@ getEstimatePooled <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
         lev2 <- 0
         
         # pooled
-        est <- rowSums(meth.mat[, design[, coeff] == lev1])/
-          rowSums(cov.mat[, design[,coeff] == lev1]) - 
-          rowSums(meth.mat[, design[, coeff] == lev2])/
-          rowSums(cov.mat[, design[, coeff] == lev2])
+        est <- DelayedMatrixStats::rowSums2(meth.mat[, 
+                                            unname(design[, coeff] == lev1)])/
+          DelayedMatrixStats::rowSums2(cov.mat[, 
+                                            unname(design[,coeff] == lev1)]) - 
+          DelayedMatrixStats::rowSums2(meth.mat[, 
+                                            unname(design[, coeff] == lev2)])/
+          DelayedMatrixStats::rowSums2(cov.mat[, 
+                                            unname(design[, coeff] == lev2)])
         
-        sd <- cbind(rowMads(meth.mat[, design[, coeff] == lev1]/
-                  cov.mat[, design[, coeff] == lev1], na.rm=TRUE)^2, 
-                  rowMads(meth.mat[, design[, coeff] == lev2]/
-                  cov.mat[, design[, coeff] == lev2], na.rm=TRUE)^2)
+        sd <- cbind(DelayedMatrixStats::rowMads(meth.mat[, 
+                                              unname(design[, coeff] == lev1)]/
+                  cov.mat[, unname(design[, coeff] == lev1)], na.rm=TRUE)^2, 
+                  DelayedMatrixStats::rowMads(meth.mat[, 
+                                              unname(design[, coeff] == lev2)]/
+                  cov.mat[, unname(design[, coeff] == lev2)], na.rm=TRUE)^2)
         # when sd is zero because one of the groups had only a single sample
         # with nonzero coverage, impute with the other group's sd est
-        sd[rowSums(cov.mat[, design[, coeff] == lev1] > 0) == 1 &
-           rowSums(cov.mat[, design[, coeff] == lev2] > 0) == 1,] <- 1
-        sd[rowSums(cov.mat[, design[, coeff] == lev1] > 0) == 1,1] <- 
-          sd[rowSums(cov.mat[, design[, coeff] == lev1] > 0) == 1,2]
-        sd[rowSums(cov.mat[, design[, coeff] == lev2] > 0) == 1,2] <- 
-          sd[rowSums(cov.mat[, design[, coeff] == lev2] > 0) == 1,1]
-        sd <- 1.4826 * sqrt(rowSums(sd))
+        sd[DelayedMatrixStats::rowSums2(cov.mat[, 
+                              unname(design[, coeff] == lev1)] > 0) == 1 &
+          DelayedMatrixStats::rowSums2(cov.mat[, 
+                              unname(design[, coeff] == lev2)] > 0) == 1,] <- 1
+        sd[DelayedMatrixStats::rowSums2(cov.mat[, 
+                              unname(design[, coeff] == lev1)] > 0) == 1,1] <- 
+          sd[DelayedMatrixStats::rowSums2(cov.mat[, 
+                              unname(design[, coeff] == lev1)] > 0) == 1,2]
+        sd[DelayedMatrixStats::rowSums2(cov.mat[, 
+                              unname(design[, coeff] == lev2)] > 0) == 1,2] <- 
+          sd[DelayedMatrixStats::rowSums2(cov.mat[, 
+                              unname(design[, coeff] == lev2)] > 0) == 1,1]
+        sd <- 1.4826 * sqrt(rowSums2(sd))
         
         return(list(rawBeta = est, sd = sd))
     } else {
@@ -144,21 +156,22 @@ bumphunt <- function(bs,
     
     # get 75th percentile of mean coverage genomewide before subsetting
     # by chromosome
-    covQ75 <- quantile(rowMeans(as.matrix(getCoverage(bs, type="Cov"))), 0.75)
+    covQ75 <- quantile(DelayedMatrixStats::rowMeans2(getCoverage(bs, 
+                                                        type="Cov")), 0.75)
   
     tab <- NULL
     for (chromosome in chrs) {
-      meth.mat <- as.matrix(getCoverage(chrSelectBSseq(bs, chromosome), 
-                                        type = "M"))
-      cov.mat <- as.matrix(getCoverage(chrSelectBSseq(bs, chromosome), 
-                                       type = "Cov"))
+      meth.mat <- getCoverage(chrSelectBSseq(bs, chromosome), 
+                                        type = "M")
+      cov.mat <- getCoverage(chrSelectBSseq(bs, chromosome), 
+                                       type = "Cov")
       pos <- start(chrSelectBSseq(bs, chromosome))
       chr <- as.character(seqnames(chrSelectBSseq(bs, chromosome)))
     
       if (verbose) 
         message("...Chromosome ", chromosome, ": ", appendLF = FALSE)
     
-      cov.means <- rowMeans(cov.mat)
+      cov.means <- DelayedMatrixStats::rowMeans2(cov.mat)
     
       if (length(unique(design[, coeff])) == 2 &&
           length(coeff) == 1 &&
@@ -750,8 +763,8 @@ smoother <- function(y, x = NULL, weights = NULL, chr = chr,
         for (i in seq(along = Indexes)) {
             Index <- Indexes[[i]]
             if (clusterL[i] >= minNumRegion && 
-                sum(rowSums(is.na(yi[Index, , drop = FALSE])) == 
-                0) >= minNumRegion) {
+                sum(DelayedMatrixStats::rowSums2(is.na(yi[Index, , 
+                                       drop = FALSE])) == 0) >= minNumRegion) {
                 
                 # for local DMRs, balance minInSpan and bpSpan
                 if (!is.null(bpSpan2)){ 
@@ -822,21 +835,22 @@ getEstimate <- function(mat, design, coeff) {
     Q <- qr.Q(QR)
     R <- qr.R(QR)
     df.residual <- ncol(mat) - QR$rank
-    bhat <- t(tcrossprod(backsolve(R, t(Q)), mat))
+    bhat <- t(tcrossprod(backsolve(R, t(Q)), as.matrix(mat)))
     
     if (!is.matrix(bhat)) 
       b <- matrix(b, ncol = 1)
-    if (!is.matrix(mat)) 
+    if (!("matrix" %in% class(mat)) && !("DelayedMatrix" %in% class(mat))) 
       mat <- matrix(mat, nrow = 1)
     
-    meth.diff <- rowSums(exp(bhat))/(1 + rowSums(exp(bhat))) - 
+    meth.diff <- DelayedMatrixStats::rowSums2(exp(bhat))/
+                 (1 + DelayedMatrixStats::rowSums2(exp(bhat))) - 
                  exp(bhat[,1])/(1 + exp(bhat[,1]))
     
     X <- rep(design, each = nrow(mat))
     X1 <- design
 
-    res <- mat - t(tcrossprod(design, bhat))
-    se2 <- rowSums(res ^ 2) / df.residual
+    res <- as.matrix(mat) - t(tcrossprod(design, bhat))
+    se2 <- DelayedMatrixStats::rowSums2(res ^ 2) / df.residual
     vb <- chol2inv(R)[coeff[1],coeff[1]] * se2
     
     out <- list(meth.diff = meth.diff, 

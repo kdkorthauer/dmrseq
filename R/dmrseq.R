@@ -119,8 +119,7 @@
 #' @keywords inference
 #' @importFrom outliers grubbs.test
 #' @importFrom bumphunter clusterMaker getSegments
-#' @importFrom matrixStats colMedians
-#' @importFrom matrixStats rowMads
+#' @importFrom DelayedMatrixStats colMedians rowMads rowSums2 rowMeans2
 #' @importFrom stats formula anova as.formula
 #' 
 #' @importClassesFrom bsseq BSseq 
@@ -303,7 +302,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
       filter <- NULL
       for (l in seq_along(lev)){
         filter <- rbind(filter,
-              1*(rowSums(getCoverage(bs)[,pData(bs)[[testCovariate]] == 
+              1*(DelayedMatrixStats::rowSums2(getCoverage(bs)[,pData(bs)[[testCovariate]] == 
                                            lev[l]]) == 0))
       }
       filter <- which( apply(filter, 2, max) > 0 )
