@@ -21,21 +21,15 @@ on samples as small as two per group.
 
 ## Installation
 
-**dmrseq** is now available on 
+**dmrseq** is available on 
 [Bioconductor](https://bioconductor.org/packages/dmrseq). You can install
-it with R version 3.5.0 or higher (R-devel)
+it with R version 3.5.0 or higher
 with the following commands:
 
 ```
 source("https://bioconductor.org/biocLite.R")
 biocLite("dmrseq")
 ```
-
-If you don't have R-devel installed, until the next Bioconductor release, you
-may install **dmrseq** with R version 3.4.0
-or higher from the `R-3.4` branch with the following command:
-
-`devtools::install_github("kdkorthauer/dmrseq", ref="R-3.4")`
 
 ## Getting started
 
