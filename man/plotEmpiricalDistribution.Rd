@@ -28,7 +28,9 @@ a ggplot object
 }
 \description{
 Uses ggplot2 to plot smoothed density histograms of methylation
-proportions (beta values), or coverage. The number of curves plotted 
+proportions (beta values), or coverage. Methylation proportion densities
+are weighted by coverage.
+The number of curves plotted 
 will be equal to the number of different values of \code{testCovariate},
 unless \code{bySample} is TRUE. This can take quite some time to 
 execute for a large object, so it is recommended to first take a random

@@ -1,7 +1,9 @@
 #' Plot the empirical distribution of the methylation beta vals or coverage
 #' 
 #' Uses ggplot2 to plot smoothed density histograms of methylation
-#' proportions (beta values), or coverage. The number of curves plotted 
+#' proportions (beta values), or coverage. Methylation proportion densities
+#' are weighted by coverage.
+#' The number of curves plotted 
 #' will be equal to the number of different values of \code{testCovariate},
 #' unless \code{bySample} is TRUE. This can take quite some time to 
 #' execute for a large object, so it is recommended to first take a random
@@ -76,8 +78,18 @@ plotEmpiricalDistribution <- function(bs,
     
     if (!bySample){
       if (type=="M"){
+        # compute weights - sum over all samples in group ##
+        covtots <- rep(NA, ncol(cov.matm))
+        names(covtots) <- pData(bs)[,mC]
+        for(l in unique(pData(bs)[,mC])){
+          covtots[names(covtots) == l] <- sum(colSums(cov.matm)[pData(bs)[,mC] == l]) 
+        }
+        
+        wt.matm <- data.frame(t(t(cov.matm) / covtots)) 
+        meth.levelsm$wt <- utils::stack(wt.matm)$values 
+        
         p1 <- ggplot(meth.levelsm, 
-                 aes(M, colour = group, group = group)) + 
+                 aes(M, colour = group, group = group, weight = wt)) + 
           geom_line(adjust = adj, alpha = 0.6, stat = "density", size = 1.3) + 
         xlab("Methylation Proportion") + 
         theme_bw()  # colour=condition
@@ -91,8 +103,11 @@ plotEmpiricalDistribution <- function(bs,
       }
     }else{
       if (type=="M"){
+        wt.matm <- data.frame(t(t(cov.matm) / colSums(cov.matm))) 
+        meth.levelsm$wt <- utils::stack(wt.matm)$values 
+        
         p1 <- ggplot(meth.levelsm, 
-                     aes(M, colour = group, group = sample)) + 
+                     aes(M, colour = group, group = sample, weight = wt)) + 
           geom_line(adjust = adj, alpha = 0.6, stat = "density", size = 1.3) +
           xlab("Methylation Proportion") + 
           theme_bw()  # colour=condition
