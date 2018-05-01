@@ -35,7 +35,7 @@ If you don't have R 3.5.0 or higher, please go to
 
 As a *last resort*, currently you may install **dmrseq** with R version 3.4.0
 or higher from the `R-3.4` branch with the following command (_**this branch will
-soon be deprecated**_:
+soon be deprecated**_):
 
 `devtools::install_github("kdkorthauer/dmrseq", ref="R-3.4")`
 
