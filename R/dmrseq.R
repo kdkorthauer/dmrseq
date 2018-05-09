@@ -97,6 +97,11 @@
 #' @param blockSize numeric value indicating the minimum number of basepairs 
 #'  to be considered a block (only used if \code{block}=TRUE). Default is 
 #'  5000 basepairs.
+#' @param chrsPerChunk a positive integer value indicating the number of 
+#'  chromosomes per chunk. The default is 1, meaning that the data will be 
+#'  looped through one chromosome at a time. When pairing up multiple 
+#'  chromosomes per chunk, sizes (in terms of numbers of CpGs) will be taken
+#'  into consideration to balance the sizes of each chunk.
 #' @return a \code{GRanges} object that contains the results of the inference. 
 #'    The object contains one row for each candidate region, sorted by q-value
 #'    and then chromosome. The standard 
@@ -163,7 +168,8 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
                    verbose = TRUE,  
                    maxPerms = 10, matchCovariate = NULL, 
                    BPPARAM = bpparam(), stat = "stat", 
-                   block = FALSE, blockSize = 5000) {
+                   block = FALSE, blockSize = 5000,
+                   chrsPerChunk = 1) {
     
     stopifnot(class(bs) == "BSseq")
     
@@ -213,6 +219,20 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
         }
     }
     
+    # check that chrsPerChunk value makes sense
+    if (chrsPerChunk != 1){
+      if (chrsPerChunk%%1 != 0){
+        stop("chrsPerChunk must be an integer")
+      }else if(chrsPerChunk < 1){
+        stop("chrsPerChunk must be strictly positive")
+      }else if(chrsPerChunk > length(unique(seqnames(bs)))){
+        stop("chrsPerChunk can't be larger than the total",
+             " number of chromosomes")
+      }else if(!identical(as.character(seqnames(bs)@values), seqlevels(bs))){
+        stop("BSseq object must be ordered if breaking computation ",
+             "into multiple chromosomes per chunk (see bsseq::orderBSseq())")
+      }
+    }
     
     # construct the design matrix using the pData of bs
     if (ncol(pData(bs)) < max(testCovariate, adjustCovariate)) {
@@ -320,30 +340,31 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
     
     if (bpparam()$workers == 1) {
       if (verbose) {
-        mes <- "Using a single core (backend: %s).
-                  "
+        mes <- "Using a single core (backend: %s)."
         message(sprintf(mes, backend))
       }
       parallel <- FALSE
     } else {
       if (verbose) {
         mes <- paste0("Parallelizing using %s workers/cores ", 
-                      "(backend: %s).
-                        ")
+                      "(backend: %s).")
         message(sprintf(mes, bpparam()$workers, backend))
       }
       parallel <- TRUE
     }
+    message("Computing on ", chrsPerChunk, 
+            " chromosome(s) at a time.\n")
     
     message("Detecting candidate regions with coefficient larger than ",
                    unique(abs(cutoff)), 
-        " in magnitude.")
+           " in magnitude.")
     OBS <- bumphunt(bs=bs, design = design, 
                     coeff = coeff, coeff.adj = coeff.adj, minInSpan = minInSpan,
                     minNumRegion = minNumRegion, cutoff = cutoff, 
                     maxGap = maxGap, maxGapSmooth = maxGapSmooth, 
                     smooth = smooth, bpSpan = bpSpan, verbose = verbose, 
-                    parallel = parallel, block = block, blockSize = blockSize)
+                    parallel = parallel, block = block, blockSize = blockSize,
+                    chrsPerChunk = chrsPerChunk)
    
     # check that at least one candidate region was found; if there were none 
     # there is no need to go on to compute permutation tests...
@@ -512,7 +533,8 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
                                    maxGap = maxGap, maxGapSmooth = maxGapSmooth,
                                    smooth = smooth, bpSpan = bpSpan, 
                                    verbose = verbose, parallel = parallel,
-                                   block = block, blockSize = blockSize)
+                                   block = block, blockSize = blockSize,
+                                   chrsPerChunk = chrsPerChunk)
             
             if (verbose) {
               message("* ", j, " out of ", ncol(perms), 
@@ -598,25 +620,14 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
     }
     
     # convert output into GRanges, with indexStart/indexEnd as IRanges
-    # convert index from within chromosome to overall
-    chrlengths <- cumsum(table(seqnames(bs)))
-    chrs <- unique(as.character(seqnames(bs)))
-    for (j in seq_len(length(chrs)-1)) {
-      ch <- chrs[j+1]
-      OBS$indexStart[OBS$chr == ch] <- OBS$indexStart[OBS$chr == ch] +
-        chrlengths[names(chrlengths) == chrs[j]] 
-      OBS$indexEnd[OBS$chr == ch] <- OBS$indexEnd[OBS$chr == ch] +
-        chrlengths[names(chrlengths) == chrs[j]] 
-    }
-    
     indexIR <- IRanges(OBS$indexStart, OBS$indexEnd)
     OBS.gr <- makeGRangesFromDataFrame(OBS[,-c(4:5)], 
                                        keep.extra.columns = TRUE)
     OBS.gr$index <- indexIR
+    names(OBS.gr) <- NULL
     
-    
-    # sort on qval overall (currently sorted within chromsome)
-    OBS.gr <- OBS.gr[order(OBS.gr$qval, seqnames(OBS.gr)),]
+    # sort on pval overall (currently sorted within chromsome)
+    OBS.gr <- OBS.gr[order(OBS.gr$pval, -abs(OBS.gr$stat)),]
     
     return(OBS.gr)
 }
