@@ -8,7 +8,7 @@ dmrseq(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
   minNumRegion = 5, smooth = TRUE, bpSpan = 1000, minInSpan = 30,
   maxGapSmooth = 2500, maxGap = 1000, verbose = TRUE, maxPerms = 10,
   matchCovariate = NULL, BPPARAM = bpparam(), stat = "stat",
-  block = FALSE, blockSize = 5000)
+  block = FALSE, blockSize = 5000, chrsPerChunk = 1)
 }
 \arguments{
 \item{bs}{bsseq object containing the methylation values as well as the 
@@ -119,6 +119,12 @@ one interior knot per each 10kb of length (up to 10 interior knots).}
 \item{blockSize}{numeric value indicating the minimum number of basepairs 
 to be considered a block (only used if \code{block}=TRUE). Default is 
 5000 basepairs.}
+
+\item{chrsPerChunk}{a positive integer value indicating the number of 
+chromosomes per chunk. The default is 1, meaning that the data will be 
+looped through one chromosome at a time. When pairing up multiple 
+chromosomes per chunk, sizes (in terms of numbers of CpGs) will be taken
+into consideration to balance the sizes of each chunk.}
 }
 \value{
 a \code{GRanges} object that contains the results of the inference. 

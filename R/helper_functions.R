@@ -140,11 +140,11 @@ bumphunt <- function(bs,
     minInSpan = 30, minNumRegion = 5, 
     cutoff = NULL, maxGap = 1000, maxGapSmooth = 2500, smooth = FALSE, 
     bpSpan = 1000, verbose = TRUE, parallel = FALSE, block = FALSE,
-    blockSize = 5000, ...) {
+    blockSize = 5000, chrsPerChunk = 1, ...) {
     
     # calculate smoothing span from minInSpan
     bpSpan2 <- NULL
-    chrs <- unique(as.character(seqnames(bs)))
+    chrs <- as.character(unique(seqnames(bs)))
     if (!block){ # don't balance minInSpan and bpSpan for blocks
       for (ch in chrs) {
         pos <- chrSelectBSseq(bs, ch)
@@ -159,6 +159,39 @@ bumphunt <- function(bs,
     covQ75 <- quantile(DelayedMatrixStats::rowMeans2(getCoverage(bs, 
                                                         type="Cov")), 0.75)
   
+    if (chrsPerChunk > 1){
+      sizeRank <- rank(-seqnames(bs)@lengths, ties.method = "first") 
+      nChunks <- ceiling(length(unique(seqnames(bs))) / chrsPerChunk)
+      chrlengths <- rep(NA, nChunks)
+      all.chrs <- as.character(unique(seqnames(bs)))
+      chrs <- vector("list", nChunks)
+      chunk <- 1
+      while ((chunk <= nChunks || length(chrs[[chunk]]) < chrsPerChunk) &&
+             length(all.chrs) > 0 ){
+        largest <- which.min(sizeRank)
+        smallest <- which.max(sizeRank)
+        if (largest != smallest && ( length(chrs[[chunk]]) == 0 || 
+                    (chrsPerChunk - length(chrs[[chunk]])) > 1 )){
+          chrs[[chunk]] <- c(chrs[[chunk]], all.chrs[c(largest, smallest)])
+          all.chrs <- all.chrs[-c(largest,smallest)]
+          sizeRank <- sizeRank[-c(largest,smallest)]
+        }else{
+          chrs[[chunk]] <- c(chrs[[chunk]], all.chrs[largest])
+          all.chrs <- all.chrs[-largest]
+          sizeRank <- sizeRank[-largest]
+        }
+        # put in original seqlevel order
+        chrs[[chunk]] <- as.character(seqnames(chrSelectBSseq(bs, 
+                                               chrs[[chunk]]))@values) 
+        if(length(chrs[[chunk]]) == chrsPerChunk){
+          chunk <- min(nChunks, chunk + 1)
+        }
+      }
+    }else{
+      chrlengths <- cumsum(table(seqnames(bs)))
+      names(chrlengths) <- chrs
+    }
+
     tab <- NULL
     for (chromosome in chrs) {
       meth.mat <- getCoverage(chrSelectBSseq(bs, chromosome), 
@@ -169,7 +202,8 @@ bumphunt <- function(bs,
       chr <- as.character(seqnames(chrSelectBSseq(bs, chromosome)))
     
       if (verbose) 
-        message("...Chromosome ", chromosome, ": ", appendLF = FALSE)
+        message("...Chromosome ", paste(chromosome, collapse = ", "),
+                ": ", appendLF = FALSE)
     
       cov.means <- DelayedMatrixStats::rowMeans2(cov.mat)
     
@@ -205,7 +239,7 @@ bumphunt <- function(bs,
         
         beta.tmp <- smoother(y = rawBeta, 
                                  x = pos, 
-                                 chr = chromosome, maxGapSmooth = maxGapSmooth,
+                                 chr = chr, maxGapSmooth = maxGapSmooth,
                                  weights = weights, 
                                  minNumRegion = minNumRegion, 
                                  minInSpan = minInSpan, 
@@ -248,6 +282,34 @@ bumphunt <- function(bs,
             message("No regions found.")
         return(NULL)
     }
+    
+    # convert index from within chromosome to overall
+    if (length(chrs) > 0){
+      if (is.list(chrs)){ # make length relative to single chrs
+        for(ch in chrs){
+          if(length(ch) > 1){
+            sublengths <- cumsum(table(seqnames(chrSelectBSseq(bs, ch))))
+            for (j in seq_len(length(ch)-1)) {
+              tab$indexStart[tab$chr %in% ch[j+1]] <- tab$indexStart[tab$chr %in% ch[j+1]] -
+                sublengths[names(sublengths) == ch[j]]
+              tab$indexEnd[tab$chr %in% ch[j+1]] <- tab$indexEnd[tab$chr %in% ch[j+1]] -
+                sublengths[names(sublengths) == ch[j]]
+            }
+          }
+        } 
+      }
+      
+      chrs <- unique(seqnames(bs))
+      chrlengths <- cumsum(table(seqnames(bs)))
+      for (j in seq_len(length(chrs)-1)) {
+        ch <- chrs[[j+1]]
+        tab$indexStart[tab$chr %in% ch] <- tab$indexStart[tab$chr %in% ch] +
+          chrlengths[names(chrlengths) == chrs[j]]
+        tab$indexEnd[tab$chr %in% ch] <- tab$indexEnd[tab$chr %in% ch] +
+          chrlengths[names(chrlengths) == chrs[j]] 
+      }
+    }
+    
     return(tab)
 }
 
@@ -285,8 +347,8 @@ refineEdges <- function(y, candidates = NULL,
                                         FUN=refineOne, sig=sig)
         candidates[vapply(candidates, is.null, FUN.VALUE=logical(1))] <- NULL
       } else if (length(which.long) == 1) {
-        candidates[[which.long]] <- lapply(candidates[which.long], 
-                                           FUN=refineOne, sig=sig)
+        candidates[[which.long]] <- unlist(lapply(candidates[which.long], 
+                                           FUN=refineOne, sig=sig))
       }
     }
     return(candidates)
@@ -365,8 +427,8 @@ trimEdges <- function(x, candidates = NULL, verbose = FALSE, minNumRegion) {
                                          FUN=trimOne, x=x, sig=sig)
         candidates[vapply(candidates, is.null, FUN.VALUE=logical(1))] <- NULL
       } else if (length(which.long) == 1) {
-        candidates[[which.long]] <- lapply(candidates[which.long], 
-                                           FUN=trimOne, x=x, sig=sig)
+        candidates[[which.long]] <- unlist(lapply(candidates[which.long], 
+                                           FUN=trimOne, x=x, sig=sig))
       }
     }
     return(candidates)
@@ -390,11 +452,12 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
        ind <- intersect(which(!is.na(x)), ind)
     }
     
-    cluster <- bumphunter::clusterMaker(chr, pos, maxGap = maxGap, 
+    cluster <- bumphunter::clusterMaker(factor(chr, levels=unique(chr)), 
+                                        pos, maxGap = maxGap, 
                                         assumeSorted = assumeSorted)
     Indexes <- bumphunter::getSegments(x = x[ind], f = cluster[ind], 
                                        cutoff = cutoff, 
-                                       assumeSorted = assumeSorted, 
+                                       assumeSorted = TRUE, 
                                        verbose = FALSE)
     
     # only keep up and down indices
@@ -516,9 +579,10 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
         }
         
         # condition to remove regions with constant methylation / unmeth values
-        if (!((length(unique(dat$meth)) == 1 && dat$meth[1] == 0) || 
-              (length(unique(dat$cov - dat$meth)) == 1 && 
-               (dat$cov - dat$meth)[1] == 0))) {
+        if (!((length(unique(na.omit(dat$meth))) == 1 && 
+               na.omit(dat$meth)[1] == 0) || 
+              (length(unique(na.omit(dat$cov - dat$meth))) == 1 && 
+               na.omit(dat$cov - dat$meth)[1] == 0))) {
             
             dat$pos <- as.numeric(factor(dat$L))
             if (block){
@@ -800,7 +864,7 @@ smoother <- function(y, x = NULL, weights = NULL, chr = chr,
     ret.all <- NULL
     
     t1 <- proc.time()
-    clusterC <- bumphunter::clusterMaker(rep(chr, length(x)), x, 
+    clusterC <- bumphunter::clusterMaker(factor(chr, levels=unique(chr)), x, 
                                          maxGap = maxGapSmooth)
     
     Indexes <- split(seq(along = clusterC), clusterC)
