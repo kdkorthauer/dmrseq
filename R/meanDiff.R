@@ -59,10 +59,10 @@ meanDiff <- function(bs, dmrs, testCovariate) {
     indexRanges <- IRanges(start(dmrs$index), end(dmrs$index))
     prop.mat.dmr <- extractROWS(prop.mat, indexRanges)
     prop.mat1.means <- DelayedMatrixStats::rowMeans2(prop.mat.dmr[,
-                                 unname(design[, coeff] == levs[1])],
+                                 design[, coeff] == levs[which.min(levs)]],
                                  na.rm=TRUE)
     prop.mat2.means <- DelayedMatrixStats::rowMeans2(prop.mat.dmr[,
-                                 unname(design[, coeff] == levs[2])],
+                                 design[, coeff] == levs[which.max(levs)]],
                                  na.rm=TRUE)
     
     meanDiff <- IRanges::mean(IRanges::relist(prop.mat2.means - prop.mat1.means,
