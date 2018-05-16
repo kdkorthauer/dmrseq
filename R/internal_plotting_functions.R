@@ -339,16 +339,22 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
   } else if (length(x) > 100) {
     lwd <- 2
   }
+  
+  spn <- max(1 - (1/160)*sum(z >= pointsMinCov), 0.75)
 
-  loess_fit <- loess(y[z >= pointsMinCov] ~ x[z >= pointsMinCov],
-                    weights = z[z >= pointsMinCov])
+  y[y==1] <- 0.99
+  y[y==0] <- 0.01
+  logit <- function(p){ log(p/(1-p))}
+  inv.logit <- function(l){ exp(l) / (1 + exp(l)) }
+  
+  loess_fit <- loess(logit(y[z >= pointsMinCov]) ~ x[z >= pointsMinCov],
+                    weights = z[z >= pointsMinCov], span = spn)
   
   xl <- seq(min(x[z >= pointsMinCov], na.rm=TRUE), 
             max(x[z >= pointsMinCov], na.rm=TRUE), 
            (max(x[z >= pointsMinCov], na.rm=TRUE) - 
               min(x[z >= pointsMinCov], na.rm=TRUE))/500)
-  
-  lines(xl, predict(loess_fit,xl), 
+  lines(xl, inv.logit(predict(loess_fit,xl)), 
         col = .makeTransparent(.darken(col), 175), lwd = lwd)
 }
 
@@ -420,22 +426,26 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
         }
         
         for(sampIdx in seq_len(ncol(BSseq))){
-          .dmrPlotLines(positions, rawPs[, sampIdx], coverage[, sampIdx], 
+          if (sum(coverage[, sampIdx] >= pointsMinCov) > 1){
+            .dmrPlotLines(positions, rawPs[, sampIdx], coverage[, sampIdx], 
                         col = colEtc$col[sampIdx], 
                         lwd = colEtc$lwd[sampIdx],
                         pointsMinCov = pointsMinCov, 
                         maxCov = quantile(coverage, 0.95), 
                         regionWidth = end(gr) - 
                           start(gr))
+          }
         }
         
     } else {
         for(sampIdx in seq_len(ncol(BSseq))){
-          .dmrPlotLines0(positions, rawPs[, sampIdx], 
+          if (sum(!is.na(rawPs[, sampIdx])) > 1){
+            .dmrPlotLines0(positions, rawPs[, sampIdx], 
                          col = colEtc$col[sampIdx], 
                          lty = colEtc$lty[sampIdx], lwd = colEtc$lwd[sampIdx], 
                          plotRange = c(start(gr), 
                                        end(gr)))
+          }
         }
     }
     
