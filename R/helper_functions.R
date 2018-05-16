@@ -140,7 +140,7 @@ bumphunt <- function(bs,
     minInSpan = 30, minNumRegion = 5, 
     cutoff = NULL, maxGap = 1000, maxGapSmooth = 2500, smooth = FALSE, 
     bpSpan = 1000, verbose = TRUE, parallel = FALSE, block = FALSE,
-    blockSize = 5000, chrsPerChunk = 1, ...) {
+    blockSize = 5000, chrsPerChunk = 1, fact = FALSE, ...) {
     
     # calculate smoothing span from minInSpan
     bpSpan2 <- NULL
@@ -274,7 +274,7 @@ bumphunt <- function(bs,
         minNumRegion = minNumRegion, design = design, coeff = coeff, 
         coeff.adj = coeff.adj,
         verbose = verbose, parallel = parallel,
-        pDat=pData(bs), block = block, blockSize = blockSize))
+        pDat=pData(bs), block = block, blockSize = blockSize, fact = fact))
     }
     
     if (length(tab) == 0) {
@@ -312,7 +312,6 @@ bumphunt <- function(bs,
     
     return(tab)
 }
-
 
 refineEdges <- function(y, candidates = NULL, 
     cutoff = qt(0.975, nrow(design) - 2), verbose = FALSE, 
@@ -445,7 +444,7 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
     chr = chr, x, y = x, ind = seq(along = x), order = TRUE, minNumRegion = 5, 
     maxGap = 300, cutoff = quantile(abs(x), 0.99), assumeSorted = FALSE, 
     verbose = verbose, design = design, coeff = coeff, coeff.adj = coeff.adj,
-    parallel = parallel, pDat, block, blockSize) {
+    parallel = parallel, pDat, block, blockSize, fact = fact) {
     if (any(is.na(x[ind]))) {
        message(sum(is.na(x[ind]))," CpG(s) excluded due to zero coverage. ",
               appendLF = FALSE)
@@ -550,6 +549,34 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
                 "maxGapSmooth increase computational efficiency.")
       }
     }
+    
+    # only keep regions with replicates in each group for at least two CpGs
+    # for factor comparisons 
+    replicateStatus <- function(candidates, design, coeff, fact){
+      levs <- unique(design[, coeff])
+      
+      if (fact){
+        indexRanges <- IRanges(unlist(lapply(candidates, min)), 
+                               unlist(lapply(candidates, max)))
+        cov.mat.cand <- extractROWS(cov.mat, indexRanges)
+        
+        prev.mat <- rep(TRUE, nrow(cov.mat.cand))
+        for (l in levs){
+          cov.matl <- DelayedMatrixStats::rowSums2(
+                        cov.mat.cand[,design[, coeff] == l] > 0) > 1 &
+                      prev.mat
+          prev.mat <- cov.matl
+        }
+
+        rel <- unlist(lapply(IRanges::relist(cov.matl,indexRanges), sum))
+        
+        return(which(rel > 1))
+      }else{
+        return(seq_along(candidates))
+      }
+    }
+    
+    Indexes <- Indexes[replicateStatus(Indexes, design, coeff, fact)]
     
     numCandidates <- length(Indexes)
     if (numCandidates == 0) {
