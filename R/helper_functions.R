@@ -611,7 +611,7 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
               (length(unique(na.omit(dat$cov - dat$meth))) == 1 && 
                na.omit(dat$cov - dat$meth)[1] == 0))) {
             
-            dat$pos <- as.numeric(factor(dat$L))
+          dat$pos <- as.numeric(factor(dat$L))
             if (block){
               # one interior knot per 10K basepairs, with max of 10
               k <- min(ceiling((max(pos[ix]) - min(pos[ix])) / 10000) + 1,
@@ -635,119 +635,98 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
               }
             }
             
-            Y <- as.matrix(dat$meth)
-            N <- as.matrix(dat$cov)
+          Y <- as.matrix(dat$meth)
+          N <- as.matrix(dat$cov)
+          
+          dat$MedCov <- rep(as.numeric(by(dat$cov, dat$pos, median)), 
+                            nrow(design))
+          # remove rows with zero coverage
+          whichZ <- which(dat$cov==0)
+          if (length(whichZ)>0){
+            dat <- dat[-whichZ,]
+          }
+          
+          ## small constants to bound p and phi pick this such that min value
+          ##  of z[m>0] is greater than all values of z[m==0]
+          c0 <- 0.05
+          c1 <- 0.001
+          
+          ## check to make sure data is complete
+          ixn <- N > 0
+          if (mean(ixn) < 1) {
+            ## has missing entries
+            X <- X[ixn, , drop = FALSE]
+            Y <- Y[ixn]
+            N <- N[ixn]
+            ## check design not enough df for regression
+            if (nrow(X) < ncol(X) + 1) {
+              message("Not enough degree of freedom to fit the ", 
+                      "model. Drop some terms in formula")
+              return(data.frame(beta = NA, stat = NA, constant = FALSE))
+            }
+            ## design is not of full rank because of missing. Skip
+            if (any(abs(svd(X)$d) < 1e-08)) 
+              return(data.frame(beta = NA, stat = NA, constant = FALSE))
+          }
+          
+          ## Transform the methylation levels.  Add a small constant to bound 
+          ## away from 0/1.
+          dat$Z <- asin(2 * (Y + c0)/(N + 2 * c0) - 1)
+          
+          # Add a tiny amt of jitter to avoid numerically constant Z vals 
+          # across a sample over the entire region
+          if (max(table(dat$Z, dat$sample)) >= length(ix) - 1) {
+            dat$Z <- asin(2 * (Y + c0)/(N + 2 * c0) - 1) + 
+              runif(length(Y), -c1, c1)
+          }
             
-            dat$MedCov <- rep(as.numeric(by(dat$cov, dat$pos, median)), 
-                              nrow(design))
-            # remove rows with zero coverage
-            whichZ <- which(dat$cov==0)
-            if (length(whichZ)>0){
-              dat <- dat[-whichZ,]
+            if (length(ix) < 40) {
+              correlation <- correlationSmall
+              
+              # check for presence of 1-2 coverage outliers that could end up
+              # driving the difference between the groups
+              if (length(unique(dat$MedCov[seq_len(length(ix))])) > 1 && 
+                  length(ix) <= 10) {
+                grubbs.one <- suppressWarnings(grubbs.test(
+                  dat$MedCov[seq_len(length(ix))])$p.value)
+                grubbs.two <- suppressWarnings(
+                  grubbs.test(dat$MedCov[seq_len(length(ix))], 
+                  type = 20)$p.value)
+              } else {
+                grubbs.one <- grubbs.two <- 1
+              }
+                
+              if (grubbs.one < 0.01 || grubbs.two < 0.01) {
+                weights <- varIdent(form = ~1)
+              }
+              
             }
             
-            ## small constants to bound p and phi pick this such that min value
-            ##  of z[m>0] is greater than all values of z[m==0]
-            c0 <- 0.05
-            c1 <- 0.001
-            
-            ## check to make sure data is complete
-            ixn <- N > 0
-            if (mean(ixn) < 1) {
-                ## has missing entries
-                X <- X[ixn, , drop = FALSE]
-                Y <- Y[ixn]
-                N <- N[ixn]
-                ## check design not enough df for regression
-                if (nrow(X) < ncol(X) + 1) {
-                  message("Not enough degree of freedom to fit the ", 
-                          "model. Drop some terms in formula")
-                  return(data.frame(beta = NA, stat = NA, constant = FALSE))
-                }
-                ## design is not of full rank because of missing. Skip
-                if (any(abs(svd(X)$d) < 1e-08)) 
-                  return(data.frame(beta = NA, stat = NA, constant = FALSE))
-            }
-            
-            ## Transform the methylation levels.  Add a small constant to bound 
-            ## away from 0/1.
-            dat$Z <- asin(2 * (Y + c0)/(N + 2 * c0) - 1)
-            
-            # Add a tiny amt of jitter to avoid numerically constant Z vals 
-            # across a sample over the entire region
-            if (max(table(dat$Z, dat$sample)) >= length(ix) - 1) {
-                dat$Z <- asin(2 * (Y + c0)/(N + 2 * c0) - 1) + 
-                  runif(length(Y), -c1, c1)
-            }
-            
-            
-            if (length(ix) >= 40) {
+            # gls model fitting    
+            fit <- tryCatch({
+              summary(gls(mm, weights = weights, 
+                          data = dat, correlation = correlation))
+            }, error = function(e) {
+              return(NA)
+            })
+              
+            # error handling in case of false convergence (don't include 
+            # first variance weighting, and then corr str)
+            if(sum(is.na(fit)) == length(fit)){
+              fit <- tryCatch({
+                summary(gls(mm, data = dat, 
+                            correlation = correlation))
+              }, error = function(e) {
+                return(NA)
+              })
+              
+              if(sum(is.na(fit)) == length(fit)){
                 fit <- tryCatch({
-                  summary(gls(mm, weights = weights, 
-                              data = dat, correlation = correlation))
+                  summary(gls(mm, data = dat))
                 }, error = function(e) {
                   return(NA)
                 })
-                
-                # error handling in case of false convergence (don't include 
-                # first variance weighting, and then corr str)
-                if (sum(is.na(fit)) == length(fit)) {
-                  fit <- tryCatch({
-                    summary(gls(mm, data = dat, 
-                                correlation = correlation))
-                  }, error = function(e) {
-                    return(NA)
-                  })
-                  if (sum(is.na(fit)) == length(fit)) {
-                    fit <- tryCatch({
-                      summary(gls(mm, data = dat))
-                    }, error = function(e) {
-                      return(NA)
-                    })
-                  }
-                }
-            } else {
-                # check for presence of 1-2 coverage outliers that could end up
-                # driving the difference between the groups
-                if (length(unique(dat$MedCov[seq_len(length(ix))])) > 1 && 
-                    length(ix) <= 10) {
-                  grubbs.one <- suppressWarnings(grubbs.test(
-                    dat$MedCov[seq_len(length(ix))])$p.value)
-                  grubbs.two <- suppressWarnings(
-                    grubbs.test(dat$MedCov[seq_len(length(ix))], 
-                    type = 20)$p.value)
-                } else {
-                  grubbs.one <- grubbs.two <- 1
-                }
-                
-                if (grubbs.one < 0.01 || grubbs.two < 0.01) {
-                  weights <- varIdent(form = ~1)
-                }
-                
-                fit <- tryCatch({
-                  summary(gls(mm, weights = weights,
-                              data = dat, correlation = correlationSmall))
-                }, error = function(e) {
-                  return(NA)
-                })
-                
-                # error handling in case of false convergence (don't include 
-                # first variance weighting, and then corr str)
-                if (sum(is.na(fit)) == length(fit)) {
-                  fit <- tryCatch({
-                    summary(gls(mm, data = dat, 
-                                correlation = correlationSmall))
-                  }, error = function(e) {
-                    return(NA)
-                  })
-                  if (sum(is.na(fit)) == length(fit)) {
-                    fit <- tryCatch({
-                      summary(gls(mm, data = dat))
-                    }, error = function(e) {
-                      return(NA)
-                    })
-                  }
-                }
+              }
             }
             
             if (!(sum(is.na(fit)) == length(fit))) {
@@ -792,6 +771,39 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
         ret <- do.call("rbind", lapply(Indexes, 
             function(Index) asin.gls.cov(ix = ind[Index], 
             design = design, coeff = coeff)))
+    }
+    
+    # check for extreme beta values (rare; represents proportion differences >
+    # than 1 or large differences in sign and magnitude compared to simple 
+    # proportion difference) and re-fit without variance weighting 
+    # only for 2-group comparisons
+    if( length(coeff)==1 && fact ){
+      levs <- unique(design[, coeff])
+      indexRanges <- IRanges(unlist(lapply(Indexes, min)), 
+                             unlist(lapply(Indexes, max)))
+      prop.mat.dmr <- extractROWS(meth.mat/cov.mat, indexRanges)
+   
+      prop.mat1.means <- DelayedMatrixStats::rowMeans2(prop.mat.dmr[,
+                                  design[, coeff] == levs[which.min(levs)]],
+                                  na.rm=TRUE)
+      prop.mat2.means <- DelayedMatrixStats::rowMeans2(prop.mat.dmr[,
+                                  design[, coeff] == levs[which.max(levs)]],
+                                  na.rm=TRUE)
+    
+      simpleMeanDiff <- IRanges::mean(IRanges::relist(prop.mat2.means - 
+                                                        prop.mat1.means,
+                                              indexRanges), na.rm=TRUE)
+      
+      reFit <- which(abs(ret$beta) > pi |
+                     (abs(simpleMeanDiff - ret$beta/pi) > 1/3 & 
+                     sign(simpleMeanDiff) != sign(ret$beta)))
+      
+      if(length(reFit) > 0){
+        ret[reFit,] <- do.call("rbind", lapply(Indexes[reFit], 
+                           function(Index) asin.gls.cov(ix = ind[Index], 
+                                   design = design, coeff = coeff,
+                                   weights = NULL)))
+      }
     }
     
     df <- S4Vectors::DataFrame(ind, x = x[ind], chr = chr[ind], pos = pos[ind])
