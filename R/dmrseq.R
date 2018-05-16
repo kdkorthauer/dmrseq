@@ -364,7 +364,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
                     maxGap = maxGap, maxGapSmooth = maxGapSmooth, 
                     smooth = smooth, bpSpan = bpSpan, verbose = verbose, 
                     parallel = parallel, block = block, blockSize = blockSize,
-                    chrsPerChunk = chrsPerChunk)
+                    chrsPerChunk = chrsPerChunk, fact = fact)
    
     # check that at least one candidate region was found; if there were none 
     # there is no need to go on to compute permutation tests...
@@ -534,7 +534,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
                                    smooth = smooth, bpSpan = bpSpan, 
                                    verbose = verbose, parallel = parallel,
                                    block = block, blockSize = blockSize,
-                                   chrsPerChunk = chrsPerChunk)
+                                   chrsPerChunk = chrsPerChunk, fact = fact)
             
             if (verbose) {
               message("* ", j, " out of ", ncol(perms), 
