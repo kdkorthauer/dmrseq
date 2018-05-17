@@ -7,11 +7,11 @@
 #' 
 #' @param bs bsseq object containing the methylation values as well as the 
 #'   phenotype matrix that contains sample level covariates
-#' @param testCovariate Character value or vector indicating which variables
-#' (column names) in \code{pData(bs)} to test
+#' @param testCovariate Character value indicating which variable
+#'  (column name) in \code{pData(bs)} to test
 #'  for association of methylation levels. 
-#'  Can alternatively specify an integer value or vector indicating
-#'  which of columns of
+#'  Can alternatively specify an integer value indicating
+#'  which of column of
 #'  \code{pData(bs)} to use. This is used to construct the 
 #'  design matrix for the test statistic calculation. To run using a 
 #'  continuous or categorial covariate with more than two groups, simply pass in
@@ -29,14 +29,14 @@
 #'  which of the columns of \code{pData(bs)} to adjust for.
 #'  If not NULL (default), then this is also used to 
 #'  construct the design matrix for the test statistic calculation.
-#' @param matchCovariate an (optional) character value or vector 
-#' indicating which variables (column names) of \code{pData(bs)} 
-#' will be blocked for when 
+#' @param matchCovariate an (optional) character value 
+#'  indicating which variable (column name) of \code{pData(bs)} 
+#'  will be blocked for when 
 #'  constructing the permutations in order to
 #'  test for the association of methylation value with the 
 #'  \code{testCovariate}. 
-#'  Alternatively, you can specify an integer value or vector indicating
-#'  which columns of \code{pData(bs)} to block for.
+#'  Alternatively, you can specify an integer value indicating
+#'  which column of \code{pData(bs)} to block for.
 #'  Blocking means that only permutations with balanced
 #'  composition of \code{testCovariate} values will be used (for example if
 #'  you have samples from different gender and this is not your covariate of
@@ -49,7 +49,8 @@
 #'    CpGs in a smoothing span window if \code{smooth} is TRUE.  
 #'    Default value is 30.
 #' @param minNumRegion positive integer that represents the minimum number of
-#'    nucleotides to consider for a candidate region. Default value is 5.
+#'    nucleotides to consider for a candidate region. Default value is 5. 
+#'    Minimum value is 3.
 #' @param cutoff scalar value that represents the absolute value (or a vector 
 #'    of two numbers representing a lower and upper bound) for the cutoff of 
 #'    the single CpG coefficient that is used to discover 
@@ -181,6 +182,10 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
         stop("Must specify a value for cutoff between 0 and 1")
     subverbose <- max(as.integer(verbose) - 1L, 0)
     
+    if(minNumRegion < 3){
+      stop("minNumRegion must be at least 3")
+    }
+    
     # check statistic name
     if (!(stat %in% c("L", "area", "beta", "stat", "avg"))) {
         stop("Specified '", stat, 
@@ -204,6 +209,16 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
     
     # convert covariates to column numbers if characters
     if (is.character(testCovariate)) {
+        if(length(testCovariate) > 1)
+          stop("Only one testCovariate can be specified")
+        if(is.character(adjustCovariate)){
+          if(sum(testCovariate %in% adjustCovariate) > 0)
+            stop("adjustCovariate can't contain testCovariate")
+        }
+        if(is.character(matchCovariate)){
+          if(sum(testCovariate %in% matchCovariate))
+            stop("matchCovariate can't contain testCovariate")
+        }
         testCovariate <- which(colnames(pData(bs)) == testCovariate)
         if (length(testCovariate) == 0) {
             stop("testCovariate not found in pData(). ",
@@ -212,7 +227,11 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
     }
     
     if (is.character(adjustCovariate)) {
-        adjustCovariate <- which(colnames(pData(bs)) == adjustCovariate)
+        if(is.character(matchCovariate)){
+          if(matchCovariate == adjustCovariate)
+            stop("matchCovariate can't be identical to adjustCovariate")
+        }
+        adjustCovariate <- which(colnames(pData(bs)) %in% adjustCovariate)
         if (length(adjustCovariate) == 0) {
             stop("adjustCovariate not found in pData(). ",
                 "Please specify a valid adjustCovariate")
@@ -274,7 +293,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
     sampleSize <- table(testCov)
     if (!is.null(adjustCovariate)) {
         adjustCov <- pData(bs)[, adjustCovariate]
-        design <- model.matrix(~testCov + adjustCov)
+        design <- model.matrix(~testCov + as.matrix(adjustCov))
         colnames(design)[coeff] <- colnames(pData(bs))[testCovariate]
         colnames(design)[seq((max(coeff) + 1), ncol(design))] <- 
           colnames(pData(bs))[adjustCovariate]
@@ -294,9 +313,12 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
     }
     if (!is.null(adjustCovariate)) {
       message("Adjusting for covariate: ", 
-              colnames(pData(bs))[adjustCovariate])
+              paste(colnames(pData(bs))[adjustCovariate], collapse = ", "))
     }
     if (!is.null(matchCovariate)) {
+        if (length(matchCovariate) > 1)
+          stop("Covariate matching can only be carried out for one",
+              " covariate")
         if (length(unique(testCov)) > 2)
           stop("Covariate matching can only be carried out for 2-group",
                " comparisons")
@@ -485,8 +507,8 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
                     xr <- c(xr, match[1])
                 }
                 if(length(coeff.adj) > 0){
-                  pData(bs)[[adjustCovariate]] <- 
-                    pData.orig[[adjustCovariate]][xr]
+                  pData(bs)[,adjustCovariate] <- 
+                    pData.orig[xr,adjustCovariate]
                 }
             } else {
                 designr[, coeff] <- designr[reorder, coeff]
