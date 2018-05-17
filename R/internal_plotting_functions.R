@@ -124,6 +124,12 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
     
 }
 
+.isColor <- function(x)
+{
+  res <- try(col2rgb(x),silent=TRUE)
+  return(!"try-error"%in%class(res))
+}
+
 .dmrGetMeta <- function(object, col, lty, lwd, label) {
     ## Assumes that object has pData and sampleNames methods Code adapted from 
     ## bsseq package
@@ -133,6 +139,11 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
         if ("col" %in% names(pData(object))) 
             col <- pData(object)[["col"]] else col <- rep("black", 
                                                           nrow(pData(object)))
+    }else if (length(col) == 1){
+      if (col %in% names(pData(object)))
+        col <- pData(object)[[col]] else col <- rep("black", ncol(object))
+      if (!.isColor(col))
+        col <- rainbow(length(unique(col)))[as.numeric(as.factor(col))]
     }
     if (length(col) != ncol(object)) 
         col <- rep(col, length.out = ncol(object))
@@ -141,8 +152,13 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
     
     ## extract lty
     if (is.null(lty)) {
-        if ("lty" %in% names(pData(object))) 
-            lty <- pData(object)[["lty"]] else lty <- rep(1, ncol(object))
+      if ("lty" %in% names(pData(object)))
+        lty <- pData(object)[["lty"]] else lty <- rep(1, ncol(object))
+    }else if (length(lty) == 1){
+      if (lty %in% names(pData(object)))
+        lty <- pData(object)[[lty]] else lty <- rep(1, ncol(object))
+      if (!is.numeric(lty))
+        lty <- as.numeric(as.factor(lty))
     }
     if (length(lty) != ncol(object)) 
         lty <- rep(lty, length.out = ncol(object))
@@ -154,6 +170,11 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
         if ("lwd" %in% names(pData(object))) 
             lwd <- pData(object)[["lwd"]] else lwd <- rep(1.5, 
                                                           nrow(pData(object)))
+    }else if (length(lwd) == 1){
+      if (lwd %in% names(pData(object)))
+        lwd <- pData(object)[[lwd]] else lwd <- rep(1, ncol(object))
+      if (!is.numeric(lwd))
+        lwd <- as.numeric(as.factor(lwd))
     }
     if (length(lwd) != ncol(object)) 
         lwd <- rep(lwd, length.out = ncol(object))
@@ -165,6 +186,11 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
         if ("label" %in% names(pData(object))) 
             label <- pData(object)[["label"]] else label <- rep(NA, 
                                                                 ncol(object))
+    }else if (length(label) == 1){
+      if (label %in% names(pData(object)))
+        label <- pData(object)[[label]] else label <- rep(NA, ncol(object))
+        if (!is.character(label))
+          label <- as.character(label)
     }
     if (length(label) != ncol(object)) 
         label <- rep(label, length.out = ncol(object))
@@ -332,7 +358,7 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
 }
 
 .dmrPlotLines <- function(x, y, z, col, lwd, pointsMinCov, maxCov, 
-                          regionWidth) {
+                          regionWidth, lty) {
   
   if (length(x) > 100 && !is.null(lwd)) {
     lwd <- lwd + 1
@@ -355,7 +381,8 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
            (max(x[z >= pointsMinCov], na.rm=TRUE) - 
               min(x[z >= pointsMinCov], na.rm=TRUE))/500)
   lines(xl, inv.logit(predict(loess_fit,xl)), 
-        col = .makeTransparent(.darken(col), 175), lwd = lwd)
+        col = .makeTransparent(.darken(col), 175), lwd = lwd,
+        lty = lty)
 }
 
 .dmrPlotSmoothData <- function(BSseq, region, extend, addRegions, col, lty, lwd,
@@ -433,7 +460,8 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
                         pointsMinCov = pointsMinCov, 
                         maxCov = quantile(coverage, 0.95), 
                         regionWidth = end(gr) - 
-                          start(gr))
+                          start(gr),
+                        lty = colEtc$lty[sampIdx])
           }
         }
         

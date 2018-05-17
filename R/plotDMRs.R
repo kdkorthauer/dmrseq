@@ -209,7 +209,7 @@ plotDMRs <- function(BSseq, regions = NULL, testCovariate = NULL,
         coeff <- seq(2, (2 + length(testCovariate) - 1))
         design <- model.matrix(~pData(BSseq)[, testCovariate])
         
-        if (is.null(col)) {
+        if (is.null(col) && !("col" %in% names(pData(BSseq)))) {
             cov.unique <- unique(design[, coeff])
             colors <- gg_color_hue(length(cov.unique))
             if (length(cov.unique) == 2) {
@@ -220,7 +220,7 @@ plotDMRs <- function(BSseq, regions = NULL, testCovariate = NULL,
             pData(BSseq)$col <- as.character(z)
         }
         
-        if (is.null(label)) {
+        if (is.null(label)  && !("label" %in% names(pData(BSseq))))  {
             pData(BSseq)$label <- paste0(pData(BSseq)[, testCovariate])
         }
     }
