@@ -588,6 +588,7 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
         correlation = corAR1(form = ~1 |sample), 
         correlationSmall = corCAR1(form = ~L | sample), 
         weights = varPower(form = ~1/MedCov, fixed = 0.5)) {
+      
         dat <- data.frame(g.fac = rep(pDat[,colnames(design)[coeff[1]]], 
                                       each = length(ix)),
                           sample = factor(rep(seq_len(nrow(design)), 
@@ -597,8 +598,10 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
                           L = as.vector(rep(pos[ix], nrow(design))))
         
         if(length(coeff.adj) > 0){
-          dat$a.fac <- rep(pDat[,colnames(design)[coeff.adj]], 
-                                  each=length(ix))
+          for (k in seq_along(coeff.adj)){
+            dat[,colnames(design)[coeff.adj[k]]] <- 
+                    rep(pDat[,colnames(design)[coeff.adj[k]]], each=length(ix))
+          }
         }
         
         if(length(unique(dat$g.fac)) == 2){
@@ -612,28 +615,32 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
                na.omit(dat$cov - dat$meth)[1] == 0))) {
             
           dat$pos <- as.numeric(factor(dat$L))
-            if (block){
-              # one interior knot per 10K basepairs, with max of 10
-              k <- min(ceiling((max(pos[ix]) - min(pos[ix])) / 10000) + 1,
-                      10)			      
-              if (length(coeff.adj)==0){
-                X <- model.matrix( ~ dat$g.fac + ns(dat$L, df=k))
-                mm <- as.formula(paste0("Z ~ g.fac + ns(L, df=", k, ")"))
-              }else{
-                X <- model.matrix( ~ dat$g.fac + ns(dat$L, df=k) + dat$a.fac)
-                mm <- formula(Z ~ g.fac + ns(L, df=eval(k)) + a.fac)
-                mm <- as.formula(paste0("Z ~ g.fac + ns(L, df=", 
-                                        k, ") + a.fac"))
-              }
+          if (block){
+            # one interior knot per 10K basepairs, with max of 10
+            k <- min(ceiling((max(pos[ix]) - min(pos[ix])) / 10000) + 1, 10)
+            if (length(coeff.adj)==0){
+              X <- model.matrix( ~ dat$g.fac + ns(dat$L, df=k))
+              mm <- as.formula(paste0("Z ~ g.fac + ns(L, df=", k, ")"))
             }else{
-              if (length(coeff.adj)==0){
-                X <- model.matrix( ~ dat$g.fac + dat$L)
-                mm <- formula(Z ~ g.fac + factor(L))
-              }else{
-                X <- model.matrix( ~ dat$g.fac + dat$L + dat$a.fac)
-                mm <- formula(Z ~ g.fac + factor(L) + a.fac)
-              }
+              X <- model.matrix( ~ dat$g.fac + ns(dat$L, df=k) + 
+                                   as.matrix(dat[,colnames(design)[coeff.adj]]))
+              mm <- as.formula(paste0("Z ~ g.fac + ns(L, df=", 
+                                      k, ") + ",
+                                      paste(colnames(design)[coeff.adj], 
+                                            collapse=" + ")))
             }
+          }else{
+            if (length(coeff.adj)==0){
+              X <- model.matrix( ~ dat$g.fac + dat$L)
+              mm <- formula(Z ~ g.fac + factor(L))
+            }else{
+              X <- model.matrix( ~ dat$g.fac + dat$L + 
+                                   as.matrix(dat[,colnames(design)[coeff.adj]]))
+              mm <- as.formula(paste0("Z ~ g.fac + factor(L) + ",
+                                      paste(colnames(design)[coeff.adj], 
+                                            collapse=" + ")))
+            }
+          }
             
           Y <- as.matrix(dat$meth)
           N <- as.matrix(dat$cov)
@@ -685,15 +692,16 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
               
               # check for presence of 1-2 coverage outliers that could end up
               # driving the difference between the groups
+              grubbs.one <- grubbs.two <- 1
               if (length(unique(dat$MedCov[seq_len(length(ix))])) > 1 && 
                   length(ix) <= 10) {
                 grubbs.one <- suppressWarnings(grubbs.test(
                   dat$MedCov[seq_len(length(ix))])$p.value)
-                grubbs.two <- suppressWarnings(
-                  grubbs.test(dat$MedCov[seq_len(length(ix))], 
-                  type = 20)$p.value)
-              } else {
-                grubbs.one <- grubbs.two <- 1
+                if(length(ix) > 3){
+                  grubbs.two <- suppressWarnings(
+                    grubbs.test(dat$MedCov[seq_len(length(ix))], 
+                    type = 20)$p.value)
+                }
               }
                 
               if (grubbs.one < 0.01 || grubbs.two < 0.01) {

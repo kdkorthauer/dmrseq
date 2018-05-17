@@ -14,18 +14,18 @@ dmrseq(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
 \item{bs}{bsseq object containing the methylation values as well as the 
 phenotype matrix that contains sample level covariates}
 
-\item{testCovariate}{Character value or vector indicating which variables
-(column names) in \code{pData(bs)} to test
- for association of methylation levels. 
- Can alternatively specify an integer value or vector indicating
- which of columns of
- \code{pData(bs)} to use. This is used to construct the 
- design matrix for the test statistic calculation. To run using a 
- continuous or categorial covariate with more than two groups, simply pass in
- the name of a column in `pData` that contains this covariate. A continuous
- covariate is assmued if the data type in the `testCovariate` slot is 
- continuous, with the exception of if there are only two unique values 
- (then a two group comparison is carried out).}
+\item{testCovariate}{Character value indicating which variable
+(column name) in \code{pData(bs)} to test
+for association of methylation levels. 
+Can alternatively specify an integer value indicating
+which of column of
+\code{pData(bs)} to use. This is used to construct the 
+design matrix for the test statistic calculation. To run using a 
+continuous or categorial covariate with more than two groups, simply pass in
+the name of a column in `pData` that contains this covariate. A continuous
+covariate is assmued if the data type in the `testCovariate` slot is 
+continuous, with the exception of if there are only two unique values 
+(then a two group comparison is carried out).}
 
 \item{adjustCovariate}{an (optional) character value or vector 
 indicating which variables (column names) in \code{pData(bs)} 
@@ -44,7 +44,8 @@ the single CpG coefficient that is used to discover
 candidate regions. Default value is 0.10.}
 
 \item{minNumRegion}{positive integer that represents the minimum number of
-nucleotides to consider for a candidate region. Default value is 5.}
+nucleotides to consider for a candidate region. Default value is 5. 
+Minimum value is 3.}
 
 \item{smooth}{logical value that indicates whether or not to smooth the 
 CpG level signal when discovering candidate regions.
@@ -73,22 +74,22 @@ should be printed to stdout. Defaults value is TRUE.}
 of permutations that will be used to generate the global null 
 distribution of test statistics.  Default value is 10.}
 
-\item{matchCovariate}{an (optional) character value or vector 
-indicating which variables (column names) of \code{pData(bs)} 
+\item{matchCovariate}{an (optional) character value 
+indicating which variable (column name) of \code{pData(bs)} 
 will be blocked for when 
- constructing the permutations in order to
- test for the association of methylation value with the 
- \code{testCovariate}. 
- Alternatively, you can specify an integer value or vector indicating
- which columns of \code{pData(bs)} to block for.
- Blocking means that only permutations with balanced
- composition of \code{testCovariate} values will be used (for example if
- you have samples from different gender and this is not your covariate of
- interest, 
- it is recommended to use gender as a matching covariate to avoid one 
- of the permutations testing entirely males versus females; this violates
- the null hypothesis and will decrease power).
- If not NULL (default), then no blocking is performed.}
+constructing the permutations in order to
+test for the association of methylation value with the 
+\code{testCovariate}. 
+Alternatively, you can specify an integer value indicating
+which column of \code{pData(bs)} to block for.
+Blocking means that only permutations with balanced
+composition of \code{testCovariate} values will be used (for example if
+you have samples from different gender and this is not your covariate of
+interest, 
+it is recommended to use gender as a matching covariate to avoid one 
+of the permutations testing entirely males versus females; this violates
+the null hypothesis and will decrease power).
+If not NULL (default), then no blocking is performed.}
 
 \item{BPPARAM}{a \code{BiocParallelParam} object to specify the parallel 
 backend. The default 
