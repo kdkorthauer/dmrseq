@@ -512,7 +512,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
                 }
             } else {
                 designr[, coeff] <- designr[reorder, coeff]
-                pData(bs) <- pData.orig[reorder, ]
+                pData(bs) <- pData.orig[reorder, , drop = FALSE]
             }
             
             # if matchCovariate is not null, restrict permutations such that 
