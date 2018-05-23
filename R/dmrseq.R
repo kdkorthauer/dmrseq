@@ -125,7 +125,7 @@
 #' @keywords inference
 #' @importFrom outliers grubbs.test
 #' @importFrom bumphunter clusterMaker getSegments
-#' @importFrom DelayedMatrixStats colMedians rowMads rowSums2 rowMeans2
+#' @importFrom DelayedMatrixStats colMedians rowMads rowSums2 rowMeans2 rowSds
 #' @importFrom stats formula anova as.formula
 #' 
 #' @importClassesFrom bsseq BSseq 
