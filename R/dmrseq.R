@@ -637,19 +637,20 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
           OBS$pval <- pval$x
           OBS$qval <- pval$y
         }
+        
+        # convert output into GRanges, with indexStart/indexEnd as IRanges
+        indexIR <- IRanges(OBS$indexStart, OBS$indexEnd)
+        OBS.gr <- makeGRangesFromDataFrame(OBS[,-c(4:5)], 
+                                           keep.extra.columns = TRUE)
+        OBS.gr$index <- indexIR
+        names(OBS.gr) <- NULL
+        
+        # sort on pval overall (currently sorted within chromsome)
+        OBS.gr <- OBS.gr[order(OBS.gr$pval, -abs(OBS.gr$stat)),]
+        
+        return(OBS.gr)
     } else {
         message("No candidate regions pass the cutoff of ", unique(abs(cutoff)))
+        return(NULL)
     }
-    
-    # convert output into GRanges, with indexStart/indexEnd as IRanges
-    indexIR <- IRanges(OBS$indexStart, OBS$indexEnd)
-    OBS.gr <- makeGRangesFromDataFrame(OBS[,-c(4:5)], 
-                                       keep.extra.columns = TRUE)
-    OBS.gr$index <- indexIR
-    names(OBS.gr) <- NULL
-    
-    # sort on pval overall (currently sorted within chromsome)
-    OBS.gr <- OBS.gr[order(OBS.gr$pval, -abs(OBS.gr$stat)),]
-    
-    return(OBS.gr)
 }
