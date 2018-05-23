@@ -222,6 +222,12 @@ bumphunt <- function(bs,
               design = design, coeff = coeff)
           rawBeta <- tmp$meth.diff
           sd.raw <- tmp$sd.meth.diff
+          
+          # replace NA estimates where all samples had identical values
+          constant <- which((DelayedMatrixStats::rowSds(meth.mat) == 0) & 
+                            (DelayedMatrixStats::rowSds(cov.mat) == 0))
+          rawBeta[constant] <- 0
+          sd.raw[constant] <- 0
       }
     
       sd.raw[sd.raw < 1e-05] <- 1e-05
