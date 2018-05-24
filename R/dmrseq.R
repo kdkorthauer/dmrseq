@@ -125,7 +125,8 @@
 #' @keywords inference
 #' @importFrom outliers grubbs.test
 #' @importFrom bumphunter clusterMaker getSegments
-#' @importFrom DelayedMatrixStats colMedians rowMads rowSums2 rowMeans2 rowSds
+#' @importFrom DelayedMatrixStats colMedians rowMads rowSums2 rowMeans2 rowDiffs
+#' @importFrom matrixStats rowRanges
 #' @importFrom stats formula anova as.formula
 #' 
 #' @importClassesFrom bsseq BSseq 
@@ -304,6 +305,10 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
         colnames(design)[coeff] <- colnames(pData(bs))[testCovariate]
         coeff.adj <- NULL
     }
+  
+    # check for interaction terms (not yet supported)
+    if (length(coeff) > 1 && any(rowSums(design[,coeff]) > 1))
+      stop("Interaction terms in testCovariate are not yet supported.")
     
     if (length(unique(testCov)) == 2) {
         message("Condition: ",
