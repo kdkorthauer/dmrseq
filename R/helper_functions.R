@@ -219,15 +219,9 @@ bumphunt <- function(bs,
       } else {
           tmp <- estim(meth.mat = meth.mat, cov.mat = cov.mat, 
               pos = pos, chr = chr, 
-              design = design, coeff = coeff)
+              design = design, coeff = coeff, coeff.adj = coeff.adj)
           rawBeta <- tmp$meth.diff
           sd.raw <- tmp$sd.meth.diff
-          
-          # replace NA estimates where all samples had identical values
-          constant <- which((DelayedMatrixStats::rowSds(meth.mat) == 0) & 
-                            (DelayedMatrixStats::rowSds(cov.mat) == 0))
-          rawBeta[constant] <- 0
-          sd.raw[constant] <- 0
       }
     
       sd.raw[sd.raw < 1e-05] <- 1e-05
@@ -244,13 +238,14 @@ bumphunt <- function(bs,
         beta[[1]] <- beta[[2]] <- rep(NA, length(pos))
         
         beta.tmp <- smoother(y = rawBeta, 
-                                 x = pos, 
-                                 chr = chr, maxGapSmooth = maxGapSmooth,
-                                 weights = weights, 
-                                 minNumRegion = minNumRegion, 
-                                 minInSpan = minInSpan, 
-                bpSpan = bpSpan, bpSpan2 = bpSpan2, verbose = verbose, 
-                parallel = parallel)
+                             x = pos, chr = chr, 
+                             maxGapSmooth = maxGapSmooth,
+                             weights = weights, 
+                             minNumRegion = minNumRegion, 
+                             minInSpan = minInSpan, 
+                             bpSpan = bpSpan, bpSpan2 = bpSpan2, 
+                             verbose = verbose, 
+                             parallel = parallel)
         beta[[1]] <- beta.tmp[[1]]
         beta[[2]] <- beta.tmp[[2]]
 
@@ -272,7 +267,11 @@ bumphunt <- function(bs,
       rawBeta <- rawBeta/sd.raw
     }
     
-    beta[-Index] <- rawBeta[-Index]
+    if(length(Index) > 0){
+      beta[-Index] <- rawBeta[-Index]
+    }else{ # if no loci were smoothed, use raw ests instead of NA
+      beta <- rawBeta
+    }
     
     tab <- rbind(tab, 
         regionScanner(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos, 
@@ -946,7 +945,7 @@ smoother <- function(y, x = NULL, weights = NULL, chr = chr,
 ## Function to compute the coefficient estimates for regression of the 
 ## methylation levels on the group indicator variable, at each CpG site 
 ## - only used if not a standard two-group comparison
-getEstimate <- function(mat, design, coeff) {
+getEstimate <- function(mat, design, coeff, coeff.adj) {
     vv <- design[, coeff, drop = FALSE]
     QR <- qr(design)
     Q <- qr.Q(QR)
@@ -955,13 +954,30 @@ getEstimate <- function(mat, design, coeff) {
     bhat <- t(tcrossprod(backsolve(R, t(Q)), as.matrix(mat)))
     
     if (!is.matrix(bhat)) 
-      b <- matrix(b, ncol = 1)
+      bhat <- matrix(bhat, ncol = 1)
     if (!("matrix" %in% class(mat)) && !("DelayedMatrix" %in% class(mat))) 
       mat <- matrix(mat, nrow = 1)
     
-    meth.diff <- DelayedMatrixStats::rowSums2(exp(bhat))/
-                 (1 + DelayedMatrixStats::rowSums2(exp(bhat))) - 
-                 exp(bhat[,1])/(1 + exp(bhat[,1]))
+    if (length(coeff) == 1){ # two-group comparison or continuous 
+      if (length(coeff.adj) > 0){
+        meth.diff <- exp(rowSums(bhat[,-coeff.adj, drop = FALSE])) / 
+                       (1 + exp(rowSums(bhat[-coeff.adj, drop = FALSE]))) - 
+                     exp(rowSums(bhat[,-c(coeff, coeff.adj), drop = FALSE])) / 
+                       (1 + exp(rowSums(bhat[,-c(coeff,coeff.adj),drop=FALSE])))
+      }else{
+        meth.diff <- exp(rowSums(bhat)) / (1 + exp(rowSums(bhat))) - 
+                     exp(rowSums(bhat[,-coeff,drop=FALSE])) / 
+                        (1 + exp(rowSums(bhat[,-coeff, drop=FALSE])))
+      }
+    }else{ # multi-factor comparison - scan for max diff between any 2 groups
+      if(length(coeff.adj) == 0){
+        gdes <- t(unique(design) %*% t(bhat)) 
+      }else{
+        gdes <- t(unique(design[,-coeff.adj,drop=FALSE]) %*% t(bhat))
+      }
+      group.means <- exp(gdes) / (1 + exp(gdes))
+      meth.diff <- as.numeric(rowDiffs(rowRanges(group.means)))
+    }
     
     X <- rep(design, each = nrow(mat))
     X1 <- design
@@ -979,18 +995,28 @@ getEstimate <- function(mat, design, coeff) {
 
 # *Experimental* - only used if not a standard two-group comparison
 estim <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos, 
-                  chr = chr, design, coeff) {
+                  chr = chr, design, coeff, coeff.adj) {
     
     ## For a linear regression of logit(meth.level) on the biological group 
     ## indicator variable at each CpG site
     mat <- meth.mat/cov.mat
     
-    eps <- min(mat[mat != 0])
+    if (sum(mat != 0) > 0 && sum(mat != 1) > 0){
+      eps <- min( min(mat[mat != 0]), 1-max(mat[mat != 1]) )
+    }else if (sum(mat != 0) > 0){
+      eps <- min(mat[mat != 0])
+    }else if(sum(mat != 1) > 0){
+      eps <- 1-max(mat[mat != 1])
+    }
+    if(eps == 1)
+      eps <- 0.1
+    
     mat[mat == 0] <- eps
     mat[mat == 1] <- 1 - eps
     logit.mat <- log(mat/(1 - mat))
     
-    lm.fit <- getEstimate(mat = logit.mat, design = design, coeff = coeff)
+    lm.fit <- getEstimate(mat = logit.mat, design = design, coeff = coeff, 
+                          coeff.adj)
     meth.diff <- lm.fit$meth.diff
     sd.meth.diff <- lm.fit$sd.meth.diff
     
