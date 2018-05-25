@@ -49,7 +49,7 @@
 #'    CpGs in a smoothing span window if \code{smooth} is TRUE.  
 #'    Default value is 30.
 #' @param minNumRegion positive integer that represents the minimum number of
-#'    nucleotides to consider for a candidate region. Default value is 5. 
+#'    CpGs to consider for a candidate region. Default value is 5. 
 #'    Minimum value is 3.
 #' @param cutoff scalar value that represents the absolute value (or a vector 
 #'    of two numbers representing a lower and upper bound) for the cutoff of 

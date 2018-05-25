@@ -44,7 +44,7 @@ the single CpG coefficient that is used to discover
 candidate regions. Default value is 0.10.}
 
 \item{minNumRegion}{positive integer that represents the minimum number of
-nucleotides to consider for a candidate region. Default value is 5. 
+CpGs to consider for a candidate region. Default value is 5. 
 Minimum value is 3.}
 
 \item{smooth}{logical value that indicates whether or not to smooth the 
