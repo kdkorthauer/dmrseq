@@ -529,7 +529,7 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
           # add back to regions and remake indices
           reg <- as.matrix(as.data.frame(IRanges::reduce(c(flk, reg)))[,2:3])
           idx <- apply(reg, 1, function(x) which(pos %in% x[1]:x[2]))
-          if (class(idx) == "list"){
+          if (is(idx, "list")){
             Indexes[[j]] <- idx
           }else{
             Indexes[[j]] <- list(as.vector(idx))

@@ -138,7 +138,7 @@
 #' @return None (generates a plot)
 #' 
 #' @importFrom RColorBrewer brewer.pal
-#' @importFrom grDevices hcl
+#' @importFrom grDevices hcl rainbow
 #' @importFrom graphics arrows
 #' 
 #' @examples
