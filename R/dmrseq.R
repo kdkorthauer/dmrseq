@@ -173,7 +173,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
                    block = FALSE, blockSize = 5000,
                    chrsPerChunk = 1) {
     
-    stopifnot(class(bs) == "BSseq")
+    stopifnot(is(bs, "BSseq"))
     
     if (!(is.null(cutoff) || length(cutoff) %in% seq_len(2))) 
         stop("'cutoff' has to be either NULL or a vector of length 1 or 2")
@@ -412,7 +412,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
             
             # Remove redundant permutations (if balanced)
             if (length(unique(table(design[,coeff]))) == 1){
-              perms <- perms[, c(1:(ncol(perms)/2))]
+              perms <- perms[, seq_len(ncol(perms)/2)]
             }
             
             # restrict to unique permutations that don't include any 
