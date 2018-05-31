@@ -951,7 +951,44 @@ getEstimate <- function(mat, design, coeff, coeff.adj) {
     Q <- qr.Q(QR)
     R <- qr.R(QR)
     df.residual <- ncol(mat) - QR$rank
-    bhat <- t(tcrossprod(backsolve(R, t(Q)), as.matrix(mat)))
+    xtx <- backsolve(R, t(Q))
+    bhat <- t(tcrossprod(xtx, as.matrix(mat)))
+    vb <- chol2inv(R)[coeff,coeff]
+    if(is(vb, "matrix"))
+      vb <- mean(diag(vb))
+    vb <- rep(vb, nrow(mat))
+    
+    # for any loci with missing coverage in at least one sample, need to
+    # estimate effect separately (since previous matrix mult method will
+    # produce NA). Split into groups based on which samples are missing 
+    # (so only have to estimate QR matrix the number of times equal to the
+    # number of different patterns, rather than once for each loci with 
+    # missing coverage)
+    if(sum(is.na(mat)) > 0){
+      NA.patterns <- unique(is.na(as.matrix(mat)))
+      nomissing <- which(rowSums(NA.patterns) == 0)
+      if (length(nomissing) > 0){
+        NA.patterns <- NA.patterns[-nomissing,]
+      }
+      for (l in seq_len(nrow(NA.patterns))){
+        idx <- which(apply(as.matrix(is.na(mat)), 1, 
+                           function(x) identical(x, NA.patterns[l,])))
+      
+        vv <- design[-which(NA.patterns[l,]), coeff, drop = FALSE]
+        QR <- qr(design[-which(NA.patterns[l,]), , drop = FALSE])
+        Q <- qr.Q(QR)
+        R <- qr.R(QR)
+        xtx <- backsolve(R, t(Q))
+        bhat[idx,] <- t(tcrossprod(xtx, 
+                                  as.matrix(mat[idx, 
+                                                -which(NA.patterns[l,]), 
+                                                drop = FALSE])))
+        new.vb <- chol2inv(R)[coeff,coeff]
+        if(is(new.vb, "matrix"))
+          new.vb <- mean(diag(new.vb))
+        vb[idx] <- new.vb
+      }
+    }
     
     if (!is.matrix(bhat)) 
       bhat <- matrix(bhat, ncol = 1)
@@ -979,12 +1016,9 @@ getEstimate <- function(mat, design, coeff, coeff.adj) {
       meth.diff <- as.numeric(rowDiffs(rowRanges(group.means)))
     }
     
-    X <- rep(design, each = nrow(mat))
-    X1 <- design
-
     res <- as.matrix(mat) - t(tcrossprod(design, bhat))
-    se2 <- DelayedMatrixStats::rowSums2(res ^ 2) / df.residual
-    vb <- chol2inv(R)[coeff[1],coeff[1]] * se2
+    se2 <- DelayedMatrixStats::rowSums2(res ^ 2, na.rm = TRUE) / df.residual
+    vb <- vb * se2
     
     out <- list(meth.diff = meth.diff, 
                 sd.meth.diff = sqrt(vb), 
@@ -1001,12 +1035,13 @@ estim <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
     ## indicator variable at each CpG site
     mat <- meth.mat/cov.mat
     
-    if (sum(mat != 0) > 0 && sum(mat != 1) > 0){
-      eps <- min( min(mat[mat != 0]), 1-max(mat[mat != 1]) )
-    }else if (sum(mat != 0) > 0){
-      eps <- min(mat[mat != 0])
-    }else if(sum(mat != 1) > 0){
-      eps <- 1-max(mat[mat != 1])
+    if (sum(mat != 0, na.rm = TRUE) > 0 && sum(mat != 1, na.rm = TRUE) > 0){
+      eps <- min( min(mat[mat != 0], na.rm = TRUE), 
+                  1-max(mat[mat != 1], na.rm = TRUE) )
+    }else if (sum(mat != 0, na.rm = TRUE) > 0){
+      eps <- min(mat[mat != 0], na.rm = TRUE)
+    }else if(sum(mat != 1, na.rm = TRUE) > 0){
+      eps <- 1-max(mat[mat != 1, na.rm = TRUE])
     }
     if(eps == 1)
       eps <- 0.1
