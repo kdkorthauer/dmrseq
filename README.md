@@ -1,5 +1,9 @@
 # dmrseq: Inference for differentially methylated regions (DMRs) from bisulfite sequencing
 
+**This branch is now deprecated, and will be deleted soon. Please use the official
+supported release and/or devel versions of dmrseq via 
+[Bioconductor](https://bioconductor.org/packages/dmrseq).**
+
 A central question in the analysis of bisulfite sequencing data 
 is to detect regions (collections of 
 neighboring CpGs) with systematic differences between conditions, 
