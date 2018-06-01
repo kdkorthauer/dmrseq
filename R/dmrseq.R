@@ -293,8 +293,11 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
     
     sampleSize <- table(testCov)
     if (!is.null(adjustCovariate)) {
-        adjustCov <- pData(bs)[, adjustCovariate]
-        design <- model.matrix(~testCov + as.matrix(adjustCov))
+        mmdat <- data.frame(testCov = testCov)
+        adjustCov <- pData(bs)[, adjustCovariate, drop = FALSE]
+        mmdat <- cbind(mmdat, adjustCov)
+        frm <- paste0("~", paste0(colnames(mmdat), collapse = " + "))
+        design <- model.matrix(as.formula(frm), data=mmdat)
         colnames(design)[coeff] <- colnames(pData(bs))[testCovariate]
         colnames(design)[seq((max(coeff) + 1), ncol(design))] <- 
           colnames(pData(bs))[adjustCovariate]

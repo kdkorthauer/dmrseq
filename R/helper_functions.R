@@ -624,28 +624,24 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
             # one interior knot per 10K basepairs, with max of 10
             k <- min(ceiling((max(pos[ix]) - min(pos[ix])) / 10000) + 1, 10)
             if (length(coeff.adj)==0){
-              X <- model.matrix( ~ dat$g.fac + ns(dat$L, df=k))
-              mm <- as.formula(paste0("Z ~ g.fac + ns(L, df=", k, ")"))
+              mm <- as.formula(paste0("~ g.fac + ns(L, df=", k, ")"))
             }else{
-              X <- model.matrix( ~ dat$g.fac + ns(dat$L, df=k) + 
-                                   as.matrix(dat[,colnames(design)[coeff.adj]]))
-              mm <- as.formula(paste0("Z ~ g.fac + ns(L, df=", 
+              mm <- as.formula(paste0("~ g.fac + ns(L, df=", 
                                       k, ") + ",
                                       paste(colnames(design)[coeff.adj], 
                                             collapse=" + ")))
             }
           }else{
             if (length(coeff.adj)==0){
-              X <- model.matrix( ~ dat$g.fac + dat$L)
-              mm <- formula(Z ~ g.fac + factor(L))
+              mm <- formula(~ g.fac + factor(L))
             }else{
-              X <- model.matrix( ~ dat$g.fac + dat$L + 
-                                   as.matrix(dat[,colnames(design)[coeff.adj]]))
-              mm <- as.formula(paste0("Z ~ g.fac + factor(L) + ",
+              mm <- as.formula(paste0("~ g.fac + factor(L) + ",
                                       paste(colnames(design)[coeff.adj], 
                                             collapse=" + ")))
             }
           }
+          X <- model.matrix(mm, data = dat)
+          mm <- as.formula(paste0("Z", paste(mm, collapse="")))
             
           Y <- as.matrix(dat$meth)
           N <- as.matrix(dat$cov)
@@ -951,8 +947,7 @@ getEstimate <- function(mat, design, coeff, coeff.adj) {
     Q <- qr.Q(QR)
     R <- qr.R(QR)
     df.residual <- ncol(mat) - QR$rank
-    xtx <- backsolve(R, t(Q))
-    bhat <- t(tcrossprod(xtx, as.matrix(mat)))
+    bhat <- t(tcrossprod(backsolve(R, t(Q)), as.matrix(mat)))
     vb <- chol2inv(R)[coeff,coeff]
     if(is(vb, "matrix"))
       vb <- mean(diag(vb))
@@ -978,8 +973,7 @@ getEstimate <- function(mat, design, coeff, coeff.adj) {
         QR <- qr(design[-which(NA.patterns[l,]), , drop = FALSE])
         Q <- qr.Q(QR)
         R <- qr.R(QR)
-        xtx <- backsolve(R, t(Q))
-        bhat[idx,] <- t(tcrossprod(xtx, 
+        bhat[idx,] <- t(tcrossprod(backsolve(R, t(Q)), 
                                   as.matrix(mat[idx, 
                                                 -which(NA.patterns[l,]), 
                                                 drop = FALSE])))
@@ -992,13 +986,13 @@ getEstimate <- function(mat, design, coeff, coeff.adj) {
     
     if (!is.matrix(bhat)) 
       bhat <- matrix(bhat, ncol = 1)
-    if (!("matrix" %in% class(mat)) && !("DelayedMatrix" %in% class(mat))) 
+    if (!is(mat, "matrix") && !is(mat, "DelayedMatrix"))
       mat <- matrix(mat, nrow = 1)
     
     if (length(coeff) == 1){ # two-group comparison or continuous 
       if (length(coeff.adj) > 0){
         meth.diff <- exp(rowSums(bhat[,-coeff.adj, drop = FALSE])) / 
-                       (1 + exp(rowSums(bhat[-coeff.adj, drop = FALSE]))) - 
+                       (1 + exp(rowSums(bhat[,-coeff.adj, drop = FALSE]))) - 
                      exp(rowSums(bhat[,-c(coeff, coeff.adj), drop = FALSE])) / 
                        (1 + exp(rowSums(bhat[,-c(coeff,coeff.adj),drop=FALSE])))
       }else{
@@ -1010,7 +1004,8 @@ getEstimate <- function(mat, design, coeff, coeff.adj) {
       if(length(coeff.adj) == 0){
         gdes <- t(unique(design) %*% t(bhat)) 
       }else{
-        gdes <- t(unique(design[,-coeff.adj,drop=FALSE]) %*% t(bhat))
+        gdes <- t(unique(design[,-coeff.adj,drop=FALSE]) %*% 
+                    t(bhat[,-coeff.adj]))
       }
       group.means <- exp(gdes) / (1 + exp(gdes))
       meth.diff <- as.numeric(rowDiffs(rowRanges(group.means)))
