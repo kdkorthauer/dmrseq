@@ -30,15 +30,6 @@ source("https://bioconductor.org/biocLite.R")
 biocLite("dmrseq")
 ```
 
-If you don't have R 3.5.0 or higher, please go to 
-[CRAN](https://cran.r-project.org/) and install it. 
-
-As a *last resort*, currently you may install **dmrseq** with R version 3.4.0
-or higher from the `R-3.4` branch with the following command (_**this branch will
-soon be deprecated**_):
-
-`devtools::install_github("kdkorthauer/dmrseq", ref="R-3.4")`
-
 ## Getting started
 
 See the vignette for information on how to use the package to perform
