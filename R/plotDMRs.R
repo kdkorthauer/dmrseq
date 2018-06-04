@@ -206,17 +206,30 @@ plotDMRs <- function(BSseq, regions = NULL, testCovariate = NULL,
     }
     
     if (!is.null(testCovariate)) {
-        coeff <- seq(2, (2 + length(testCovariate) - 1))
+        coeff <- seq(2, (1 + length(testCovariate)))
+        testCov <- pData(BSseq)[, testCovariate]
+        if (length(unique(testCov)) > 2 && !is.numeric(testCov))
+          coeff <- c(coeff, coeff + length(unique(testCov)) - 2)
+      
         design <- model.matrix(~pData(BSseq)[, testCovariate])
         
         if (is.null(col) && !("col" %in% names(pData(BSseq)))) {
-            cov.unique <- unique(design[, coeff])
-            colors <- gg_color_hue(length(cov.unique))
-            if (length(cov.unique) == 2) {
+            cov.unique <- unique(design[, coeff, drop = FALSE])
+            ncol <- nrow(cov.unique) 
+            
+            colors <- gg_color_hue(ncol)
+            if (ncol == 2) {
                 colors <- c("mediumblue", "deeppink1")
             }
-            colors <- cbind(cov.unique, colors[rank(as.numeric(cov.unique))])
-            z <- colors[, 2][match(design[, coeff], colors[, 1])]
+            colors <- cbind(cov.unique, 
+                            colors[rank(as.numeric(rowSums(cov.unique)), 
+                                        ties="first")])
+            colmat <- colors[, -ncol(colors), drop = FALSE]
+            colmat <- apply(colmat, 2, as.numeric)
+            z <- colors[,ncol(colors)][
+                         match(data.frame(t(design[, coeff, drop = FALSE])), 
+                               data.frame(t(colmat)))]
+            
             pData(BSseq)$col <- as.character(z)
         }
         
