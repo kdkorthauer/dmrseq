@@ -559,6 +559,8 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
     # for factor comparisons 
     replicateStatus <- function(candidates, design, coeff, fact){
       levs <- unique(design[, coeff])
+      if(!is(levs, "matrix"))
+        levs <- as.matrix(levs)
       
       if (fact){
         indexRanges <- IRanges(unlist(lapply(candidates, min)), 
@@ -566,9 +568,11 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
         cov.mat.cand <- extractROWS(cov.mat, indexRanges)
         
         prev.mat <- rep(TRUE, nrow(cov.mat.cand))
-        for (l in levs){
+        for (l in seq_len(nrow(levs))){
           cov.matl <- DelayedMatrixStats::rowSums2(
-                        cov.mat.cand[,design[, coeff] == l] > 0) > 1 &
+                          cov.mat.cand[,apply(design[, coeff], 1,
+                            function(x) identical(unname(x),
+                                                  unname(levs[l,])))] > 0) > 1 &
                       prev.mat
           prev.mat <- cov.matl
         }
