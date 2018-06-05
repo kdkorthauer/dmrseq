@@ -570,7 +570,7 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
         prev.mat <- rep(TRUE, nrow(cov.mat.cand))
         for (l in seq_len(nrow(levs))){
           cov.matl <- DelayedMatrixStats::rowSums2(
-                          cov.mat.cand[,apply(design[, coeff], 1,
+                          cov.mat.cand[,apply(design[, coeff, drop = FALSE], 1,
                             function(x) identical(unname(x),
                                                   unname(levs[l,])))] > 0) > 1 &
                       prev.mat
