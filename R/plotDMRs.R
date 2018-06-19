@@ -223,7 +223,7 @@ plotDMRs <- function(BSseq, regions = NULL, testCovariate = NULL,
             }
             colors <- cbind(cov.unique, 
                             colors[rank(as.numeric(rowSums(cov.unique)), 
-                                        ties="first")])
+                                        ties.method="first")])
             colmat <- colors[, -ncol(colors), drop = FALSE]
             colmat <- apply(colmat, 2, as.numeric)
             z <- colors[,ncol(colors)][
