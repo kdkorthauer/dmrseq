@@ -1,3 +1,20 @@
+Changes in Version 1.0.10 (2018-06-19)
+_____________________________________
+
+o Bug fixes and improvements in region-level model fitting:
+  - allow zero coverage loci with continuous covariate
+  - more robust estimates of effect across multiple groups
+  - ensure covariate type of adjustCovariate remains the same as in pData()
+  - check for unstable fits and re-estimate without variance weighting
+o Bug fixes and improvements in plotting routine:
+  - properly handle custom plotting attributes 
+  - more sensible defaults in colors for multi-group comparisons
+  - restrict smoothing lines to 0,1 range on y-axis
+o For factor comparisons, ensure that candidate regions have replicates (with 
+  coverage at least 1) in each group for at least two CpGs within the region.
+o The newly added `chrsPerChunk` argument specifies the number of chromosomes
+  to compute at a time (default is 1). 
+
 Changes in Version 0.99.11 (2018-04-05)
 ______________________________________
 
