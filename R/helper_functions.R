@@ -374,13 +374,13 @@ trimEdges <- function(x, candidates = NULL, verbose = FALSE, minNumRegion) {
   if (verbose) 
       message("trimEdges: trimming")
   
-  trimOne <- function(w, x, sig) {
+  trimOne <- function(w, x) {
       mid <- which.max(x[w])
       new.start <- 1
       new.end <- length(w)
       
       if (x[w[mid]]/min(x[w]) > 4/3) {
-        if (w[mid] - w[1] + 1 > 4) {
+        if (sum(!is.na(x[w[1]:w[mid]])) > 4) {
           fit1 <- lm(x[w[seq_len(mid)]] ~ w[seq_len(mid)])
           if (length(summary(fit1)) > 0) {
             if (nrow(summary(fit1)$coef) == 2) {
@@ -397,7 +397,7 @@ trimEdges <- function(x, candidates = NULL, verbose = FALSE, minNumRegion) {
           }
         }
         
-        if (w[length(w)] - w[mid] + 1 > 4) {
+        if (sum(!is.na(x[w[mid]:w[length(w)]])) > 4) {
           fit2 <- lm(x[w[seq(mid,length(w))]] ~ w[seq(mid,length(w))])
           if (length(fit2) > 0) {
             if (nrow(summary(fit2)$coef) == 2) {
@@ -428,11 +428,11 @@ trimEdges <- function(x, candidates = NULL, verbose = FALSE, minNumRegion) {
       which.long <- which(lengths(candidates) > minNumRegion)
       if (length(which.long) > 1) {
         candidates[which.long] <- lapply(candidates[which.long], 
-                                         FUN=trimOne, x=x, sig=sig)
+                                         FUN=trimOne, x=x)
         candidates[vapply(candidates, is.null, FUN.VALUE=logical(1))] <- NULL
       } else if (length(which.long) == 1) {
         candidates[[which.long]] <- unlist(lapply(candidates[which.long], 
-                                           FUN=trimOne, x=x, sig=sig))
+                                           FUN=trimOne, x=x))
       }
     }
     return(candidates)
@@ -587,8 +587,7 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
     
     Indexes <- Indexes[replicateStatus(Indexes, design, coeff, fact)]
     
-    numCandidates <- length(Indexes)
-    if (numCandidates == 0) {
+    if (length(Indexes) == 0) {
       message("No candidates found. ")
       return(NULL)
     }
@@ -836,7 +835,7 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
     
     t2 <- proc.time()
     if (verbose) {
-        message(numCandidates, " regions scored (", round((t2 - t1)[3]/60, 2), 
+        message(nrow(res), " regions scored (", round((t2 - t1)[3]/60, 2), 
                 " min). ")
     }
     
