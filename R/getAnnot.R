@@ -73,9 +73,9 @@ getAnnot <- function(genomeName) {
                 fail1 <- 0
                 break
             } else {
-                message("Download of CpG annotation failed. ",
-                  5 - attempt, 
-                  " attempts left")
+                message(cpg)
+                if (5 - attempt > 0)
+                  message("Trying again (", 5 - attempt, " attempts remaining)")
                 fail1 <- 1
             }
         }
@@ -89,9 +89,9 @@ getAnnot <- function(genomeName) {
                 fail2 <- 0
                 break
             } else {
-                message("Download of Gene annotation failed. ",
-                  5 - attempt, 
-                  " attempts left")
+                message(genes)
+                if (5 - attempt > 0)
+                  message("Trying again (", 5 - attempt, " attempts remaining)")
                 fail2 <- 1
             }
         }
