@@ -490,7 +490,8 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
             designr <- design
             
             if (length(unique(design[, coeff[1]])) == 2 && 
-                length(coeff) == 1) {
+                length(coeff) == 1 && 
+                !nrow(perms) == nrow(designr)) {
                 designr[, coeff] <- 0
                 designr[reorder, coeff] <- 1
                 pData(bs)[[testCovariate]] <- levs[1]
