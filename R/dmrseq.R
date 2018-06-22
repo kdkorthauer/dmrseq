@@ -362,6 +362,12 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
              "of at least one condition. Please remove these loci ", 
              "before running dmrseq")
       }
+    }else{
+      filter <- DelayedMatrixStats::rowSums2(getCoverage(bs)==0) >= ncol(bs) - 1
+      if(sum(filter) > 0)
+        stop(sum(filter), " loci have zero coverage in at least ",
+             ncol(bs) - 1, " samples. Please remove these loci ", 
+             "before running dmrseq")
     }
     
     # register the parallel backend
