@@ -387,7 +387,7 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
 
 .dmrPlotSmoothData <- function(BSseq, region, extend, addRegions, col, lty, lwd,
     label, regionCol, addTicks, addPoints, pointsMinCov, highlightMain, 
-    includeYlab = TRUE, horizLegend) {
+    includeYlab = TRUE, horizLegend, addLines=TRUE) {
     # modified from .plotSmoothData in bsseq to allow non-smoothed regions
     
     gr <- bsseq.bsGetGr(BSseq, region, extend)
@@ -452,9 +452,10 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
                            start(gr))
         }
         
-        for(sampIdx in seq_len(ncol(BSseq))){
-          if (sum(coverage[, sampIdx] >= pointsMinCov) > 1){
-            .dmrPlotLines(positions, rawPs[, sampIdx], coverage[, sampIdx], 
+        if (addLines){
+          for(sampIdx in seq_len(ncol(BSseq))){
+            if (sum(coverage[, sampIdx] >= pointsMinCov) > 1){
+              .dmrPlotLines(positions, rawPs[, sampIdx], coverage[, sampIdx], 
                         col = colEtc$col[sampIdx], 
                         lwd = colEtc$lwd[sampIdx],
                         pointsMinCov = pointsMinCov, 
@@ -462,10 +463,12 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
                         regionWidth = end(gr) - 
                           start(gr),
                         lty = colEtc$lty[sampIdx])
+            }
           }
         }
         
     } else {
+      if (addLines){
         for(sampIdx in seq_len(ncol(BSseq))){
           if (sum(!is.na(rawPs[, sampIdx])) > 1){
             .dmrPlotLines0(positions, rawPs[, sampIdx], 
@@ -475,6 +478,7 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
                                        end(gr)))
           }
         }
+      }
     }
     
     # if colEtc$label contains characters that are not null or missing, then 
@@ -494,7 +498,7 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
     label = NULL, mainWithWidth = TRUE, regionCol = .alpha("orchid1", 0.2), 
     addTicks = TRUE, addPoints = FALSE, pointsMinCov = 5, highlightMain = FALSE,
     qval = NULL, stat = NULL, includeYlab = TRUE, compareTrack = NULL, 
-    labelCols = NULL, horizLegend = FALSE) {
+    labelCols = NULL, horizLegend = FALSE, addLines = TRUE) {
     
     if(!is.null(annoTrack) || !is.null(compareTrack)){
       layout(matrix(seq_len(2), ncol = 1), heights = c(2, 1.5))
@@ -508,7 +512,8 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
         addPoints = addPoints, pointsMinCov = pointsMinCov, 
         highlightMain = highlightMain, 
         includeYlab = includeYlab, 
-        horizLegend = horizLegend)
+        horizLegend = horizLegend, 
+        addLines = addLines)
     gr <- bsseq.bsGetGr(BSseq, region, extend)
     
     if (!is.null(main)) {
