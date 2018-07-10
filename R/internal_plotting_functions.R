@@ -346,7 +346,7 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
                (80)/80 * pi) +  0.75, 0.5)
     ptSize <- c1 * (sqrt(z)/sqrt(maxCov) + 0.25)
     
-    points(x[z > pointsMinCov], y[z > pointsMinCov], col = col.points, pch = 16,
+    points(x[z >= pointsMinCov], y[z >= pointsMinCov], col = col.points, pch = 16,
         cex = ptSize)
 }
 
@@ -356,6 +356,8 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
     col <- rgb(t(col), maxColorValue = 255)
     col
 }
+
+
 
 .dmrPlotLines <- function(x, y, z, col, lwd, pointsMinCov, maxCov, 
                           regionWidth, lty) {
@@ -373,16 +375,24 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
   logit <- function(p){ log(p/(1-p))}
   inv.logit <- function(l){ exp(l) / (1 + exp(l)) }
   
-  loess_fit <- loess(logit(y[z >= pointsMinCov]) ~ x[z >= pointsMinCov],
-                    weights = z[z >= pointsMinCov], span = spn)
-  
-  xl <- seq(min(x[z >= pointsMinCov], na.rm=TRUE), 
-            max(x[z >= pointsMinCov], na.rm=TRUE), 
-           (max(x[z >= pointsMinCov], na.rm=TRUE) - 
-              min(x[z >= pointsMinCov], na.rm=TRUE))/500)
-  lines(xl, inv.logit(predict(loess_fit,xl)), 
-        col = .makeTransparent(.darken(col), 175), lwd = lwd,
-        lty = lty)
+  # don't interpolate smooth lines if there are fewer than 10 cpgs
+  if (length(x) >= 10) {
+    loess_fit <- loess(logit(y[z >= pointsMinCov]) ~ x[z >= pointsMinCov],
+                       weights = z[z >= pointsMinCov], span = spn)
+    
+    xl <- seq(min(x[z >= pointsMinCov], na.rm=TRUE), 
+              max(x[z >= pointsMinCov], na.rm=TRUE), 
+              (max(x[z >= pointsMinCov], na.rm=TRUE) - 
+               min(x[z >= pointsMinCov], na.rm=TRUE))/500)
+    lines(xl, inv.logit(predict(loess_fit,xl)), 
+          col = .makeTransparent(.darken(col), 175), lwd = lwd,
+          lty = lty)
+    
+  }else{
+    lines(x[z >= pointsMinCov], y[z >= pointsMinCov], 
+          col = .makeTransparent(.darken(col), 175), lwd = lwd,
+          lty = lty)
+  }
 }
 
 .dmrPlotSmoothData <- function(BSseq, region, extend, addRegions, col, lty, lwd,
