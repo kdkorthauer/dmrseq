@@ -11,7 +11,7 @@ plotDMRs(BSseq, regions = NULL, testCovariate = NULL,
   regionCol = .alpha("#C77CFF", 0.2), addTicks = TRUE, addPoints = TRUE,
   pointsMinCov = 1, highlightMain = FALSE, qval = TRUE, stat = TRUE,
   verbose = TRUE, includeYlab = TRUE, compareTrack = NULL,
-  labelCols = NULL, horizLegend = FALSE)
+  labelCols = NULL, horizLegend = FALSE, addLines = TRUE)
 }
 \arguments{
 \item{BSseq}{An object of class BSseq.}
@@ -138,6 +138,10 @@ list item. If NULL (default), just the name of the track is printed.}
 \item{horizLegend}{logical indicating whether the legend should be 
 horizontal instead of vertical (default FALSE). This is useful if you need
 to plot many labels and want to preserve whitespace.}
+
+\item{addLines}{logical indicating whether to plot smooth lines between 
+points. Default is true. Can be useful to turn this off for very small 
+regions.}
 }
 \value{
 None (generates a plot)
