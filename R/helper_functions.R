@@ -623,31 +623,36 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
                na.omit(dat$cov - dat$meth)[1] == 0))) {
             
           dat$pos <- as.numeric(factor(dat$L))
-          if (block){
+                   if (block){
             # one interior knot per 10K basepairs, with max of 10
             k <- min(ceiling((max(pos[ix]) - min(pos[ix])) / 10000) + 1, 10)
             if (length(coeff.adj)==0){
-              mm <- as.formula(paste0("~ g.fac + ns(L, df=", k, ")"))
+              X <- model.matrix( ~ dat$g.fac + ns(dat$L, df=k))
+              mm <- as.formula(paste0("Z ~ g.fac + ns(L, df=", k, ")"))
             }else{
-              mm <- as.formula(paste0("~ g.fac + ns(L, df=", 
+              X <- model.matrix( ~ dat$g.fac + ns(dat$L, df=k) + 
+                                   as.matrix(dat[,colnames(design)[coeff.adj]]))
+              mm <- as.formula(paste0("Z ~ g.fac + ns(L, df=", 
                                       k, ") + ",
                                       paste(colnames(design)[coeff.adj], 
                                             collapse=" + ")))
             }
           }else{
             if (length(coeff.adj)==0){
-              mm <- formula(~ g.fac + factor(L))
+              X <- model.matrix( ~ dat$g.fac + dat$L)
+              mm <- formula(Z ~ g.fac + factor(L))
             }else{
-              mm <- as.formula(paste0("~ g.fac + factor(L) + ",
+              X <- model.matrix( ~ dat$g.fac + dat$L + 
+                                   as.matrix(dat[,colnames(design)[coeff.adj]]))
+              mm <- as.formula(paste0("Z ~ g.fac + factor(L) + ",
                                       paste(colnames(design)[coeff.adj], 
                                             collapse=" + ")))
             }
           }
-          X <- model.matrix(mm, data = dat)
-          mm <- as.formula(paste0("Z", paste(mm, collapse="")))
             
           Y <- as.matrix(dat$meth)
           N <- as.matrix(dat$cov)
+
           
           dat$MedCov <- rep(as.numeric(by(dat$cov, dat$pos, median)), 
                             nrow(design))
