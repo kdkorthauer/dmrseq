@@ -27,7 +27,7 @@ it with R version 3.5.0 or higher with the following commands:
 
 ```
 install.packages("BiocManager")
-BiocManager::install("YourPackageNameHere")
+BiocManager::install("dmrseq")
 ```
 
 ## Getting started
