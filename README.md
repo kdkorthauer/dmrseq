@@ -26,8 +26,8 @@ on samples as small as two per group.
 it with R version 3.5.0 or higher with the following commands:
 
 ```
-source("https://bioconductor.org/biocLite.R")
-biocLite("dmrseq")
+install.packages("BiocManager")
+BiocManager::install("YourPackageNameHere")
 ```
 
 ## Getting started
