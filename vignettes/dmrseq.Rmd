@@ -516,10 +516,13 @@ sum(sigRegions$stat > 0) / length(sigRegions)
 ```
 
 To interpret the direction of effect, note that for a two-group comparison 
-**dmrseq** uses alphabetical order of the covariate of interest. For example, if
-the two conditions are "A" and "B", a positive direction of effect means that 
-"A" is hyper-methylated relative to "B". Conversely, a negative direction of 
-effect means that "A" is hypo-methylated relative to "B". 
+**dmrseq** uses alphabetical order of the covariate of interest. 
+The condition with a higher alphabetical rank will become the reference category.
+For example, if
+the two conditions are "A" and "B", the "A" group will be the reference category,
+so a positive direction of effect means that 
+"B" is hyper-methylated relative to "A". Conversely, a negative direction of 
+effect means that "B" is hypo-methylated relative to "A". 
 
 ## Plot DMRs 
 
