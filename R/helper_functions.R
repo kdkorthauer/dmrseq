@@ -1039,12 +1039,12 @@ estim <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
     mat <- meth.mat/cov.mat
     
     if (sum(mat != 0, na.rm = TRUE) > 0 && sum(mat != 1, na.rm = TRUE) > 0){
-      eps <- min( min(as.matrix(mat)[as.matrix(mat) != 0], na.rm = TRUE), 
-                  1-max(as.matrix(mat)[as.matrix(mat != 1)], na.rm = TRUE) )
+      eps <- min( min(mat[mat != 0], na.rm = TRUE), 
+                  1-max(mat[mat != 1], na.rm = TRUE) )
     }else if (sum(mat != 0, na.rm = TRUE) > 0){
-      eps <- min(as.matrix(mat)[as.matrix(mat) != 0], na.rm = TRUE)
+      eps <- min(mat[mat != 0], na.rm = TRUE)
     }else if(sum(mat != 1, na.rm = TRUE) > 0){
-      eps <- 1-max(as.matrix(mat)[as.matrix(mat) != 1], na.rm = TRUE)
+      eps <- 1-max(mat[mat != 1, na.rm = TRUE])
     }
     if(eps == 1)
       eps <- 0.1
