@@ -8,10 +8,11 @@ plotDMRs(BSseq, regions = NULL, testCovariate = NULL,
   extend = (end(regions) - start(regions) + 1)/2, main = "",
   addRegions = regions, annoTrack = NULL, col = NULL, lty = NULL,
   lwd = NULL, label = NULL, mainWithWidth = TRUE,
-  regionCol = .alpha("#C77CFF", 0.2), addTicks = TRUE, addPoints = TRUE,
-  pointsMinCov = 1, highlightMain = FALSE, qval = TRUE, stat = TRUE,
-  verbose = TRUE, includeYlab = TRUE, compareTrack = NULL,
-  labelCols = NULL, horizLegend = FALSE, addLines = TRUE)
+  regionCol = .alpha("#C77CFF", 0.2), addTicks = TRUE,
+  addPoints = TRUE, pointsMinCov = 1, highlightMain = FALSE,
+  qval = TRUE, stat = TRUE, verbose = TRUE, includeYlab = TRUE,
+  compareTrack = NULL, labelCols = NULL, horizLegend = FALSE,
+  addLines = TRUE)
 }
 \arguments{
 \item{BSseq}{An object of class BSseq.}
