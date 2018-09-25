@@ -214,13 +214,14 @@ simDMRs <- function(bs, num.dmrs = 3000, delta.max0 = 0.3) {
     }
 
     # get everything in order to run bumphunter functions
+    sampnames <- paste0("Condition", c(rep(1, sampleSize),
+                                       rep(2, ncol(bs) - sampleSize)), 
+                        "_Rep", c(seq_len(sampleSize), 
+                                  seq_len(ncol(bs) - sampleSize)))
+    colnames(meth.mat) <- colnames(unmeth.mat) <- sampnames 
     bsNew <- BSseq(pos = pos, chr = chr, M = meth.mat, 
                    Cov = (meth.mat + unmeth.mat), 
-                   sampleNames = paste0("Condition", 
-                                        c(rep(1, sampleSize), 
-                                          rep(2, ncol(bs) - sampleSize)), 
-                                        "_Rep", 
-                        c(seq_len(sampleSize), seq_len(ncol(bs) - sampleSize))))
+                   sampleNames = sampnames)
     
     sim.dat.red <- list(gr.dmrs = gr.dmrs, dmr.mncov = dmr.mncov, dmr.L = dmr.L,
         bs = bsNew, delta = deltas)
