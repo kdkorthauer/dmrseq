@@ -213,12 +213,12 @@ plotDMRs <- function(BSseq, regions = NULL, testCovariate = NULL,
     }
     
     if (!is.null(testCovariate)) {
-        coeff <- seq(2, (1 + length(testCovariate)))
-        testCov <- pData(BSseq)[, testCovariate]
-        if (length(unique(testCov)) > 2 && !is.numeric(testCov))
-          coeff <- c(coeff, coeff + length(unique(testCov)) - 2)
+      coeff <- seq(2, (1 + length(testCovariate)))
+      testCov <- as.character(pData(BSseq)[, testCovariate])
+      if (length(unique(testCov)) > 2 && !is.numeric(testCov) && length(coeff) == 1)
+        coeff <- seq(coeff, coeff + length(unique(as.character(testCov))) - 2 )
       
-        design <- model.matrix(~pData(BSseq)[, testCovariate])
+      design <- model.matrix(~testCov)
         
         if (is.null(col) && !("col" %in% names(pData(BSseq)))) {
             cov.unique <- unique(design[, coeff, drop = FALSE])
