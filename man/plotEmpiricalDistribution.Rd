@@ -13,9 +13,12 @@ plotEmpiricalDistribution(bs, testCovariate = NULL, bySample = FALSE,
 \item{testCovariate}{character specifying the column name of the
 \code{pData} slot of the BSseq object to include in the plot legend.}
 
-\item{bySample}{logical whether to plot a separate line for each sample.
+\item{bySample}{logical whether to plot a separate line for each sample,
+even if the grouping \code{testCovariate} is specified.
 Default value is FALSE (so samples with the same value of 
-\code{testCovariate} will be collapsed into the same line).}
+\code{testCovariate} will be collapsed into the same line). If 
+\code{testCovariate} is not specified, this parameter does not have an 
+effect and samples are automatically plotted separately.}
 
 \item{type}{a character indicating which type of density to plot - the 
 methylation (beta) values ("M") or the coverage ("Cov"). Default is "M".}

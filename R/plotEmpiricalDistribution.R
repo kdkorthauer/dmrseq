@@ -14,9 +14,12 @@
 #' @param testCovariate character specifying the column name of the
 #' \code{pData} slot of the BSseq object to include in the plot legend.
 #' 
-#' @param bySample logical whether to plot a separate line for each sample.
+#' @param bySample logical whether to plot a separate line for each sample,
+#'  even if the grouping \code{testCovariate} is specified.
 #'  Default value is FALSE (so samples with the same value of 
-#'  \code{testCovariate} will be collapsed into the same line).
+#'  \code{testCovariate} will be collapsed into the same line). If 
+#'  \code{testCovariate} is not specified, this parameter does not have an 
+#'  effect and samples are automatically plotted separately.
 #' 
 #' @param type a character indicating which type of density to plot - the 
 #' methylation (beta) values ("M") or the coverage ("Cov"). Default is "M".
@@ -48,6 +51,11 @@ plotEmpiricalDistribution <- function(bs,
     if (!(type %in% c("M", "Cov"))){
       stop("type must be either M or Cov")
     }
+    
+    if(is.null(testCovariate) & !bySample){
+      message("No testCovariate specified; plotting each sample separately.")
+      bySample = TRUE
+    }
   
     meth.mat <- getCoverage(bs, type = "M")
     unmeth.mat <- getCoverage(bs, type = "Cov") - meth.mat
@@ -65,24 +73,41 @@ plotEmpiricalDistribution <- function(bs,
                 "than one column in pData()")
         }
         mC <- grep(testCovariate, colnames(pData(bs)))
+        grouplab <- pData(bs)[,mC]
+    }else{
+       if(is.null(sampleNames(bs))){
+         grouplab <- as.character(seq_len(ncol(bs)))
+       }else{
+         grouplab <- sampleNames(bs)
+       }
     }
     
     meth.levelsm <- utils::stack(meth.levelsm)
     colnames(meth.levelsm)[1] <- "M"
     meth.levelsm$Cov <- utils::stack(cov.matm)$values
     
-    meth.levelsm$group <- 
-      unlist(lapply(seq_len(ncol(bs)), function(x) 
-        rep(pData(bs)[x,mC], nrow(bs))))
-    meth.levelsm$sample <- sort(rep(seq_len(ncol(bs)), nrow(bs)))
+    if(is.null(sampleNames(bs))){
+      meth.levelsm$sample <- sort(rep(seq_len(ncol(bs)), nrow(bs)))
+    }else{
+      meth.levelsm$sample <- unlist(lapply(sampleNames(bs), function(x) 
+                                           rep(x, nrow(bs))))
+    }
+    
+    if (!is.null(testCovariate)){
+      meth.levelsm$group <- 
+        unlist(lapply(seq_len(ncol(bs)), function(x) 
+          rep(pData(bs)[x,mC], nrow(bs))))
+    }else{
+      meth.levelsm$group <- meth.levelsm$sample
+    }
     
     if (!bySample){
       if (type=="M"){
         # compute weights - sum over all samples in group ##
         covtots <- rep(NA, ncol(cov.matm))
-        names(covtots) <- pData(bs)[,mC]
-        for(l in unique(pData(bs)[,mC])){
-          covtots[names(covtots) == l] <- sum(colSums(cov.matm)[pData(bs)[,mC] == l]) 
+        names(covtots) <- grouplab
+        for(l in unique(grouplab)){
+          covtots[names(covtots) == l] <- sum(colSums(cov.matm)[grouplab == l]) 
         }
         
         wt.matm <- data.frame(t(t(cov.matm) / covtots)) 
@@ -92,32 +117,51 @@ plotEmpiricalDistribution <- function(bs,
                  aes(M, colour = group, group = group, weight = wt)) + 
           geom_line(adjust = adj, alpha = 0.6, stat = "density", size = 1.3) + 
         xlab("Methylation Proportion") + 
-        theme_bw()  # colour=condition
+        theme_bw()
       }else{
         p1 <- ggplot(meth.levelsm, aes(Cov+0.1, 
                                colour = group, group = group)) + 
           geom_line(adjust = adj, alpha = 0.6, stat = "density", size = 1.3) +
           scale_x_continuous(trans="log2") +
         xlab("Coverage") + 
-          theme_bw()  # colour=condition
+          theme_bw()
       }
+      p1 <- p1 + labs(colour = "Group")
     }else{
       if (type=="M"){
         wt.matm <- data.frame(t(t(cov.matm) / colSums(cov.matm))) 
         meth.levelsm$wt <- utils::stack(wt.matm)$values 
         
-        p1 <- ggplot(meth.levelsm, 
-                     aes(M, colour = group, group = sample, weight = wt)) + 
-          geom_line(adjust = adj, alpha = 0.6, stat = "density", size = 1.3) +
+        if(identical(meth.levelsm$group, meth.levelsm$sample)){
+          p1 <- ggplot(meth.levelsm, 
+                       aes(M, colour = group, group = sample, weight = wt)) +
+            labs(color = "Sample")
+        }else{
+          p1 <- ggplot(meth.levelsm, 
+                     aes(M, colour = group, group = sample, weight = wt,
+                         linetype = sample)) +
+            labs(color = "Group", linetype = "Sample")
+        }
+        p1 <- p1 + geom_line(adjust = adj, alpha = 0.6, stat = "density", size = 1.3) +
           xlab("Methylation Proportion") + 
-          theme_bw()  # colour=condition
+          theme_bw()  
       }else{
-        p1 <- ggplot(meth.levelsm, aes(Cov+0.1, 
-                                       colour = group, group = sample)) + 
+        if(identical(meth.levelsm$group, meth.levelsm$sample)){
+          p1 <- ggplot(meth.levelsm, aes(Cov+0.1, 
+                                         colour = group, group = sample)) +
+            labs(color = "Sample")
+        }else{
+          p1 <- ggplot(meth.levelsm, aes(Cov+0.1, 
+                                         colour = group, group = sample,
+                                         linetype = sample)) +
+            labs(color = "Group", linetype = "Sample")
+        }
+        
+        p1 <- p1 + 
           geom_line(adjust = adj, alpha = 0.6, stat = "density", size = 1.3) +
           scale_x_continuous(trans="log2") +
           xlab("Coverage") + 
-          theme_bw()  # colour=condition
+          theme_bw()  
       }
     }
     return(p1)
