@@ -125,7 +125,7 @@ getEstimatePooled <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
                               unname(design[, coeff] == lev2)] > 0) == 1,2] <- 
           sd[DelayedMatrixStats::rowSums2(cov.mat[, 
                               unname(design[, coeff] == lev2)] > 0) == 1,1]
-        sd <- 1.4826 * sqrt(rowSums2(sd))
+        sd <- 1.4826 * sqrt(DelayedMatrixStats::rowSums2(sd))
         
         return(list(rawBeta = est, sd = sd))
     } else {
