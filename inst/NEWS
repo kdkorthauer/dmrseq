@@ -1,3 +1,10 @@
+Changes in Version 1.1.20 (2018-10-11)
+_____________________________________
+
+o Minor bug fix for a rare situation that occured in the case of a multi-level 
+  covariate of interest if the region level model fitting procedure did not 
+  converge.
+
 Changes in Version 1.1.2 (2018-05-09)
 _____________________________________
 

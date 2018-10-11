@@ -774,7 +774,8 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
             
             return(df)
         } else {
-            return(data.frame(beta = NA, stat = NA, constant = TRUE))
+            return(data.frame(beta = rep(NA, length(coeff)), stat = NA, 
+                              constant = TRUE))
         }
     }
     
