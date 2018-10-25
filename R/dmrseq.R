@@ -264,6 +264,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
     coeff <- seq(2,(2 + length(testCovariate) - 1))
     testCov <- pData(bs)[, testCovariate]
     fact <- TRUE
+    sampleSize <- table(testCov)[names(table(testCov)) %in% pData(bs)[,testCovariate]]
     if (length(unique(testCov)) == 1) {
         message("Warning: only one unique value of the specified ", 
                 "covariate of interest.  Assuming null comparison and ",
@@ -285,13 +286,12 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
         message("Assuming the test ",
               "covariate ", colnames(pData(bs))[testCovariate],
               " is a factor.")
-        if(min(table(testCov)[names(table(testCov)) %in% pData(bs)[,testCovariate]]) < 2)
+        if(min(sampleSize) < 2)
           stop("At least one group has only one sample! ",
                "Replicates are required to run dmrseq.")
         testCov <- as.factor(testCov)
     }
-    
-    sampleSize <- table(testCov)
+  
     if (!is.null(adjustCovariate)) {
         mmdat <- data.frame(testCov = testCov)
         adjustCov <- pData(bs)[, adjustCovariate, drop = FALSE]
@@ -307,6 +307,12 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
         design <- model.matrix(~testCov)
         colnames(design)[coeff] <- colnames(pData(bs))[testCovariate]
         coeff.adj <- NULL
+    }
+    
+    # check for empty factor levels in design matrix
+    if (sum(colSums(design) == 0) > 0){
+      which.empty <- which(colSums(design) == 0)
+      design <- design[,-which.empty]
     }
   
     # check for interaction terms (not yet supported)
