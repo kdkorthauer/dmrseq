@@ -285,7 +285,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
         message("Assuming the test ",
               "covariate ", colnames(pData(bs))[testCovariate],
               " is a factor.")
-        if(min(table(testCov)) < 2)
+        if(min(table(testCov)[names(table(testCov)) %in% colnames(pData(bs))[testCovariate]]) < 2)
           stop("At least one group has only one sample! ",
                "Replicates are required to run dmrseq.")
         testCov <- as.factor(testCov)
