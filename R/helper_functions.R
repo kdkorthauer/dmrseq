@@ -162,7 +162,6 @@ bumphunt <- function(bs,
     if (chrsPerChunk > 1){
       sizeRank <- rank(-seqnames(bs)@lengths, ties.method = "first") 
       nChunks <- ceiling(length(unique(seqnames(bs))) / chrsPerChunk)
-      chrlengths <- rep(NA, nChunks)
       all.chrs <- as.character(unique(seqnames(bs)))
       chrs <- vector("list", nChunks)
       chunk <- 1
@@ -182,14 +181,11 @@ bumphunt <- function(bs,
         }
         # put in original seqlevel order
         chrs[[chunk]] <- as.character(seqnames(chrSelectBSseq(bs, 
-                                               chrs[[chunk]]))@values) 
+                                               chrs[[chunk]]))@values)
         if(length(chrs[[chunk]]) == chrsPerChunk){
           chunk <- min(nChunks, chunk + 1)
         }
       }
-    }else{
-      chrlengths <- cumsum(table(seqnames(bs)))
-      names(chrlengths) <- chrs
     }
 
     tab <- NULL
@@ -204,6 +200,12 @@ bumphunt <- function(bs,
       if (verbose) 
         message("...Chromosome ", paste(chromosome, collapse = ", "),
                 ": ", appendLF = FALSE)
+      
+      # skip chromosomes that have fewer than minNumRegion loci
+      if (length(pos) < minNumRegion){ 
+        message("No candidates found.")
+        next
+      }
     
       cov.means <- DelayedMatrixStats::rowMeans2(cov.mat)
     
@@ -305,7 +307,7 @@ bumphunt <- function(bs,
       }
       
       chrs <- unique(seqnames(bs))
-      chrlengths <- cumsum(table(seqnames(bs)))
+      chrlengths <- cumsum(table(as.character(seqnames(bs))))
       for (j in seq_len(length(chrs)-1)) {
         ch <- chrs[[j+1]]
         tab$indexStart[tab$chr %in% ch] <- tab$indexStart[tab$chr %in% ch] +

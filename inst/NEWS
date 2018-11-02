@@ -1,3 +1,9 @@
+Changes in Version 1.2.1 (2018-11-02)
+_____________________________________
+
+o dmrseq now requires that input BSseq objects be ordered (as the BSseq() 
+  constructor no longer automatically orders loci).
+
 Changes in Version 1.1.20 (2018-10-11)
 _____________________________________
 

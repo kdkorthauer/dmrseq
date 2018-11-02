@@ -248,10 +248,13 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
       }else if(chrsPerChunk > length(unique(seqnames(bs)))){
         stop("chrsPerChunk can't be larger than the total",
              " number of chromosomes")
-      }else if(!identical(as.character(seqnames(bs)@values), seqlevels(bs))){
-        stop("BSseq object must be ordered if breaking computation ",
-             "into multiple chromosomes per chunk (see bsseq::orderBSseq())")
       }
+    }
+    
+    # check that bs object is sorted since `bsseq::BSseq()` no longer 
+    # automatically sorts to ensure loci from same chr are indexed consecutively
+    if (is.unsorted(bs)) {
+      stop("'bs' must be sorted before smoothing. Use 'sort(bs)'.")
     }
     
     # construct the design matrix using the pData of bs
