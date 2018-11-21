@@ -35,7 +35,8 @@
 #'  constructing the permutations in order to
 #'  test for the association of methylation value with the 
 #'  \code{testCovariate}, only to be used when \code{testCovariate}
-#'  is a two-group factor.
+#'  is a two-group factor and the number of permutations possible is less
+#'  than 500000.
 #'  Alternatively, you can specify an integer value indicating
 #'  which column of \code{pData(bs)} to block for.
 #'  Blocking means that only permutations with balanced
@@ -295,11 +296,6 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
                "Replicates are required to run dmrseq.")
         testCov <- as.factor(testCov)
     }
-  
-    # check for incompatible args
-    if (fact & !is.null(matchCovariate))
-      stop("matchCovariate can't be used when testCovariate is not a 2-group ",
-           "factor. Perhaps you'd like to add an adjustCovariate instead?")
     
     if (!is.null(adjustCovariate)) {
         mmdat <- data.frame(testCov = testCov)
@@ -324,6 +320,16 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
       design <- design[,-which.empty]
     }
   
+    # check for incompatible args
+    if (fact && !is.null(matchCovariate))
+      stop("matchCovariate can't be used when testCovariate is not a 2-group ",
+           "factor. Perhaps you'd like to add an adjustCovariate instead?")
+    
+    if(!is.null(matchCovariate) && choose(nrow(design), min(sampleSize)) < 5e5)
+      stop("matchCovariate can't be used when the sample size is large enough ",
+           "to yield more than 500000 possible permutations. ",
+           "Perhaps you'd like to add an adjustCovariate instead?")
+    
     # check for interaction terms (not yet supported)
     if (length(coeff) > 1 && any(rowSums(design[,coeff]) > 1))
       stop("Interaction terms in testCovariate are not yet supported.")

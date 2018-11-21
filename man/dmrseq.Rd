@@ -80,7 +80,8 @@ will be blocked for when
 constructing the permutations in order to
 test for the association of methylation value with the 
 \code{testCovariate}, only to be used when \code{testCovariate}
-is a two-group factor.
+is a two-group factor and the number of permutations possible is less
+than 500000.
 Alternatively, you can specify an integer value indicating
 which column of \code{pData(bs)} to block for.
 Blocking means that only permutations with balanced
