@@ -29,12 +29,13 @@
 #'  which of the columns of \code{pData(bs)} to adjust for.
 #'  If not NULL (default), then this is also used to 
 #'  construct the design matrix for the test statistic calculation.
-#' @param matchCovariate an (optional) character value 
+#' @param matchCovariate An (optional) character value 
 #'  indicating which variable (column name) of \code{pData(bs)} 
 #'  will be blocked for when 
 #'  constructing the permutations in order to
 #'  test for the association of methylation value with the 
-#'  \code{testCovariate}. 
+#'  \code{testCovariate}, only to be used when \code{testCovariate}
+#'  is a two-group factor.
 #'  Alternatively, you can specify an integer value indicating
 #'  which column of \code{pData(bs)} to block for.
 #'  Blocking means that only permutations with balanced
@@ -295,6 +296,11 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
         testCov <- as.factor(testCov)
     }
   
+    # check for incompatible args
+    if (fact & !is.null(matchCovariate))
+      stop("matchCovariate can't be used when testCovariate is not a 2-group ",
+           "factor. Perhaps you'd like to add an adjustCovariate instead?")
+    
     if (!is.null(adjustCovariate)) {
         mmdat <- data.frame(testCov = testCov)
         adjustCov <- pData(bs)[, adjustCovariate, drop = FALSE]
@@ -371,6 +377,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
              "of at least one condition. Please remove these loci ", 
              "before running dmrseq")
       }
+      
     }else{
       filter <- DelayedMatrixStats::rowSums2(getCoverage(bs)==0) >= ncol(bs) - 1
       if(sum(filter) > 0)

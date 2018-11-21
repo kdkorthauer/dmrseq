@@ -74,12 +74,13 @@ should be printed to stdout. Defaults value is TRUE.}
 of permutations that will be used to generate the global null 
 distribution of test statistics.  Default value is 10.}
 
-\item{matchCovariate}{an (optional) character value 
+\item{matchCovariate}{An (optional) character value 
 indicating which variable (column name) of \code{pData(bs)} 
 will be blocked for when 
 constructing the permutations in order to
 test for the association of methylation value with the 
-\code{testCovariate}. 
+\code{testCovariate}, only to be used when \code{testCovariate}
+is a two-group factor.
 Alternatively, you can specify an integer value indicating
 which column of \code{pData(bs)} to block for.
 Blocking means that only permutations with balanced
