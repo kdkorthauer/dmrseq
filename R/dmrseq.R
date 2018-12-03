@@ -304,10 +304,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
         frm <- paste0("~", paste0(colnames(mmdat), collapse = " + "))
         design <- model.matrix(as.formula(frm), data=mmdat)
         colnames(design)[coeff] <- colnames(pData(bs))[testCovariate]
-        colnames(design)[seq((max(coeff) + 1), ncol(design))] <- 
-          colnames(pData(bs))[adjustCovariate]
-        coeff.adj <- which(colnames(design) == 
-                             colnames(pData(bs))[adjustCovariate])
+        coeff.adj <- (max(coeff) + 1):(ncol(design))
     } else {
         design <- model.matrix(~testCov)
         colnames(design)[coeff] <- colnames(pData(bs))[testCovariate]
@@ -341,7 +338,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
             unique(pData(bs)[, testCovariate][which(design[, coeff] == 0)]))
     }
     if (!is.null(adjustCovariate)) {
-      message("Adjusting for covariate: ", 
+      message("Adjusting for covariate (s): ", 
               paste(colnames(pData(bs))[adjustCovariate], collapse = ", "))
     }
     if (!is.null(matchCovariate)) {
@@ -422,7 +419,8 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
                     maxGap = maxGap, maxGapSmooth = maxGapSmooth, 
                     smooth = smooth, bpSpan = bpSpan, verbose = verbose, 
                     parallel = parallel, block = block, blockSize = blockSize,
-                    chrsPerChunk = chrsPerChunk, fact = fact)
+                    chrsPerChunk = chrsPerChunk, fact = fact,
+                    adjustCovariate = adjustCovariate)
    
     # check that at least one candidate region was found; if there were none 
     # there is no need to go on to compute permutation tests...
@@ -593,7 +591,8 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
                                    smooth = smooth, bpSpan = bpSpan, 
                                    verbose = verbose, parallel = parallel,
                                    block = block, blockSize = blockSize,
-                                   chrsPerChunk = chrsPerChunk, fact = fact)
+                                   chrsPerChunk = chrsPerChunk, fact = fact,
+                                   adjustCovariate = adjustCovariate)
             
             if (verbose) {
               message("* ", j, " out of ", ncol(perms), 

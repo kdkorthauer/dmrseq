@@ -140,7 +140,8 @@ bumphunt <- function(bs,
     minInSpan = 30, minNumRegion = 5, 
     cutoff = NULL, maxGap = 1000, maxGapSmooth = 2500, smooth = FALSE, 
     bpSpan = 1000, verbose = TRUE, parallel = FALSE, block = FALSE,
-    blockSize = 5000, chrsPerChunk = 1, fact = FALSE, ...) {
+    blockSize = 5000, chrsPerChunk = 1, fact = FALSE, 
+    adjustCovariate = NULL, ...) {
     
     # calculate smoothing span from minInSpan
     bpSpan2 <- NULL
@@ -281,7 +282,8 @@ bumphunt <- function(bs,
         minNumRegion = minNumRegion, design = design, coeff = coeff, 
         coeff.adj = coeff.adj,
         verbose = verbose, parallel = parallel,
-        pDat=pData(bs), block = block, blockSize = blockSize, fact = fact))
+        pDat=pData(bs), block = block, blockSize = blockSize, fact = fact,
+        adjustCovariate = adjustCovariate))
     }
     
     if (length(tab) == 0) {
@@ -451,7 +453,8 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
     chr = chr, x, y = x, ind = seq(along = x), order = TRUE, minNumRegion = 5, 
     maxGap = 300, cutoff = quantile(abs(x), 0.99), assumeSorted = FALSE, 
     verbose = verbose, design = design, coeff = coeff, coeff.adj = coeff.adj,
-    parallel = parallel, pDat, block, blockSize, fact = fact) {
+    parallel = parallel, pDat, block, blockSize, fact = fact, 
+    adjustCovariate = NULL) {
     if (any(is.na(x[ind]))) {
        message(sum(is.na(x[ind]))," CpG(s) excluded due to zero coverage. ",
               appendLF = FALSE)
@@ -608,9 +611,9 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
                           L = as.vector(rep(pos[ix], nrow(design))))
         
         if(length(coeff.adj) > 0){
-          for (k in seq_along(coeff.adj)){
-            dat[,colnames(design)[coeff.adj[k]]] <- 
-                    rep(pDat[,colnames(design)[coeff.adj[k]]], each=length(ix))
+          for (k in adjustCovariate){
+            dat[,colnames(pDat)[k]] <- 
+                    rep(pDat[,colnames(pDat)[k]], each=length(ix))
           }
         }
         
@@ -625,30 +628,30 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
                na.omit(dat$cov - dat$meth)[1] == 0))) {
             
           dat$pos <- as.numeric(factor(dat$L))
-                   if (block){
+          if (block){
             # one interior knot per 10K basepairs, with max of 10
             k <- min(ceiling((max(pos[ix]) - min(pos[ix])) / 10000) + 1, 10)
             if (length(coeff.adj)==0){
               X <- model.matrix( ~ dat$g.fac + ns(dat$L, df=k))
               mm <- as.formula(paste0("Z ~ g.fac + ns(L, df=", k, ")"))
             }else{
-              X <- model.matrix( ~ dat$g.fac + ns(dat$L, df=k) + 
-                                   as.matrix(dat[,colnames(design)[coeff.adj]]))
-              mm <- as.formula(paste0("Z ~ g.fac + ns(L, df=", 
+              mm <- as.formula(paste0("~ g.fac + + ns(L, df=", 
                                       k, ") + ",
-                                      paste(colnames(design)[coeff.adj], 
+                                      paste(colnames(pDat)[adjustCovariate], 
                                             collapse=" + ")))
+              X <- model.matrix(mm, data = dat)
+              mm <- as.formula(paste0("Z", paste(mm, collapse = "")))
             }
           }else{
             if (length(coeff.adj)==0){
               X <- model.matrix( ~ dat$g.fac + dat$L)
               mm <- formula(Z ~ g.fac + factor(L))
             }else{
-              X <- model.matrix( ~ dat$g.fac + dat$L + 
-                                   as.matrix(dat[,colnames(design)[coeff.adj]]))
-              mm <- as.formula(paste0("Z ~ g.fac + factor(L) + ",
-                                      paste(colnames(design)[coeff.adj], 
+              mm <- as.formula(paste0("~ g.fac + factor(L) + ",
+                                      paste(colnames(pDat)[adjustCovariate], 
                                             collapse=" + ")))
+              X <- model.matrix(mm, data = dat)
+              mm <- as.formula(paste0("Z", paste(mm, collapse = "")))
             }
           }
             
