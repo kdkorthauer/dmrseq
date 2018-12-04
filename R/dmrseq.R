@@ -318,11 +318,11 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
     }
   
     # check for incompatible args
-    if (fact && !is.null(matchCovariate))
+    if (fact && !is.null(matchCovariate) && length(unique(testCov)) > 2)
       stop("matchCovariate can't be used when testCovariate is not a 2-group ",
            "factor. Perhaps you'd like to add an adjustCovariate instead?")
     
-    if(!is.null(matchCovariate) && choose(nrow(design), min(sampleSize)) < 5e5)
+    if(!is.null(matchCovariate) && choose(nrow(design), min(sampleSize)) >= 5e5)
       stop("matchCovariate can't be used when the sample size is large enough ",
            "to yield more than 500000 possible permutations. ",
            "Perhaps you'd like to add an adjustCovariate instead?")
