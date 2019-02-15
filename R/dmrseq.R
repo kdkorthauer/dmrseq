@@ -279,7 +279,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
                 length(unique(testCov)), " groups (assuming the test ",
                 "covariate ", colnames(pData(bs))[testCovariate],
                 " is a factor).")
-        coeff <- c(coeff, coeff + length(unique(testCov)) - 2)
+        coeff <- seq(coeff, coeff + length(unique(testCov)) - 2)
     }else if (length(unique(testCov)) > 2 && is.numeric(testCov)) {
         message("Assuming the test ",
               "covariate ", colnames(pData(bs))[testCovariate],
