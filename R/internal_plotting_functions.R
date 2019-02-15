@@ -76,7 +76,6 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
                   ix <- agrep(ucol, names(colvec))
                   if (length(ix) > 1)
                     stop("Ambiguous CpG annotation labels")
-                    
                   color[color == ucol] <- colvec[ix]
                 }
                 bord <- color
