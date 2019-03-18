@@ -776,8 +776,12 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
             
             return(df)
         } else {
-            return(data.frame(beta = rep(NA, length(coeff)), stat = NA, 
-                              constant = TRUE))
+            df1 <- data.frame(stat = NA, constant = TRUE)
+            df2 <- data.frame(matrix(nrow = 1, ncol = length(coeff)))
+            # make sure colnames match nonconstant rows
+            names(df2) <- paste0("beta_", unique(dat$g.fac)[-1])
+            df <- cbind(df1, df2) 
+            return(df)
         }
     }
     
