@@ -3,11 +3,14 @@ Type: Package
 Title: Detection and inference of differentially methylated regions 
   from Whole Genome Bisulfite Sequencing 
 Version: 1.3.10
-Author: Keegan Korthauer <keegan@jimmy.harvard.edu>, 
-  Sutirtha Chakraborty <statistuta@gmail.com>, 
-  Yuval Benjamini <yuvalbenj@gmail.com>, 
-  Rafael Irizarry <rafa@jimmy.harvard.edu>
-Maintainer: Keegan Korthauer <keegan@jimmy.harvard.edu>
+Authors@R: c(person("Keegan", "Korthauer", role = c("crea", "aut"), 
+                    email = "keegan@jimmy.harvard.edu", 
+                    comment = c(ORCID = "0000-0002-4565-1654")),
+             person("Rafael", "Irizarry", role = "aut",
+                    email = "rafa@jimmy.harvard.edu",
+                    comment = c(ORCID = "0000-0002-3944-4309")),
+             person("Yuval", "Benjamini", role = "aut"),
+             person("Sutirtha", "Chakraborty", role = "aut"))
 Description: This package implements an approach for scanning the
   genome to detect and perform accurate inference on differentially 
   methylated regions from Whole Genome Bisulfite Sequencing data. 
