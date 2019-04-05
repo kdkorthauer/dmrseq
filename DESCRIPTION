@@ -3,7 +3,7 @@ Type: Package
 Title: Detection and inference of differentially methylated regions 
   from Whole Genome Bisulfite Sequencing 
 Version: 1.3.10
-Authors@R: c(person("Keegan", "Korthauer", role = c("crea", "aut"), 
+Authors@R: c(person("Keegan", "Korthauer", role = c("cre", "aut"), 
                     email = "keegan@jimmy.harvard.edu", 
                     comment = c(ORCID = "0000-0002-4565-1654")),
              person("Rafael", "Irizarry", role = "aut",
