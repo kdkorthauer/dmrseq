@@ -301,6 +301,12 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
         mmdat <- data.frame(testCov = testCov)
         adjustCov <- pData(bs)[, adjustCovariate, drop = FALSE]
         mmdat <- cbind(mmdat, adjustCov)
+        mmdat <- data.frame(apply(mmdat, 2, as.numeric))
+        # check for number of unique values per adjust cov
+        nunq <- apply(mmdat, 2, function(x) length(unique(x)))
+        if (any(nunq < 2))
+          stop("At least one adjust covariate is constant across samples.",
+               " Please remove this covariate from the model and try again.")
         frm <- paste0("~", paste0(colnames(mmdat), collapse = " + "))
         design <- model.matrix(as.formula(frm), data=mmdat)
         colnames(design)[coeff] <- colnames(pData(bs))[testCovariate]
@@ -316,6 +322,12 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
       which.empty <- which(colSums(design) == 0)
       design <- design[,-which.empty]
     }
+    
+    # check that p <= n
+    if (ncol(bs) < ncol(design) + 1)
+      stop("Not enough degrees of freedom to estimate ", ncol(design)-1,
+           " covariates using ", ncol(bs), " samples. Please use a larger ",
+           "number of samples, or specify fewer adjust covariates.")
   
     # check for incompatible args
     if (fact && !is.null(matchCovariate) && length(unique(testCov)) > 2)

@@ -53,4 +53,4 @@ biocViews: ImmunoOncology, DNAMethylation, Epigenetics, MultipleComparison, Soft
   FunctionalGenomics
 LazyData: true
 VignetteBuilder: knitr
-RoxygenNote: 6.1.0
+RoxygenNote: 6.1.1
