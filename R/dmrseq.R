@@ -268,6 +268,8 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
     
     coeff <- seq(2,(2 + length(testCovariate) - 1))
     testCov <- pData(bs)[, testCovariate]
+    if (is.factor(testCov)) # drop unused levels of test
+      testCov <- droplevels(testCov)
     fact <- TRUE
     sampleSize <- table(testCov)[names(table(testCov)) %in% pData(bs)[,testCovariate]]
     if (length(unique(testCov)) == 1) {
@@ -300,12 +302,20 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
     if (!is.null(adjustCovariate)) {
         mmdat <- data.frame(testCov = testCov)
         adjustCov <- pData(bs)[, adjustCovariate, drop = FALSE]
-        mmdat <- cbind(mmdat, adjustCov)
+        
         # check for number of unique values per adjust cov
-        nunq <- apply(mmdat, 2, function(x) length(unique(x)))
+        nunq <- apply(adjustCov, 2, function(x) length(unique(x)))
         if (any(nunq < 2))
           stop("At least one adjust covariate is constant across samples.",
                " Please remove this covariate from the model and try again.")
+        
+        # remove any empty factor levels
+        for (f in 1:ncol(adjustCov)){
+          if (is.factor(adjustCov[,f]))
+            adjustCov[,f] <- droplevels(adjustCov[,f])
+        }
+        
+        mmdat <- cbind(mmdat, adjustCov)
         frm <- paste0("~", paste0(colnames(mmdat), collapse = " + "))
         design <- model.matrix(as.formula(frm), data=mmdat)
         colnames(design)[coeff] <- colnames(pData(bs))[testCovariate]
