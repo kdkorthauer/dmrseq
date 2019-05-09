@@ -301,7 +301,6 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
         mmdat <- data.frame(testCov = testCov)
         adjustCov <- pData(bs)[, adjustCovariate, drop = FALSE]
         mmdat <- cbind(mmdat, adjustCov)
-        mmdat <- data.frame(apply(mmdat, 2, as.numeric))
         # check for number of unique values per adjust cov
         nunq <- apply(mmdat, 2, function(x) length(unique(x)))
         if (any(nunq < 2))
