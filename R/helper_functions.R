@@ -785,7 +785,7 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
             if (length(unique(dat$g.fac)[-1]) == 1){
               names(df2) <- "beta"
             }else{
-              names(df2) <- paste0("beta_", unique(dat$g.fac)[-1])
+              names(df2) <- paste0("beta_", levels(as.factor(dat$g.fac))[-1])
             }
             df <- cbind(df1, df2) 
             return(df)
