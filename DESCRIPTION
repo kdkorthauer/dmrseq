@@ -2,7 +2,7 @@ Package: dmrseq
 Type: Package
 Title: Detection and inference of differentially methylated regions 
   from Whole Genome Bisulfite Sequencing 
-Version: 1.4.3
+Version: 1.4.4
 Authors@R: c(person("Keegan", "Korthauer", role = c("cre", "aut"), 
                     email = "keegan@jimmy.harvard.edu", 
                     comment = c(ORCID = "0000-0002-4565-1654")),
