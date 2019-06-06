@@ -629,8 +629,9 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
             
           dat$pos <- as.numeric(factor(dat$L))
           if (block){
-            # one interior knot per 10K basepairs, with max of 10
-            k <- min(ceiling((max(pos[ix]) - min(pos[ix])) / 10000) + 1, 10)
+            # one interior knot per 10K basepairs, with max of 10 or nloci/2
+            k <- min(c(ceiling((max(pos[ix]) - min(pos[ix])) / 10000) + 1, 
+                       10, ceiling(length(pos)/2)))
             if (length(coeff.adj)==0){
               X <- model.matrix( ~ dat$g.fac + ns(dat$L, df=k))
               mm <- as.formula(paste0("Z ~ g.fac + ns(L, df=", k, ")"))
@@ -683,11 +684,21 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
             if (nrow(X) < ncol(X) + 1) {
               message("Not enough degree of freedom to fit the ", 
                       "model. Drop some terms in formula")
-              return(data.frame(beta = NA, stat = NA, constant = FALSE))
             }
+            
             ## design is not of full rank because of missing. Skip
-            if (any(abs(svd(X)$d) < 1e-08)) 
-              return(data.frame(beta = NA, stat = NA, constant = FALSE))
+            if (nrow(X) < ncol(X) + 1 || any(abs(svd(X)$d) < 1e-08)){
+              df1 <- data.frame(stat = NA, constant = FALSE)
+              df2 <- data.frame(matrix(nrow = 1, ncol = length(coeff)))
+              # make sure colnames match nonconstant rows
+              if (length(unique(dat$g.fac)[-1]) == 1){
+                names(df2) <- "beta"
+              }else{
+                names(df2) <- paste0("beta_", levels(as.factor(dat$g.fac))[-1])
+              }
+              df <- cbind(df1, df2) 
+              return(df)
+            }
           }
           
           ## Transform the methylation levels.  Add a small constant to bound 
