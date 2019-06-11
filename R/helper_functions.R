@@ -97,13 +97,17 @@ getEstimatePooled <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
         
         # pooled
         est <- DelayedMatrixStats::rowSums2(meth.mat[, 
-                                            unname(design[, coeff] == lev1)])/
+                                            unname(design[, coeff] == lev1), 
+                                            drop = FALSE])/
           DelayedMatrixStats::rowSums2(cov.mat[, 
-                                            unname(design[,coeff] == lev1)]) - 
+                                            unname(design[,coeff] == lev1),
+                                            drop = FALSE]) - 
           DelayedMatrixStats::rowSums2(meth.mat[, 
-                                            unname(design[, coeff] == lev2)])/
+                                            unname(design[, coeff] == lev2),
+                                            drop = FALSE])/
           DelayedMatrixStats::rowSums2(cov.mat[, 
-                                            unname(design[, coeff] == lev2)])
+                                            unname(design[, coeff] == lev2),
+                                            drop = FALSE])
         
         sd <- cbind(DelayedMatrixStats::rowMads(meth.mat[, 
                                               unname(design[, coeff] == lev1)]/
@@ -114,17 +118,17 @@ getEstimatePooled <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
         # when sd is zero because one of the groups had only a single sample
         # with nonzero coverage, impute with the other group's sd est
         sd[DelayedMatrixStats::rowSums2(cov.mat[, 
-                              unname(design[, coeff] == lev1)] > 0) == 1 &
+                              unname(design[, coeff] == lev1), drop = FALSE] > 0) == 1 &
           DelayedMatrixStats::rowSums2(cov.mat[, 
-                              unname(design[, coeff] == lev2)] > 0) == 1,] <- 1
+                              unname(design[, coeff] == lev2), drop = FALSE] > 0) == 1,] <- 1
         sd[DelayedMatrixStats::rowSums2(cov.mat[, 
-                              unname(design[, coeff] == lev1)] > 0) == 1,1] <- 
+                              unname(design[, coeff] == lev1), drop = FALSE] > 0) == 1,1] <- 
           sd[DelayedMatrixStats::rowSums2(cov.mat[, 
-                              unname(design[, coeff] == lev1)] > 0) == 1,2]
+                              unname(design[, coeff] == lev1), drop = FALSE] > 0) == 1,2]
         sd[DelayedMatrixStats::rowSums2(cov.mat[, 
-                              unname(design[, coeff] == lev2)] > 0) == 1,2] <- 
+                              unname(design[, coeff] == lev2), drop = FALSE] > 0) == 1,2] <- 
           sd[DelayedMatrixStats::rowSums2(cov.mat[, 
-                              unname(design[, coeff] == lev2)] > 0) == 1,1]
+                              unname(design[, coeff] == lev2), drop = FALSE] > 0) == 1,1]
         sd <- 1.4826 * sqrt(DelayedMatrixStats::rowSums2(sd))
         
         return(list(rawBeta = est, sd = sd))
@@ -563,7 +567,7 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
     # only keep regions with replicates in each group for at least two CpGs
     # for factor comparisons 
     replicateStatus <- function(candidates, design, coeff, fact){
-      levs <- unique(design[, coeff])
+      levs <- unique(design[, coeff, drop = FALSE])
       if(!is(levs, "matrix"))
         levs <- as.matrix(levs)
       
@@ -577,7 +581,7 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
           cov.matl <- DelayedMatrixStats::rowSums2(
                           cov.mat.cand[,apply(design[, coeff, drop = FALSE], 1,
                             function(x) identical(unname(x),
-                                                  unname(levs[l,])))] > 0) > 1 &
+                                                  unname(levs[l,]))), drop = FALSE] > 0) > 0 &
                       prev.mat
           prev.mat <- cov.matl
         }
@@ -691,7 +695,7 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
               df1 <- data.frame(stat = NA, constant = FALSE)
               df2 <- data.frame(matrix(nrow = 1, ncol = length(coeff)))
               # make sure colnames match nonconstant rows
-              if (length(unique(dat$g.fac)[-1]) == 1){
+              if (length(unique(dat$g.fac)) == 2){
                 names(df2) <- "beta"
               }else{
                 names(df2) <- paste0("beta_", levels(as.factor(dat$g.fac))[-1])
@@ -793,7 +797,7 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
             df1 <- data.frame(stat = NA, constant = TRUE)
             df2 <- data.frame(matrix(nrow = 1, ncol = length(coeff)))
             # make sure colnames match nonconstant rows
-            if (length(unique(dat$g.fac)[-1]) == 1){
+            if (length(unique(dat$g.fac)) == 2){
               names(df2) <- "beta"
             }else{
               names(df2) <- paste0("beta_", levels(as.factor(dat$g.fac))[-1])
