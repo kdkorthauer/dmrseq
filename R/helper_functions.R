@@ -604,7 +604,8 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
     asin.gls.cov <- function(ix, design, coeff, 
         correlation = corAR1(form = ~1 |sample), 
         correlationSmall = corCAR1(form = ~L | sample), 
-        weights = varPower(form = ~1/MedCov, fixed = 0.5)) {
+        weights = varPower(form = ~1/MedCov, fixed = 0.5),
+        fact = fact) {
       
         dat <- data.frame(g.fac = rep(pDat[,colnames(design)[coeff[1]]], 
                                       each = length(ix)),
@@ -695,7 +696,7 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
               df1 <- data.frame(stat = NA, constant = FALSE)
               df2 <- data.frame(matrix(nrow = 1, ncol = length(coeff)))
               # make sure colnames match nonconstant rows
-              if (length(unique(dat$g.fac)) == 2){
+              if (!fact || length(unique(dat$g.fac)) == 2){
                 names(df2) <- "beta"
               }else{
                 names(df2) <- paste0("beta_", levels(as.factor(dat$g.fac))[-1])
@@ -797,7 +798,7 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
             df1 <- data.frame(stat = NA, constant = TRUE)
             df2 <- data.frame(matrix(nrow = 1, ncol = length(coeff)))
             # make sure colnames match nonconstant rows
-            if (length(unique(dat$g.fac)) == 2){
+            if (!fact || length(unique(dat$g.fac)) == 2){
               names(df2) <- "beta"
             }else{
               names(df2) <- paste0("beta_", levels(as.factor(dat$g.fac))[-1])
