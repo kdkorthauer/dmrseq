@@ -392,7 +392,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
       for (l in seq_along(lev)){
         filter <- rbind(filter,
               1*(DelayedMatrixStats::rowSums2(getCoverage(bs)[,pData(bs)[[testCovariate]] == 
-                                           lev[l]]) == 0))
+                                           lev[l], drop = FALSE]) == 0))
       }
       filter <- which( apply(filter, 2, max) > 0 )
   
