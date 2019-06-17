@@ -604,8 +604,7 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
     asin.gls.cov <- function(ix, design, coeff, 
         correlation = corAR1(form = ~1 |sample), 
         correlationSmall = corCAR1(form = ~L | sample), 
-        weights = varPower(form = ~1/MedCov, fixed = 0.5),
-        fact = fact) {
+        weights = varPower(form = ~1/MedCov, fixed = 0.5)) {
       
         dat <- data.frame(g.fac = rep(pDat[,colnames(design)[coeff[1]]], 
                                       each = length(ix)),
