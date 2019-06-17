@@ -606,6 +606,9 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
         correlationSmall = corCAR1(form = ~L | sample), 
         weights = varPower(form = ~1/MedCov, fixed = 0.5),
         fact) {
+        
+        if (is.factor(pDat[,colnames(design)[coeff[1]]])) # drop unused levels of test
+          pDat[,colnames(design)[coeff[1]]] <- droplevels(pDat[,colnames(design)[coeff[1]]])
       
         dat <- data.frame(g.fac = rep(pDat[,colnames(design)[coeff[1]]], 
                                       each = length(ix)),
@@ -614,9 +617,6 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
                           meth = as.vector(meth.mat[ix, ]),
                           cov = as.vector(cov.mat[ix, ]), 
                           L = as.vector(rep(pos[ix], nrow(design))))
-        
-        if (is.factor(dat$g.fac)) # drop unused levels of test
-          dat$g.fac <- droplevels(dat$g.fac)
         
         if(length(coeff.adj) > 0){
           for (k in adjustCovariate){
