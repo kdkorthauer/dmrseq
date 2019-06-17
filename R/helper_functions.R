@@ -516,6 +516,7 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
     if(block){
       # merge small candidate regions that are the same direction &
       # are less than 1kb apart
+      # and on SAME chr
       df <- S4Vectors::DataFrame(ind, chr = chr[ind], pos = pos[ind])
       for(j in seq_along(Indexes)){
         if (length(Indexes[[j]]) > 0){
@@ -530,14 +531,16 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
           # find 1kb flanking regions with no covered CpGs
           flk <- c(IRanges::flank(reg, width=1000, start=TRUE),
                    IRanges::flank(reg, width=1000, start=FALSE))
+          start(flk) <- pmax(1, start(flk)) # don't let neg positions
           overlap <- unique(IRanges::findOverlaps(flk, GRanges(seqnames=chr, 
                                    IRanges::IRanges(start=pos, end=pos)))@from)
           if (length(overlap) > 0)
             flk <- flk[-overlap]
         
-          # add back to regions and remake indices
-          reg <- as.matrix(as.data.frame(IRanges::reduce(c(flk, reg)))[,2:3])
-          idx <- apply(reg, 1, function(x) which(pos %in% x[1]:x[2]))
+          # add back to regions and remake indice
+          reg <- as.matrix(as.data.frame(IRanges::reduce(c(flk, reg)))[,1:3])
+          idx <- apply(reg, 1, function(x) which(pos %in% x[2]:x[3] &
+                                                 chr %in% x[1]))
           if (is(idx, "list")){
             Indexes[[j]] <- idx
           }else{
@@ -698,7 +701,7 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
               df1 <- data.frame(stat = NA, constant = FALSE)
               df2 <- data.frame(matrix(nrow = 1, ncol = length(coeff)))
               # make sure colnames match nonconstant rows
-              if (!fact || length(unique(dat$g.fac)) <= 2){
+              if (!fact || length(unique(dat$g.fac)) == 2){
                 names(df2) <- "beta"
               }else{
                 names(df2) <- paste0("beta_", levels(as.factor(dat$g.fac))[-1])
@@ -800,7 +803,7 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
             df1 <- data.frame(stat = NA, constant = TRUE)
             df2 <- data.frame(matrix(nrow = 1, ncol = length(coeff)))
             # make sure colnames match nonconstant rows
-            if (!fact || length(unique(dat$g.fac)) <= 2){
+            if (!fact || length(unique(dat$g.fac)) == 2){
               names(df2) <- "beta"
             }else{
               names(df2) <- paste0("beta_", levels(as.factor(dat$g.fac))[-1])
