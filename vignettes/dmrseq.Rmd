@@ -5,8 +5,8 @@ date: "`r BiocStyle::doc_date()`"
 package: "`r BiocStyle::pkg_ver('dmrseq')`"
 bibliography: dmrseqBib.bib
 abstract: >
-  A basic task in the analysis of count data from Whole Genome Bisulfite
-  Sequencing is the detection of differentially methylated regions. 
+  A basic task in the analysis of count data from Whole Genome 
+  Bisulfite-Sequencing is the detection of differentially methylated regions. 
   The count data consist of, for each sample, the number of methylated 
   reads and the total number of reads covering CpG. 
   An important analysis question is to detect regions (collections of 
@@ -95,7 +95,7 @@ neccessary components:
 
 1. genomic positions, including chromosome and location, for methylation loci.
 
-2. a (matrix) of M (Methylation) values, describing the number of read 
+2. a (matrix) of M (Methylation) values, describing the number of reads 
 supporting methylation covering a single loci. 
 Each row in this matrix is a methylation loci and each column is a sample.
 
@@ -103,10 +103,13 @@ Each row in this matrix is a methylation loci and each column is a sample.
 describing the total number of reads covering a single loci.
 Each row in this matrix is a methylation loci and each column is a sample.
 
-The following code chunk asumes that `chr` and `pos` are vectors of 
-chromosome names and positions, respectively, for each CpG in the dataset. It 
+The following code chunk assumes that `chr` and `pos` are vectors of 
+chromosome names and positions, respectively, for each CpG in the dataset. 
+You can also provide a `GRanges` object instead of `chr` and `pos`. It 
 also assumes that the matrices of methylation and coverage values (described
-above) are named `M` and `Cov`, respectively. 
+above) are named `M` and `Cov`, respectively. Note, `M` and `Cov` can also
+be data stored on-disk (not in memory) using HDF5 files with the `HDF5Array` 
+package or `DelayedMatrix` with the `DelayedArray` package. 
 
 The `sampleNames` and `trt` objects are 
 vectors with sample labels and condition labels for each sample. A condition
@@ -115,7 +118,8 @@ treatment or control, a tissue type, or a continous measurement.
 This is the covariate for which you wish to test for differences in 
 methylation. Once the `BSseq` object is constructed and the sample covariate
 information is added, DMRs are obtained by running the `dmrseq` function.
-A continuous covariate is assmued if the data type of the `testCovariate` is 
+A continuous covariate is assumed if the data type of the `testCovariate` 
+arugment in `dmrseq` is 
 continuous, with the exception of if there are only two unique values 
 (then a two group comparison is carried out).
 
@@ -154,11 +158,11 @@ the first question in the list of [Frequently Asked Questions](#FAQ)
 
 As input, the **dmrseq** package expects count data as obtained, e.g.,
 from Bisulfite-sequencing. The value in the *i*-th row and the *j*-th column of
-the M matrix tells how many methylated reads can be assigned to CpG *i* 
+the `M` matrix tells how many methylated reads can be assigned to CpG *i* 
 in sample *j*. Likewise, the value in the *i*-th row and the *j*-th column of
-the Cov matrix tells how many total reads can be assigned to CpG *i* 
+the `Cov` matrix tells how many total reads can be assigned to CpG *i* 
 in sample *j*. Although we might be tempted to combine these matrices into
-one matrix that contains the methylation *proportion* (M/Cov) at each CpG
+one matrix that contains the methylation *proportion* (`M`/`Cov`) at each CpG
 site, it is critical to notice that this would be throwing away a lot of
 information. For example, some sites have much higher coverage than others,
 and naturally, we have more confidence in those with many reads mapping to them.
@@ -211,7 +215,7 @@ more information on using this function.
 
 ## Count matrix input
 
-If you haven't used Bismark but you have count data for number of methylated
+If you haven't used Bismark, but you have count data for number of methylated
 reads and total coverage for each CpG, along with their corresponding chromosome
 and position information, you can construct a `BSseq` object from scratch, 
 like below. Notice that the `M` and `Cov` matrices have the same dimension, and
@@ -253,7 +257,7 @@ show(bs)
 rm(M, Cov, pos, chr, bismarkBSseq)
 ```
 
-The example data contains CpGs from chromosome 21 for  four samples 
+The example data contains CpGs from chromosome 21 for four samples 
 from @Lister2009. To load this data directly (already in the `BSseq` format), 
 simply type `data(BS.chr21)`.
 Two of the samples are replicates of the cell type 'imr90' 
@@ -290,7 +294,7 @@ parameter equal to its column name.
 ## Smoothing
 
 Note that unlike in **bsseq**, you do not need to carry out the smoothing step
-with a separate function. In addition, you should not use bbseq's bsmooth
+with a separate function. In addition, you should not use **bsseq**'s `BSmooth()`
 function to smooth the methylation levels, since **dmrseq** smooths in a very 
 different way. Briefly, **dmrseq** smooths methylation *differences*, so it 
 carries out the smoothing step once. This is automatically done with the main
@@ -327,7 +331,7 @@ rm(bs.filtered)
 ```
 
 Note that this is a trivial example, since our toy example object `BS.chr21` 
-already contains only loci with coverage at least one in all samples as well
+already contains only loci with coverage at least one read in all samples as well
 as only samples from the "imr90" and "h1" conditions. 
 
 Also note that instead of creating a separate object, the filtering step 
@@ -337,7 +341,7 @@ filtered version `bs[loci.idx, sample.idx]`.
 ## Adjusting for covariates
 
 There are two ways to adjust for covariates in the dmrseq model. The first way
-is to specify the `adjustCovariate` parameter of the `dmrseq` function as 
+is to specify the `adjustCovariate` parameter of the `dmrseq()` function as 
 a column of the `pData()` slot that contains the covariate you
 would like to adjust for. This will include that covariate directly in the
 model. This is ideal if the adjustment covariate is continuous or has more
@@ -379,17 +383,17 @@ The results object is a `GRanges` object with the coordiates
 of each candidate region, and contains the following metadata columns (which 
 can be extracted with the `$` operator:
 
-1. L = the number of CpGs contained in the region,
-2. area = the sum of the smoothed beta values
-3. beta = the coefficient value for the condition difference (Note: if the 
+1. `L` = the number of CpGs contained in the region,
+2. `area` = the sum of the smoothed beta values
+3. `beta` = the coefficient value for the condition difference (Note: if the 
    test covariate is categorical with more than 2 groups, there will be
    more than one beta column),
-4. stat = the test statistic for the condition difference,
-5. pval = the permutation p-value for the significance of the test
+4. `stat` = the test statistic for the condition difference,
+5. `pval` = the permutation _p_-value for the significance of the test
 statistic, and 
-6. qval = the q-value for the test statistic (adjustment
+6. `qval` = the _q_-value for the test statistic (adjustment
 for multiple comparisons to control false discovery rate).
-7. index = an `IRanges` containing the indices of the region's 
+7. `index = an `IRanges` containing the indices of the region's 
 first CpG to last CpG.
 
 ```{r, showresults}
@@ -398,7 +402,7 @@ show(regions)
 
 The above steps are carried out on a very small subset of data (20,000 CpGs).
 This package loads data into memory one chromosome at a 
-time. For on human data, this means objects with a few  million 
+time. For on human data, this means objects with a few million 
 entries per sample (since there are roughly 28.2 million total CpGs in the human
 genome, and the largest chromosomes will have more than 2 million CpGs). 
 This means that whole-genome `BSseq` objects for several samples can use up
@@ -455,7 +459,7 @@ knot per each 10kb of length (up to 10 interior knots).
 
 In addition, detecting large-scale blocks requires that 
 the smoothing window be increased to minimize the impact of noisy local
-methylation measurements. To do so, increase the values of the 
+methylation measurements. To do so, the values of the 
 smoothing parameters should be increased. For example, to use a smoothing window
 that captures at least 500 CpGs or 50,000 basepairs that are spaced apart by no 
 more than 1e6 bases, use `minInSpan=500`, `bpSpan=5e4`, and `maxGapSmooth=1e6`. 
@@ -492,9 +496,9 @@ candidate regions to carry out inference and obtain significance levels.
 
 ## Explore how many regions were significant
 
-How many regions were significant at the FDR (q-value) cutoff of 0.05? We
-can find this by counting how many values in the `qval` column of the results
-data.frame were less than 0.05. 
+How many regions were significant at the FDR (_q_-value) cutoff of 0.05? We
+can find this by counting how many values in the `qval` column of the `regions`
+object were less than 0.05. 
 You can also subset the regions by an FDR cutoff.
 
 ```{r}
