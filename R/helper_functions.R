@@ -161,8 +161,7 @@ bumphunt <- function(bs,
     
     # get 75th percentile of mean coverage genomewide before subsetting
     # by chromosome
-    covQ75 <- quantile(DelayedMatrixStats::rowMeans2(getCoverage(bs, 
-                                                        type="Cov")), 0.75)
+    covQ75 <- quantile(DelayedMatrixStats::rowMeans2(getCoverage(bs, type="Cov")), 0.75)
   
     if (chrsPerChunk > 1){
       sizeRank <- rank(-seqnames(bs)@lengths, ties.method = "first") 
@@ -464,7 +463,13 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
               appendLF = FALSE)
        ind <- intersect(which(!is.na(x)), ind)
     }
-    
+
+    # remove any empty factor levels
+    for (f in adjustCovariate){
+      if (is.factor(pDat[,f]))
+         pDat[,f] <- droplevels(pDat[,f])
+    }
+
     cluster <- bumphunter::clusterMaker(factor(chr, levels=unique(chr)), 
                                         pos, maxGap = maxGap, 
                                         assumeSorted = assumeSorted)
