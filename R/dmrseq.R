@@ -256,7 +256,7 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
     # check that bs object is sorted since `bsseq::BSseq()` no longer 
     # automatically sorts to ensure loci from same chr are indexed consecutively
     if (is.unsorted(bs)) {
-      stop("'bs' must be sorted before smoothing. Use 'sort(bs)'.")
+      stop("'bs' must be sorted. Use 'sort(bs)'.")
     }
     
     # construct the design matrix using the pData of bs

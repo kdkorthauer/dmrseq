@@ -315,7 +315,7 @@ bumphunt <- function(bs,
       chrlengths <- cumsum(table(seqnames(bs)))
       # Add a check to make sure chr order lines up with 
       # cumulative sum table
-      if (chrs == names(chrlengths)){
+      if (all.equal(as.character(chrs), names(chrlengths))){
         for (j in seq_len(length(chrs)-1)) {
           ch <- chrs[[j+1]]
           tab$indexStart[tab$chr %in% ch] <- tab$indexStart[tab$chr %in% ch] +
