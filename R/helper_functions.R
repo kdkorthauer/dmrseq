@@ -312,13 +312,20 @@ bumphunt <- function(bs,
       }
       
       chrs <- unique(seqnames(bs))
-      chrlengths <- cumsum(table(as.character(seqnames(bs))))
-      for (j in seq_len(length(chrs)-1)) {
-        ch <- chrs[[j+1]]
-        tab$indexStart[tab$chr %in% ch] <- tab$indexStart[tab$chr %in% ch] +
-          chrlengths[names(chrlengths) == chrs[j]]
-        tab$indexEnd[tab$chr %in% ch] <- tab$indexEnd[tab$chr %in% ch] +
-          chrlengths[names(chrlengths) == chrs[j]] 
+      chrlengths <- cumsum(table(seqnames(bs)))
+      # Add a check to make sure chr order lines up with 
+      # cumulative sum table
+      if (chrs == names(chrlengths)){
+        for (j in seq_len(length(chrs)-1)) {
+          ch <- chrs[[j+1]]
+          tab$indexStart[tab$chr %in% ch] <- tab$indexStart[tab$chr %in% ch] +
+            chrlengths[names(chrlengths) == chrs[j]]
+         tab$indexEnd[tab$chr %in% ch] <- tab$indexEnd[tab$chr %in% ch] +
+            chrlengths[names(chrlengths) == chrs[j]] 
+        }
+      }else{
+        stop("Chromosome order could not be reliably determined. ",
+             "Please use the 'sort' function before running dmrseq")
       }
     }
     
