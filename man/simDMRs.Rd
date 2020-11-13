@@ -20,7 +20,7 @@ this value). Default value is 0.3.}
 }
 \value{
 A named list object with 5 elements: (1) 
-\code{gr.dmrs} is a \code{GenomicRanges} object with \code{num.dmrs} 
+\code{gr.dmrs} is a \code{GRanges} object with \code{num.dmrs}
 ranges that represent the random DMRs added. (2) \code{dmr.mncov} is a 
 numeric vector that contains the mean coverage in each simulated DMR. (3)
 \code{dmr.L} is a numeric vector that contains the number of CpGs in each 

@@ -5,7 +5,7 @@
 #' sequences to DMR plot
 #' 
 #' @details An internal function that takes an annotation 
-#' \code{SimpleGenomicRangesList} 
+#' \code{SimpleGRangesList}
 #' object that
 #' contains CpG category information in the first element (optional) and / or
 #' coding gene sequence information in the second element (optional). If neither
@@ -14,7 +14,7 @@
 #' @param gr a \code{GRanges} object that contains the DMRs to be
 #'  plotted
 #' 
-#' @param annoTrack a \code{SimpleGenomicRangesList} object with two elements. 
+#' @param annoTrack a \code{SimpleGRangesList} object with two elements.
 #' The first contains CpG category information in the first element (optional)
 #' coding gene sequence information in the second element (optional).
 #' At least one of these elements needs to be non-null in order for 
@@ -27,8 +27,8 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
     # Code adapted from bsseq package
     
     ## check may need to be modified
-    if (!is(annoTrack, "SimpleGenomicRangesList"))
-        stop("'annoTrack' needs to be a 'SimpleGenomicRangesList'")
+    if (!is(annoTrack, "SimpleGRangesList"))
+        stop("'annoTrack' needs to be a 'SimpleGRangesList'")
     plot(start(gr), 1, type = "n", xaxt = "n", yaxt = "n", bty = "n", 
         ylim = c(0, length(annoTrack) + 0.5), xlim = c(start(gr), end(gr)), 
         xlab = "", ylab = "")
@@ -606,8 +606,8 @@ gg_color_hue <- function(n) {
 # region plot (instead of annotations)
 dmrPlotComparisons <- function(gr, annoTrack, labelCols = NULL) {
     
-    if (!is(annoTrack, "SimpleGenomicRangesList"))
-      stop("'annoTrack' needs to be a 'SimpleGenomicRangesList'")
+    if (!is(annoTrack, "SimpleGRangesList"))
+      stop("'annoTrack' needs to be a 'SimpleGRangesList'")
   
     if (length(annoTrack) > 4) 
         stop("Can't plot more than 4 tracks")

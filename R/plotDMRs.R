@@ -117,14 +117,14 @@
 #'  label 'Methylation' (useful to turn off if combining multiple region
 #'  figures and you do not want to include redundant y axis label information)
 #'  
-#' @param compareTrack a named GenomicRangesList item that contains up to four
-#' custom tracks (GenomicRanges objects) which will be plotted below the region.
+#' @param compareTrack a named GRangesList object that contains up to four
+#' custom tracks (GRanges objects) which will be plotted below the region.
 #' Only one of `compareTrack` or `annoTrack` can be specified since there is
 #' only for plotting either the built in GpG category and exon tracks, *or* a
 #' custom set of tracks.
 #' 
 #' @param labelCols a character vector with names of the mcols slot of the 
-#' GenomicRanges items in `compareTrack'. Only used if plotting custom
+#' GRanges items in `compareTrack'. Only used if plotting custom
 #' tracks using the `compareTrack' argument. If specified, the (first) value
 #' in that column is printed along with a label that includes the name of the
 #' list item. If NULL (default), just the name of the track is printed.

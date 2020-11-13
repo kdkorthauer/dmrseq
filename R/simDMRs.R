@@ -16,7 +16,7 @@
 #' this value). Default value is 0.3.
 #' 
 #' @return A named list object with 5 elements: (1) 
-#' \code{gr.dmrs} is a \code{GenomicRanges} object with \code{num.dmrs} 
+#' \code{gr.dmrs} is a \code{GRanges} object with \code{num.dmrs}
 #' ranges that represent the random DMRs added. (2) \code{dmr.mncov} is a 
 #' numeric vector that contains the mean coverage in each simulated DMR. (3)
 #' \code{dmr.L} is a numeric vector that contains the number of CpGs in each 
@@ -99,7 +99,7 @@ simDMRs <- function(bs, num.dmrs = 3000, delta.max0 = 0.3) {
                                   end = max(start(bs)[index])))
         return(gr.dmr)
     }
-    ## GenomicRanges Object for the Simulated DMRs
+    ## GRanges Object for the Simulated DMRs
     gr.dmrs <- suppressWarnings(Reduce("c", lapply(dmrs.ind, fnc)))
     
     ## Generating the Methylated and Unmethylated Read Counts 
