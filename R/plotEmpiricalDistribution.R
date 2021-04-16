@@ -43,10 +43,10 @@
 plotEmpiricalDistribution <- function(bs, 
                                       testCovariate = NULL,
                                       bySample = FALSE,
-                                      type="M",
+                                      type = "M",
                                       adj = 2.5) {
     #satisfy check
-    M <- Cov <- group <- NULL
+    M <- Cov <- group <- wt <- NULL
   
     if (!(type %in% c("M", "Cov"))){
       stop("type must be either M or Cov")
@@ -137,10 +137,16 @@ plotEmpiricalDistribution <- function(bs,
                        aes(M, colour = group, group = sample, weight = wt)) +
             labs(color = "Sample")
         }else{
-          p1 <- ggplot(meth.levelsm, 
+          if(ncol(bs) <= 12){
+            p1 <- ggplot(meth.levelsm, 
                      aes(M, colour = group, group = sample, weight = wt,
                          linetype = sample)) +
-            labs(color = "Group", linetype = "Sample")
+                    labs(color = "Group", linetype = "Sample")
+          }else{
+            p1 <- ggplot(meth.levelsm, 
+                         aes(M, colour = group, group = sample, weight = wt)) +
+              labs(color = "Group")
+          }
         }
         p1 <- p1 + geom_line(adjust = adj, alpha = 0.6, stat = "density", size = 1.3) +
           xlab("Methylation Proportion") + 
@@ -151,10 +157,16 @@ plotEmpiricalDistribution <- function(bs,
                                          colour = group, group = sample)) +
             labs(color = "Sample")
         }else{
-          p1 <- ggplot(meth.levelsm, aes(Cov+0.1, 
+          if(ncol(bs) <= 12){
+            p1 <- ggplot(meth.levelsm, aes(Cov+0.1, 
                                          colour = group, group = sample,
                                          linetype = sample)) +
-            labs(color = "Group", linetype = "Sample")
+                  labs(color = "Group", linetype = "Sample")
+          }else{
+            p1 <- ggplot(meth.levelsm, aes(Cov+0.1, 
+                                           colour = group, group = sample)) +
+              labs(color = "Group")
+          }
         }
         
         p1 <- p1 + 
