@@ -4,15 +4,34 @@
 \alias{plotDMRs}
 \title{Plot Differentially Methylated Regions}
 \usage{
-plotDMRs(BSseq, regions = NULL, testCovariate = NULL,
-  extend = (end(regions) - start(regions) + 1)/2, main = "",
-  addRegions = regions, annoTrack = NULL, col = NULL, lty = NULL,
-  lwd = NULL, label = NULL, mainWithWidth = TRUE,
-  regionCol = .alpha("#C77CFF", 0.2), addTicks = TRUE,
-  addPoints = TRUE, pointsMinCov = 1, highlightMain = FALSE,
-  qval = TRUE, stat = TRUE, verbose = TRUE, includeYlab = TRUE,
-  compareTrack = NULL, labelCols = NULL, horizLegend = FALSE,
-  addLines = TRUE)
+plotDMRs(
+  BSseq,
+  regions = NULL,
+  testCovariate = NULL,
+  extend = (end(regions) - start(regions) + 1)/2,
+  main = "",
+  addRegions = regions,
+  annoTrack = NULL,
+  col = NULL,
+  lty = NULL,
+  lwd = NULL,
+  label = NULL,
+  mainWithWidth = TRUE,
+  regionCol = .alpha("#C77CFF", 0.2),
+  addTicks = TRUE,
+  addPoints = TRUE,
+  pointsMinCov = 1,
+  highlightMain = FALSE,
+  qval = TRUE,
+  stat = TRUE,
+  verbose = TRUE,
+  includeYlab = TRUE,
+  compareTrack = NULL,
+  labelCols = NULL,
+  horizLegend = FALSE,
+  addLines = TRUE,
+  linesMinCov = 1
+)
 }
 \arguments{
 \item{BSseq}{An object of class BSseq.}
@@ -143,6 +162,11 @@ to plot many labels and want to preserve whitespace.}
 \item{addLines}{logical indicating whether to plot smooth lines between 
 points. Default is true. Can be useful to turn this off for very small 
 regions.}
+
+\item{linesMinCov}{The minimum coverage a methylation loci need in 
+order to be used for plotting of smoothed lines. Useful for filtering
+out low coverage loci. Only used if addLines = TRUE. Default value is 1 
+(no filtering).}
 }
 \value{
 None (generates a plot)

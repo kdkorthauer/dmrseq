@@ -4,11 +4,26 @@
 \alias{dmrseq}
 \title{Main function for detecting and evaluating significance of DMRs.}
 \usage{
-dmrseq(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
-  minNumRegion = 5, smooth = TRUE, bpSpan = 1000, minInSpan = 30,
-  maxGapSmooth = 2500, maxGap = 1000, verbose = TRUE,
-  maxPerms = 10, matchCovariate = NULL, BPPARAM = bpparam(),
-  stat = "stat", block = FALSE, blockSize = 5000, chrsPerChunk = 1)
+dmrseq(
+  bs,
+  testCovariate,
+  adjustCovariate = NULL,
+  cutoff = 0.1,
+  minNumRegion = 5,
+  smooth = TRUE,
+  bpSpan = 1000,
+  minInSpan = 30,
+  maxGapSmooth = 2500,
+  maxGap = 1000,
+  verbose = TRUE,
+  maxPerms = 10,
+  matchCovariate = NULL,
+  BPPARAM = bpparam(),
+  stat = "stat",
+  block = FALSE,
+  blockSize = 5000,
+  chrsPerChunk = 1
+)
 }
 \arguments{
 \item{bs}{bsseq object containing the methylation values as well as the 

@@ -4,8 +4,13 @@
 \alias{plotEmpiricalDistribution}
 \title{Plot the empirical distribution of the methylation beta vals or coverage}
 \usage{
-plotEmpiricalDistribution(bs, testCovariate = NULL, bySample = FALSE,
-  type = "M", adj = 2.5)
+plotEmpiricalDistribution(
+  bs,
+  testCovariate = NULL,
+  bySample = FALSE,
+  type = "M",
+  adj = 2.5
+)
 }
 \arguments{
 \item{bs}{a BSseq object}

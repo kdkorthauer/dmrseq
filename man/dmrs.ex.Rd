@@ -4,7 +4,8 @@
 \name{dmrs.ex}
 \alias{dmrs.ex}
 \title{dmrs.ex: Example results of DMRs}
-\format{a data.frame that contains the results of the inference. The
+\format{
+a data.frame that contains the results of the inference. The
    data.frame contains one row for each candidate region, and 
    10 columns, in the following order: 1. chr = 
    chromosome, 2. start = 
@@ -19,7 +20,8 @@
    10. pval = the permutation p-value for the significance of the test
    statistic, and 
    11. qval = the q-value for the test statistic (adjustment
-   for multiple comparisons to control false discovery rate).}
+   for multiple comparisons to control false discovery rate).
+}
 \source{
 Obtained from running the examples in \code{\link{dmrseq}}. 
 A script which executes these steps 
