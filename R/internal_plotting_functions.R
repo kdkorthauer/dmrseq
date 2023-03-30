@@ -299,23 +299,6 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
     }
 }
 
-.dmrPlotLines0 <- function(x, y, col, lty, lwd, plotRange) {
-    # Code adapted from bsseq package
-    
-    # if there are many points to plot (as in the case of a block level 
-    # analysis, increase the line width by one so that the lines will be more
-    # visible
-    if (length(x) > 100 && !is.null(lwd)) {
-        lwd <- lwd + 1
-    } else if (length(x) > 100) {
-        lwd <- 2
-    }
-    if (sum(!is.na(y)) <= 1) 
-        return(NULL)
-    xx <- seq(from = plotRange[1], to = plotRange[2], length.out = 500)
-    yy <- approxfun(x, y)(xx)
-    lines(xx, yy, col = col, lty = lty, lwd = lwd)
-}
 
 # function to transform a given color specified by a character object to a
 # transparent version of that color
@@ -364,7 +347,7 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
 
 
 
-.dmrPlotLines <- function(x, y, z, col, lwd, pointsMinCov, maxCov, 
+.dmrPlotLines <- function(x, y, z, col, lwd, linesMinCov, maxCov, 
                           regionWidth, lty) {
   
   if (length(x) > 100 && !is.null(lwd)) {
@@ -373,7 +356,7 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
     lwd <- 2
   }
   
-  spn <- max(1 - (1/160)*sum(z >= pointsMinCov), 0.75)
+  spn <- max(1 - (1/160)*sum(z >= linesMinCov), 0.75)
 
   y[y==1] <- 0.99
   y[y==0] <- 0.01
@@ -382,19 +365,19 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
   
   # don't interpolate smooth lines if there are fewer than 10 cpgs
   if (length(x) >= 10) {
-    loess_fit <- loess(logit(y[z >= pointsMinCov]) ~ x[z >= pointsMinCov],
-                       weights = z[z >= pointsMinCov], span = spn)
+    loess_fit <- loess(logit(y[z >= linesMinCov]) ~ x[z >= linesMinCov],
+                       weights = z[z >= linesMinCov], span = spn)
     
-    xl <- seq(min(x[z >= pointsMinCov], na.rm=TRUE), 
-              max(x[z >= pointsMinCov], na.rm=TRUE), 
-              (max(x[z >= pointsMinCov], na.rm=TRUE) - 
-               min(x[z >= pointsMinCov], na.rm=TRUE))/500)
+    xl <- seq(min(x[z >= linesMinCov], na.rm=TRUE), 
+              max(x[z >= linesMinCov], na.rm=TRUE), 
+              (max(x[z >= linesMinCov], na.rm=TRUE) - 
+               min(x[z >= linesMinCov], na.rm=TRUE))/500)
     lines(xl, inv.logit(predict(loess_fit,xl)), 
           col = .makeTransparent(.darken(col), 175), lwd = lwd,
           lty = lty)
     
   }else{
-    lines(x[z >= pointsMinCov], y[z >= pointsMinCov], 
+    lines(x[z >= linesMinCov], y[z >= linesMinCov], 
           col = .makeTransparent(.darken(col), 175), lwd = lwd,
           lty = lty)
   }
@@ -402,7 +385,7 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
 
 .dmrPlotSmoothData <- function(BSseq, region, extend, addRegions, col, lty, lwd,
     label, regionCol, addTicks, addPoints, pointsMinCov, highlightMain, 
-    includeYlab = TRUE, horizLegend, addLines=TRUE) {
+    includeYlab = TRUE, horizLegend, addLines=TRUE, linesMinCov) {
     # modified from .plotSmoothData in bsseq to allow non-smoothed regions
     
     gr <- bsseq.bsGetGr(BSseq, region, extend)
@@ -466,34 +449,21 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
                          regionWidth = end(gr) - 
                            start(gr))
         }
-        
-        if (addLines){
-          for(sampIdx in seq_len(ncol(BSseq))){
-            if (sum(coverage[, sampIdx] >= pointsMinCov) > 1){
+    }   
+    
+    if (addLines){
+       for(sampIdx in seq_len(ncol(BSseq))){
+            if (sum(coverage[, sampIdx] >= linesMinCov) > 1){
               .dmrPlotLines(positions, rawPs[, sampIdx], coverage[, sampIdx], 
                         col = colEtc$col[sampIdx], 
                         lwd = colEtc$lwd[sampIdx],
-                        pointsMinCov = pointsMinCov, 
+                        linesMinCov = linesMinCov, 
                         maxCov = quantile(coverage, 0.95), 
                         regionWidth = end(gr) - 
                           start(gr),
                         lty = colEtc$lty[sampIdx])
             }
-          }
         }
-        
-    } else {
-      if (addLines){
-        for(sampIdx in seq_len(ncol(BSseq))){
-          if (sum(!is.na(rawPs[, sampIdx])) > 1){
-            .dmrPlotLines0(positions, rawPs[, sampIdx], 
-                         col = colEtc$col[sampIdx], 
-                         lty = colEtc$lty[sampIdx], lwd = colEtc$lwd[sampIdx], 
-                         plotRange = c(start(gr), 
-                                       end(gr)))
-          }
-        }
-      }
     }
     
     # if colEtc$label contains characters that are not null or missing, then 
@@ -513,7 +483,7 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
     label = NULL, mainWithWidth = TRUE, regionCol = .alpha("orchid1", 0.2), 
     addTicks = TRUE, addPoints = FALSE, pointsMinCov = 5, highlightMain = FALSE,
     qval = NULL, stat = NULL, includeYlab = TRUE, compareTrack = NULL, 
-    labelCols = NULL, horizLegend = FALSE, addLines = TRUE) {
+    labelCols = NULL, horizLegend = FALSE, addLines = TRUE, linesMinCov = 1) {
     
     if(!is.null(annoTrack) || !is.null(compareTrack)){
       layout(matrix(seq_len(2), ncol = 1), heights = c(2, 1.5))
@@ -528,7 +498,8 @@ dmrPlotAnnotations <- function(gr, annoTrack) {
         highlightMain = highlightMain, 
         includeYlab = includeYlab, 
         horizLegend = horizLegend, 
-        addLines = addLines)
+        addLines = addLines,
+        linesMinCov = linesMinCov)
     gr <- bsseq.bsGetGr(BSseq, region, extend)
     
     if (!is.null(main)) {

@@ -137,6 +137,11 @@
 #' points. Default is true. Can be useful to turn this off for very small 
 #' regions.
 #' 
+#' @param linesMinCov The minimum coverage a methylation loci need in 
+#' order to be used for plotting of smoothed lines. Useful for filtering
+#' out low coverage loci. Only used if addLines = TRUE. Default value is 1 
+#' (no filtering).
+#' 
 #' @export
 #' 
 #' @return None (generates a plot)
@@ -171,7 +176,7 @@ plotDMRs <- function(BSseq, regions = NULL, testCovariate = NULL,
     qval = TRUE, stat = TRUE, verbose = TRUE, includeYlab = TRUE, 
     compareTrack = NULL, 
     labelCols = NULL, horizLegend = FALSE,
-    addLines = TRUE) {
+    addLines = TRUE, linesMinCov = 1) {
     # adapted from plotManyRegions from bsseq plot to take 
     # in a vector of qval values
     # (1 per region in regions argument) to be displayed in
@@ -277,7 +282,7 @@ plotDMRs <- function(BSseq, regions = NULL, testCovariate = NULL,
             pointsMinCov = pointsMinCov, highlightMain = highlightMain, 
             qval = qval, stat = stat, includeYlab = includeYlab, 
             compareTrack = compareTrack, labelCols = labelCols,
-            horizLegend = horizLegend, addLines = addLines)
+            horizLegend = horizLegend, addLines = addLines, linesMinCov = linesMinCov)
     }
 }
 

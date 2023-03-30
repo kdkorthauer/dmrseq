@@ -4,13 +4,15 @@
 \name{annot.chr21}
 \alias{annot.chr21}
 \title{annot.chr21: Annotation information for chromosome 21, hg38 genome}
-\format{a \code{GRangesList} object with two elements returned
+\format{
+a \code{GRangesList} object with two elements returned
 by \code{\link{getAnnot}}. The first
 contains CpG category information in the first element (optional)
 coding gene sequence information in the second element (optional).
 At least one of these elements needs to be non-null in order for 
 any annotation to be plotted, but it is not necessary to contain
-both.}
+both.
+}
 \source{
 Obtained from running
 \code{annoTrack} function and then subsetting the results to 

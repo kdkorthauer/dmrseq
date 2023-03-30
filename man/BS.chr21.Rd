@@ -5,7 +5,9 @@
 \alias{BS.chr21}
 \title{BS.chr21: Whole-genome bisulfite sequencing for chromosome 21 
 from Lister et al.}
-\format{An object of class \code{BSseq}.}
+\format{
+An object of class \code{BSseq}.
+}
 \source{
 Obtained from 
 \url{http://neomorph.salk.edu/human_methylome/data.html} specifically,
