@@ -326,6 +326,12 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
         coeff.adj <- NULL
     }
     
+    # check model matrix is full rank
+    e <- eigen(crossprod(as.matrix(design)), symmetric = TRUE, only.values = TRUE)$values
+    if (! (e[1] > 0 && abs(e[length(e)]/e[1]) > 1e-13)){
+      stop("Design matrix is not full rank")
+    }
+    
     # check for empty factor levels in design matrix
     if (sum(colSums(design) == 0) > 0){
       which.empty <- which(colSums(design) == 0)
