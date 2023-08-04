@@ -47,7 +47,9 @@ Imports: GenomicRanges,
   splines
 Suggests: knitr, 
   rmarkdown, 
-  BiocStyle
+  BiocStyle,
+  TxDb.Hsapiens.UCSC.hg19.knownGene,
+  org.Hs.eg.db
 biocViews: ImmunoOncology, DNAMethylation, Epigenetics, MultipleComparison, Software,
   Sequencing, DifferentialMethylation, WholeGenome, Regression, 
   FunctionalGenomics
