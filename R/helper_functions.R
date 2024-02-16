@@ -553,8 +553,8 @@ regionScanner <- function(meth.mat = meth.mat, cov.mat = cov.mat, pos = pos,
         
           # add back to regions and remake indice
           reg <- as.matrix(as.data.frame(IRanges::reduce(c(flk, reg)))[,1:3])
-          idx <- apply(reg, 1, function(x) which(pos %in% x[2]:x[3] &
-                                                 chr %in% x[1]))
+          idx <- apply(reg, 1, function(x) which(pos[ind] %in% x[2]:x[3] &
+                                                 chr[ind] %in% x[1]))
           if (is(idx, "list")){
             Indexes[[j]] <- idx
           }else{
