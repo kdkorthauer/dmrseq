@@ -106,8 +106,9 @@ getAnnot <- function(genomeName) {
                                 chainfiles$title, 
                                 ignore.case=TRUE))
               if (length(cf) == 0){
-                stop("LiftOver from ", genomeName, " to ", liftTo, 
+                message("LiftOver from ", genomeName, " to ", liftTo, 
                      " was unsucccessful")
+                return(NULL)
               }else if(length(cf) > 1){
                 # take the first matching chain if more than one
                 cf <- cf[1]
@@ -129,7 +130,8 @@ getAnnot <- function(genomeName) {
             annot <- GRangesList(CpGs = cpg, Exons = genes, compress=FALSE)
             return(annot)
         } else {
-            stop("Annotation could not be retrieved.")
+            message("Download with annotatr::build_annotations() failed; Annotation could not be retrieved.")
+            return(NULL)
         }
     }
 }
