@@ -539,7 +539,7 @@ To retrieve annotations for genomes supported by **annotatr**, use the
 helper function `getAnnot`, and pass this annotation object to the `plotDMRs` 
 function as the `annoTrack` parameter.
 
-```{r plot, out.width='\\textwidth', fig.height = 2.5, warning='hide'}
+```{r plot, out.width='\\textwidth', fig.height = 2.5, warning=FALSE}
 # get annotations for hg18
 annoTrack <- getAnnot("hg18")
 
@@ -549,7 +549,7 @@ plotDMRs(bs, regions=regions[1,], testCovariate="CellType",
 
 Here we also plot the top methylation block from the block analysis:
 
-```{r plotblock, out.width='\\textwidth', fig.height = 2.5, warning='hide'}
+```{r plotblock, out.width='\\textwidth', fig.height = 2.5, warning=FALSE}
 plotDMRs(bs, regions=blocks[1,], testCovariate="CellType",
     annoTrack=annoTrack)
 ```
