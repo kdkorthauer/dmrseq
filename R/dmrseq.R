@@ -16,7 +16,7 @@
 #'  design matrix for the test statistic calculation. To run using a 
 #'  continuous or categorial covariate with more than two groups, simply pass in
 #'  the name of a column in `pData` that contains this covariate. A continuous
-#'  covariate is assmued if the data type in the `testCovariate` slot is 
+#'  covariate is assumued if the data type in the `testCovariate` slot is 
 #'  continuous, with the exception of if there are only two unique values 
 #'  (then a two group comparison is carried out).
 #' @param adjustCovariate an (optional) character value or vector 
@@ -270,6 +270,14 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
     testCov <- pData(bs)[, testCovariate]
     if (is.factor(testCov)) # drop unused levels of test
       testCov <- droplevels(testCov)
+    
+    # check for missing values in testCov 
+    if (any(is.na(testCov))) {
+      stop("Missing values found in the testCovariate ",
+           "Please remove these samples from the analysis.")
+    }
+    
+    
     fact <- TRUE
     sampleSize <- table(testCov)[names(table(testCov)) %in% pData(bs)[,testCovariate]]
     if (length(unique(testCov)) == 1) {
@@ -302,6 +310,12 @@ dmrseq <- function(bs, testCovariate, adjustCovariate = NULL, cutoff = 0.1,
     if (!is.null(adjustCovariate)) {
         mmdat <- data.frame(testCov = testCov)
         adjustCov <- pData(bs)[, adjustCovariate, drop = FALSE]
+        
+        # check for missing values in adjustCovariate
+        if (any(is.na(adjustCov))) {
+            stop("Missing values found in the adjustCovariate. ",
+                 "Please remove these samples from the analysis.")
+        }
         
         # check for number of unique values per adjust cov
         nunq <- apply(adjustCov, 2, function(x) length(unique(x)))
